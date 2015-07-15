@@ -1,0 +1,84 @@
+<template name="maincampus">
+    <div>
+    <h2>Current Conditions at <br/> UH - Main Campus station</h2>
+    </div>    
+    
+        <div style="float:left; width:35%;">
+            <div style="float:left; width:35%;">
+                Temperature<br/>
+                Relative Humidity<br/>
+                Wind<br/>
+                Barometer<br/>
+                Percepitation (24hr)<br/>
+                Ozone <br/>
+            </div>        
+            <div style="float:right; width:65%;" align="right">
+                {{siteInfo.temperature}}<br/>
+                {{siteInfo.humidity}}<br/>
+                {{siteInfo.wind.direction}} at {{siteInfo.wind.speed}}<br/>
+                {{siteInfo.barometer}}<br/>
+                {{siteInfo.percipitation}}<br/>
+                {{siteInfo.ozone}}<br/>            
+            </div>
+            <div>
+                <div style="float:left; width:50%">
+                    {{> highchartsHelper chartId="winddir" chartWidth="100%" chartObject=windDirObj}}
+                </div>
+                <div style="float:right; width:50%">
+                    {{> highchartsHelper chartId="windspd" chartWidth="100%" chartObject=windSpdObj}}
+                </div>
+            </div>
+            <div>
+                <br/>
+                <h3>Site Information</h3>
+                State: {{siteInfo.state}}<br/>
+                County: {{siteInfo.county}}<br/>
+                City: {{siteInfo.city}}<br/>
+                Site coordinates: <br/>
+                Latitude: {{siteInfo.location.lat}}<br/>
+                Longitude: {{siteInfo.location.lng}}<br/>
+                Elevation: {{siteInfo.elevation}}<br/>
+                Maintained by: {{siteInfo.maintainer}}<br/>
+            </div>
+            
+            
+                
+             <table border="1" width="380">    
+                    <tr>
+                        <td width="80">Date/Time</td>
+                        <td width="100">Temperature</td> 
+                        <td width="100">Humidity</td>
+                        <td width="100">Ozone</td>
+                    </tr> 
+             </table>
+               <div style="height:200px;width:100%;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;"> 
+             <table border="1" width="380">            
+                 {{#each geoInfo}}             
+                                   
+                    <tr>
+                        <td width="80">{{epochToDate epoch}}</td>
+                        <td width="100">{{temp}}</td> 
+                        <td width="100">{{humid}}</td>
+                        <td width="100">{{o3}}</td>
+                    </tr>                   
+                
+                {{/each}}
+            </table>
+            </div>    
+        </div>
+        
+        
+        <div style="float: right; width:60%;"> 
+            <div>
+            {{> highchartsHelper chartId="UHMainHeat" chartWidth="100%" chartHeight="300px" chartObject=maincampustemp}}
+            </div>
+            <div>
+            {{> highchartsHelper chartId="UHMainHumid" chartWidth="100%" chartHeight="300px" chartObject=maincampushumid}}
+            </div>
+            <div>
+            {{> highchartsHelper chartId="UHMainOzone" chartWidth="100%" chartHeight="300px" chartObject=chartGeneralOptions}}
+            </div>
+        </div>
+ 
+
+</template>
