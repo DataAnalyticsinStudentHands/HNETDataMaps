@@ -1,3 +1,7 @@
+body {
+    background-color: #FFF9D9;
+}
+
 #map-canvas {
     width: 85%;
     height: 700px;
@@ -46,7 +50,7 @@
   text-decoration: none;
   display: block;
   padding: 15px 25px;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'client\stylesheets\fonts\LeagueGothic-Regular.otf', sans-serif;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 14px;
@@ -58,7 +62,7 @@
   transition: color .25s;
 }
 #cssmenu ul li a:hover {
-  color: #000;
+  color: #F6BE00;
 }
 
 #cssmenu ul li a:hover:before {
@@ -83,7 +87,7 @@
   bottom: 0;
   height: 3px;
   width: 0;
-  background: #000;
+  background: #F6BE00;
   -webkit-transition: width .25s;
   -moz-transition: width .25s;
   -ms-transition: width .25s;
@@ -95,7 +99,7 @@
   display: none;
 }
 #cssmenu ul li.active a {
-  color: #000;
+  color: #F6BE00;
 }
 #cssmenu ul li.active a:before {
   width: 100%;
@@ -129,6 +133,8 @@
     display: block;
 }
 
+/********Nav Bar On Smaller Devices********/
+
 @media screen and (max-width: 768px) {
   #cssmenu ul li {
     float: none;
@@ -161,36 +167,45 @@
 }
 
 #UH-Main .data {
-        float: left;
-        max-width: 35%;
-        width: auto;
+    float: left;
+    width: 48%;
+    text-align: right;
+    border-right: 5px solid #C8102E;
+
 }
 #UH-Main .left-screen {
     float: left;
     width: 35%;
+    padding-left: 10px;
 }
 
-#UH-Main .number {
-        float: left;
-        max-width: 65%;
-        width: auto;
+#UH-Main .numbers {
+    float: right;
+    width: 48%;
+    text-align: left;
+    border-left: 5px solid #C8102E;
 }
 
 #UH-Main .left-meter {
         float: left;
-        width: 50%;
-        max-width: 50%;
+        width: 49.35%;
+        border-top: 2px solid #c8102e;
+        border-left: 2px solid #c8102e;
+        border-bottom: 2px solid #c8102e;
 }
 
 #UH-Main .right-meter {
         float: right;
         width: 50%;
-        height: 50%;
+        border-top: 2px solid #c8102e;
+        border-right: 2px solid #c8102e;
+        border-bottom: 2px solid #c8102e;
 }
 
 #UH-Main .info {
     float: left;
     width: 100%;
+    text-align: center;
 }
 
 #UH-Main .table {
@@ -204,4 +219,27 @@
 #UH-Main .right-screen {
     float: right;
     width: 60%;
+    padding-right: 10px;
 }
+
+.conditions {
+    text-align: center;
+}
+
+.Temp {
+    padding-bottom: 5px;
+    border-bottom: 2px solid #C8102E;
+    border-top: 2px solid #C8102E;
+}
+
+.Hum {
+    padding-bottom: 5px;
+    border-bottom: 2px solid #C8102E;
+}
+
+.Hum-Oz {
+    padding-bottom: 5px;
+    border-bottom: 2px solid #C8102E;
+}
+
+/*********************Devices Under FullScreen************************/

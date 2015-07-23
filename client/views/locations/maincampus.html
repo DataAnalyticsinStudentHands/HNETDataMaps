@@ -1,5 +1,5 @@
 <template name="maincampus">
-    <div>
+    <div class="conditions">
     <h2>Current Conditions at <br/> UH - Main Campus station</h2>
     </div>
 
@@ -13,7 +13,7 @@
                 Percepitation (24hr)<br/>
                 Ozone <br/>
             </div>
-            <div class="numbers" align="right">
+            <div class="numbers">
                 {{siteInfo.temperature}}<br/>
                 {{siteInfo.humidity}}<br/>
                 {{siteInfo.wind.direction}} at {{siteInfo.wind.speed}}<br/>
@@ -70,13 +70,13 @@
 
 
         <div class="right-screen">
-            <div>
+            <div class="Temp">
             {{> highchartsHelper chartId="UHMainHeat" chartWidth="100%" chartHeight="300px" chartObject=maincampustemp}}
             </div>
-            <div>
+            <div class="Hum">
             {{> highchartsHelper chartId="UHMainHumid" chartWidth="100%" chartHeight="300px" chartObject=maincampushumid}}
             </div>
-            <div>
+            <div class="Hum-Oz">
             {{> highchartsHelper chartId="UHMainOzone" chartWidth="100%" chartHeight="300px" chartObject=chartGeneralOptions}}
             </div>
         </div>
