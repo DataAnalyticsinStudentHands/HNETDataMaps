@@ -31,7 +31,7 @@ Template.map.rendered = function() {
         var sites = Sites.find({}).fetch();
         _.each(sites, function(aSite) {           
                 var markerInfo= '<h3>' + aSite.Name + '</h3>' +
-                                'ID: ' + aSite.siteID + '<br/>'
+                                'ID: ' + aSite.siteID + '<br/>' +
                                 'Address: ' + aSite.Address + 
                                 'Cams: ' + aSite.CAMS + '<br/>' +
                                 'Region: ' + aSite.TCEQRegion + '<br/>' + 
