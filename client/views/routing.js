@@ -22,3 +22,6 @@ Router.route('/jonesstate', function() {
     this.render('jonesstate');
 });
 
+Router.route('/history', function() {
+    this.render('history');
+});
