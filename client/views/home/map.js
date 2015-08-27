@@ -1,4 +1,7 @@
 Meteor.subscribe('airdata');
+var mapCenter = null;
+
+
 Template.map.rendered = function() {
     if (!Session.get('map'))
         gmaps.initialize();
@@ -24,9 +27,9 @@ Template.map.rendered = function() {
             
             });
         //var mapCenter = {lat: 29.758864, lng: -95.447520}; // Houston
-        //var mapCenter = {lat: 29.428759, lng: -98.515177};  // San Antonio
-        var mapCenter = {lat: 30.267153, lng: -97.745177};  // Austin
-        instance.subscribe('sitesdata', mapCenter);
+        mapCenter = {lat: 29.428759, lng: -98.515177};  // San Antonio
+      //  mapCenter = {lat: 30.267153, lng: -97.745177};  // Austin
+        this.subscribe('sitesdata', mapCenter);
         
         var sites = Sites.find({}).fetch();
         _.each(sites, function(aSite) {           
@@ -45,9 +48,18 @@ Template.map.rendered = function() {
                 };
                 gmaps.addMarker(aMarker);  
         });
+        Meteor.subscribe("userData");
 });
+ 
+    
 }
 
-Template.map.destroyed = function() {
-    Session.set('map', false);
-}
+Template.map.events({
+    "click .add-favorite": function () {
+      // Set the checked property to the opposite of its current value
+      Meteor.call("addFave", mapCenter);
+    },
+    "click .delete-favorite": function () {
+      Meteor.call("deleteFave", this._id);
+    }
+  });

@@ -76,6 +76,7 @@ gmaps = {
             this.map.setZoom(13);
             this.map.setCenter(gMarker.getPosition());
             clicked_infowindow.open(this.map, this);
+            
         });
         google.maps.event.addListener(gMarker, 'mouseout', function() {
             infowindow.close();
