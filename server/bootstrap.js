@@ -1,3 +1,5 @@
+
+
 Meteor.startup(function() {
     if (Air.find().count() === 0) {    
     var sampleAirData = [

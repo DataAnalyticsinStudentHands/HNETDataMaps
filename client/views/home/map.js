@@ -29,7 +29,7 @@ Template.map.rendered = function() {
         //var mapCenter = {lat: 29.758864, lng: -95.447520}; // Houston
         mapCenter = {lat: 29.428759, lng: -98.515177};  // San Antonio
       //  mapCenter = {lat: 30.267153, lng: -97.745177};  // Austin
-        this.subscribe('sitesdata', mapCenter);
+        Meteor.subscribe('sitesdata', mapCenter);
         
         var sites = Sites.find({}).fetch();
         _.each(sites, function(aSite) {           
