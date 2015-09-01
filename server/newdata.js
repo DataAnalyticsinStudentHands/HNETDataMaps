@@ -1,4 +1,4 @@
-/*sites = [
+sites = [
     {
         'siteRef': 'UHCLH',
         'siteName': 'Clear Lake High School',
@@ -17,4 +17,6 @@
         'location': [-95.1867, 29.5480],
         'url': '/clearbrook'
     }
-]*/
+];
+
+o3data = [];
