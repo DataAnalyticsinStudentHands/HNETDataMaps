@@ -27,3 +27,4 @@ Router.route('/clearcreek', function() {
 Router.route('/about', function() {
     this.render('about');
 });
+
