@@ -9,19 +9,17 @@
 <body>
     <div id='cssmenu'>
     <ul>
-       <li><a href='#'><span>Conditions</span></a>
+        <li class='active'><a href='#'><span>Home</span></a></li>
+       <li><a href='#'><span>Current Site Conditions</span></a>
            <ul class="dropdown">
-               <li><a href="#"><span>UH - Main Campus</span></a></li>
-               <li><a href="#"><span>UH - Sugar Land</span></a></li>
-               <li><a href="#"><span>UH - Coastal Center</span></a></li>
-               <li><a href="#"><span>West Liberty Airport</span></a></li>
-               <li><a href="#"><span>Jones State Forest</span></a></li>
+               <li><a href="{{pathFor 'maincampus'}}" class="{{activePage}}"><span>UH - Main Campus</span></a></li>
+               <li><a href="{{pathFor 'sugarland'}}"><span>UH - Sugar Land</span></a></li>
+               <li><a href="{{pathFor 'coastalcenter'}}"><span>UH - Coastal Center</span></a></li>
+               <li><a href="{{pathFor 'libertyairport'}}"><span>West Liberty Airport</span></a></li>
+               <li><a href="{{pathFor 'jonesstate'}}"><span>Jones State Forest</span></a></li>
            </ul>
        </li>
-       <li><a href='#'><span>Forcast</span></a></li>
-       <li class='active'><a href='#'><span>Home</span></a></li>
-       <li><a href='#'><span>History</span></a></li>
-       <li class='last'><a href='#'><span>Site</span></a></li>
+       <li><a href='#'><span>Forecast</span></a></li>
         <li class='login'><span>{{> loginButtons}}</span></li>
     </ul>
     </div>
