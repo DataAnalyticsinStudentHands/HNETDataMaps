@@ -26,3 +26,10 @@ Router.route('/about', function() {
 Router.route('/home', function() {
     this.render('home');
 });
+
+Router.route('/disclaimer', function() {
+    this.render('disclaimer');
+});
+Router.route('/forecast', function() {
+    this.render('forecast');
+});

@@ -18,7 +18,13 @@
                <li><a href="{{pathFor 'clearcreek'}}"><span>Clear Creek HS</span></a></li>
                <li><a href="{{pathFor 'clearlake'}}"><span>Clear Lake HS</span></a></li>
            </ul></li>
-       <li><a href='#'><span>Forecast</span></a></li>
+       <li><a href='#'><span>Forecast</span></a>
+        <ul class="dropdown">
+
+               <li><a href="{{pathFor 'forecast'}}" class="{{activePage}}"><span>Forecast</span></a></li>
+               <li><a href="http://www.icas.uh.edu/"><span>Ozone Forecast</span></a></li>
+            
+           </ul></li>
        <li><a href='#'><span>Site Info</span></a>
            <ul class="dropdown">
 

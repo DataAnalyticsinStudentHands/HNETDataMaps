@@ -4,32 +4,59 @@
     </div>
 
         <div id="UH-Main" class="whole">
-        <div class="left-screen">
-            <div class="data">
-                Temperature<br/>
-                Relative Humidity<br/>
-                Wind<br/>
-                Barometer<br/>
-                Percepitation (24hr)<br/>
-                Ozone <br/>
-            </div>
-            <div class="numbers">
-                {{siteInfo.temperature}}<br/>
-                {{siteInfo.humidity}}<br/>
-                {{siteInfo.wind.direction}} at {{siteInfo.wind.speed}}<br/>
-                {{siteInfo.barometer}}<br/>
-                {{siteInfo.percipitation}}<br/>
-                {{siteInfo.ozone}}<br/>
-            </div>
+        <div align= center class="left-screen">
+            <div >
+                 <table border="1" width="380">
+                    <td>
+                        <tr width="100">Temperature</tr>
+                        <tr width="100">Humidity</tr>
+                        <tr width="100">Wind</tr>
+                        <tr width="100">Barometer</tr>
+                        <tr width="100">Percepitation (24hr)</tr>
+                        <tr width="100">Ozone </tr>
+                    </td>
+                     
+                     <td>
+                        <tr width="100">{{siteInfo.temperature}}</tr>
+                        <tr width="100">{{siteInfo.humidity}}</tr>
+                        <tr width="100">{{siteInfo.wind.direction}} at {{siteInfo.wind.speed}}</tr>
+                        <tr width="100">{{siteInfo.barometer}}</tr>
+                        <tr width="100">{{siteInfo.percipitation}}</tr>
+                        <tr width="100">{{siteInfo.ozone}}</tr>
+                    </td>
+             </table>
+                <br>
+                <br>
+                <br>
+                
+             </div> 
+           
             <div>
-                <div class="left-meter">
+                
+                <div class="meter">
                     {{> highchartsHelper chartId="winddir" chartWidth="100%" chartObject=windDirObj}}
-                </div>
-                <div class="right-meter">
                     {{> highchartsHelper chartId="windspd" chartWidth="100%" chartObject=windSpdObj}}
                 </div>
+                
+               
             </div>
-            <div class="info">
+            
+</div>
+
+
+        <div class="right-screen">
+            <div class="Temp">
+            {{> highchartsHelper chartId="UHMainHeat" chartWidth="100%" chartHeight="300px" chartObject=maincampustemp}}
+            </div>
+            <div class="Hum">
+            {{> highchartsHelper chartId="UHMainHumid" chartWidth="100%" chartHeight="300px" chartObject=maincampushumid}}
+            </div>
+            <div class="Hum-Oz">
+            {{> highchartsHelper chartId="UHMainOzone" chartWidth="100%" chartHeight="300px" chartObject=chartGeneralOptions}}
+            </div>
+        </div>
+            
+             <div align=center class="info">
                 <br/>
                 <h3>Site Information</h3>
                 State: {{siteInfo.state}}<br/>
@@ -43,7 +70,7 @@
             </div>
 
 
-
+            <div align=center class="table">
              <table border="1" width="380">
                     <tr>
                         <td width="80">Date/Time</td>
@@ -66,20 +93,7 @@
                 {{/each}}
             </table>
             </div>
-</div>
-
-
-        <div class="right-screen">
-            <div class="Temp">
-            {{> highchartsHelper chartId="UHMainHeat" chartWidth="100%" chartHeight="300px" chartObject=maincampustemp}}
-            </div>
-            <div class="Hum">
-            {{> highchartsHelper chartId="UHMainHumid" chartWidth="100%" chartHeight="300px" chartObject=maincampushumid}}
-            </div>
-            <div class="Hum-Oz">
-            {{> highchartsHelper chartId="UHMainOzone" chartWidth="100%" chartHeight="300px" chartObject=chartGeneralOptions}}
-            </div>
-        </div>
+               </div>
 
 </div>
 </template>
