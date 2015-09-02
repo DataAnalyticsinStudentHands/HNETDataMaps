@@ -13,7 +13,7 @@ gmaps = {
         
        
         var mapOptions = {
-                center: new google.maps.LatLng(29.928159, -96.817017),
+                center: new google.maps.LatLng(29.721024, -95.341939),
                 //center: new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
                 zoom: 9,
                 scaleControl: false,                

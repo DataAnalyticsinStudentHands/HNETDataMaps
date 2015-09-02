@@ -189,7 +189,7 @@ body {
 
 #UH-Main .left-meter {
         float: left;
-        width: 49.35%;
+        width: 49%;
         border-top: 2px solid #c8102e;
         border-left: 2px solid #c8102e;
         border-bottom: 2px solid #c8102e;
@@ -197,7 +197,7 @@ body {
 
 #UH-Main .right-meter {
         float: right;
-        width: 50%;
+        width: 49%;
         border-top: 2px solid #c8102e;
         border-right: 2px solid #c8102e;
         border-bottom: 2px solid #c8102e;

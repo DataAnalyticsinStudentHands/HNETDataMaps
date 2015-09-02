@@ -2,6 +2,10 @@ Router.route('/', function() {
     this.render('map');
 });
 
+Router.route('/home', function() {
+    this.render('map');
+});
+
 Router.route('/maincampus', function() {
     this.render('maincampus');
 });
@@ -22,7 +26,4 @@ Router.route('/clearcreek', function() {
 });
 Router.route('/about', function() {
     this.render('about');
-});
-Router.route('/home', function() {
-    this.render('home');
 });
