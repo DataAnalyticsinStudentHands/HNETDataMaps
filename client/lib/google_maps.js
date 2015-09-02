@@ -9,7 +9,9 @@ gmaps = {
     //markerData: [],      
         
     // intialize the map
-    initialize: function() {        
+    initialize: function() { 
+        
+       
         var mapOptions = {
                 center: new google.maps.LatLng(29.928159, -96.817017),
                 //center: new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
