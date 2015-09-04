@@ -15,15 +15,15 @@ Meteor.publish('airdata', function() {
 Meteor.publish('maincampus', function() {
     return UHMain.find();
 });
-/*
-Meteor.publish('sitesdata', function(currentLocation) {
-    return Sites.find({loc: {$near: [currentLocation.lng, currentLocation.lat]}}, {limit: 15});
-});
-*/
 
-Meteor.publish('sitesdata', function() {
-    return Sites.find();
-})
+Meteor.publish('sitesdata', function(pos) {
+    return Sites.find({loc: {$near: [pos.lng, pos.lat]}}, {limit: 2});
+});
+
+
+// Meteor.publish('sitesdata', function() {
+//     return Sites.find();
+// })
 Meteor.publish('userData', function () {
   if (this.userId) {
     return Meteor.users.find({_id: this.userId},

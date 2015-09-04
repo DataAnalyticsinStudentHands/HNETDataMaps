@@ -50,6 +50,37 @@ gmaps = {
         this.map.fitBounds(bounds);
         
     },
+
+ findlocation: function() {
+        if(navigator.geolocation) {
+        navigator.geolocation.watchPosition(gmaps.showPosition, function() {
+        handleNoGeolocation(true);
+        });
+        }   else {
+        // Browser doesn't support Geolocation
+        handleNoGeolocation(false);
+        }
+        },
+        
+        showPosition: function(position) {
+        pos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        var purpStar = {
+            path: 'M 125,5 155,90 245,90 175,145 200,230 125,180 50,230 75,145 5,90 95,90 z',
+            fillColor: 'lavender',
+            fillOpacity: 0.8,
+            scale: 0.1,
+            strokeColor: 'plum',
+            strokeWeight: 2
+        };
+       
+        var marker = {
+            lat: pos.lat,
+            lng: pos.lng,
+        };
+    	gmaps.addMarker(marker);
+        
+        
+        },
     
     addMarker: function(marker) {
         var gLatLng = new google.maps.LatLng(marker.lat, marker.lng);
