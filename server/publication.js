@@ -16,8 +16,17 @@ Meteor.publish('maincampus', function() {
     return UHMain.find();
 });
 
-Meteor.publish('sitesdata', function(pos) {
-    return Sites.find({loc: {$near: [pos.lng, pos.lat]}}, {limit: 2});
+Meteor.publish('sitesdata', function(latLng) {
+    return Sites.find({'location': {
+      $near:  {
+        $geometry: {
+          type: 'Point',
+          coordinates: [latLng.lng, latLng.lat]
+        }, 
+        $maxDistance: 50000
+      }
+    }
+  });
 });
 
 

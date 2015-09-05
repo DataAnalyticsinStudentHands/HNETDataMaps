@@ -1,14 +1,14 @@
 Meteor.subscribe('airdata');
-var mapCenter = null;
+
 
 
 Template.map.rendered = function() {
     if (!Session.get('map'))
         gmaps.initialize();
-        gmaps.findlocation();
 
 	
     var instance = this;
+    var marker;
         
     // keep updating info on map with changes in database
     Tracker.autorun(function() {
@@ -30,25 +30,48 @@ Template.map.rendered = function() {
             
             // });
         
+
+        var latLng = Geolocation.latLng();
+        console.log(latLng);
+      if (latLng){
         
-//        Meteor.subscribe('sitesdata', );
-        
+
+      // If the marker doesn't yet exist, create it.
+      if (! marker) {
+        marker = {
+          lat:latLng.lat,
+          lng:latLng.lng,
+          title: 'CurrentLocation',
+          content: 'You are here'
+        };
+        gmaps.addMarker(marker);
+      }
+      
+  }
+        Meteor.subscribe('sitesdata', latLng);
         var sites = Sites.find({}).fetch();
-        _.each(sites, function(site) {           
+        var contentString = null;
+
+
+        _.each(sites, function(site) {   
+                contentString = document.createElement('a');
+                contentString.setAttribute('href', site.url);
+                contentString.appendChild(document.createTextNode(site.siteName));        
                 var aMarker = {
                     lat: site.location[1],
                     lng: site.location[0],
-                    title: site.Name,
-                    content: site.Name
+                    title: site.siteName,
+                    content: contentString
                 };
                 
                 gmaps.addMarker(aMarker);  
         });
-        Meteor.subscribe("userData");
+       // Meteor.subscribe("userData");
 });
  
     
 }
+
 
 Template.map.events({
     "click .add-favorite": function () {
