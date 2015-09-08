@@ -12,20 +12,15 @@
         <li><a href="/home"><span>Home</span></a></li>
        <li><a href='#'><span>Current Site Conditions</span></a>
            <ul class="dropdown">
-               <li><a href="/maincampus"><span>UH - Main Campus</span></a></li>
+               
+<!--  this is where the reactive  current sites menu will go such as
+ "{{#each views}}
+            {{> menuItem this}}
+          {{/each}}"
+<li><a href="/maincampus"><span>UH - Main Campus</span></a></li>
                <li><a href="/clearbrook"><span>Clear Brook HS</span></a></li>
                <li><a href="/clearcreek"><span>Clear Creek HS</span></a></li>
-               <li><a href="/clearlake"><span>Clear Lake HS</span></a></li>
-           </ul></li>
-       <li><a href='#'><span>Forecast</span></a></li>
-       <li><a href='#'><span>Site Info</span></a>
-           <ul class="dropdown">
-
-               <li><a href="{{pathFor 'about'}}"><span>About</span></a></li>
-               <li><a href="{{pathFor 'disclaimer'}}"><span>Disclaimer</span></a></li>
-               <li><a href="http://www.uh.edu">University of Houston</a></li>
-	           <li><a href="http://www.tlc2.uh.edu">TLC<sup>2</sup></a></li>
-	           <li><a href="http://www.imaqs.uh.edu">IMAQS</a></li>
+               <li><a href="/clearlake"><span>Clear Lake HS</span></a></li> -->
            </ul></li>
         <li class='login'><span>{{> loginButtons}}</span></li>
     </ul>

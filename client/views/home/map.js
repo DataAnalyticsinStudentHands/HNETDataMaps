@@ -51,12 +51,14 @@ Template.map.rendered = function() {
         Meteor.subscribe('sitesdata', latLng);
         var sites = Sites.find({}).fetch();
         var contentString = null;
+        var currentSiteRef = null;
 
 
         _.each(sites, function(site) {   
                 contentString = document.createElement('a');
                 contentString.setAttribute('href', site.url);
-                contentString.appendChild(document.createTextNode(site.siteName));        
+                contentString.appendChild(document.createTextNode(site.siteName));  
+                currentSiteRef = site.siteRef;
                 var aMarker = {
                     lat: site.location[1],
                     lng: site.location[0],
@@ -66,7 +68,7 @@ Template.map.rendered = function() {
                 
                 gmaps.addMarker(aMarker);  
         });
-       // Meteor.subscribe("userData");
+        Meteor.subscribe('userData');
 });
  
     
@@ -76,7 +78,7 @@ Template.map.rendered = function() {
 Template.map.events({
     "click .add-favorite": function () {
       // Set the checked property to the opposite of its current value
-      Meteor.call("addFave", mapCenter);
+      Meteor.call("addFave", latLng);
     },
     "click .delete-favorite": function () {
       Meteor.call("deleteFave", this._id);

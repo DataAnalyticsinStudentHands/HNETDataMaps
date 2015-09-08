@@ -23,7 +23,7 @@ Meteor.publish('sitesdata', function(latLng) {
           type: 'Point',
           coordinates: [latLng.lng, latLng.lat]
         }, 
-        $maxDistance: 50000
+        $maxDistance: 50000000
       }
     }
   });

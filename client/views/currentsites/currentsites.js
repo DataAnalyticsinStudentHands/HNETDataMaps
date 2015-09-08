@@ -1,18 +1,11 @@
- /*
-Template.clearlake.onCreated(function() {
-    var instance = this;
-    instance.autorun(function() {            
-            instance.subscribe('ozonedata', "UHCLH");            
-        });
-    instance.fedData = function() {    
-        return OzoneData.find({}, {sort: {TheTime: -1}});
-    };
-                     
-});
-*/
-Template.clearlake.helpers({
+Template.currentsites.helpers({
+    theSiteRef: function() {
+        return Session.get("selectedSite");
+    },
+    
 	chartObj: function() {
-		var ozoneCursor = OzoneData.find({}, {limit: 288});
+        // need to 
+		var ozoneCursor = OzoneData.find({theSiteRef}, {limit: 240});
 		var ozoneConDataforGraph = [];
 		ozoneCursor.forEach(function(time) {
 			ozoneConDataforGraph.push({ x: parseFloat(time.TheTime),
@@ -64,3 +57,4 @@ Template.clearlake.helpers({
 		}
 	}
 });
+
