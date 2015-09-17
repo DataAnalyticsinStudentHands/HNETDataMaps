@@ -13,12 +13,11 @@ var MongoClient = Meteor.npmRequire('mongodb').MongoClient;
 
 //using winston.log instead of console.log
 var winston = Meteor.npmRequire('winston');
-winston.add(winston.transports.File, { 
-	filename: '/home/hthoang6/datamaps.log',
-	handleExceptions: true,
-  humanReadableUnhandledException: true
-});
 
+winston.add(winston.transports.DailyRotateFile, { 
+  filename: 'datamaps.log',
+  dirname: '/home/hthoang6/datamapsLog/'
+});
 //starting watcher
 var watcher = chokidar.watch('/hnet/incoming/2015/', {
   ignored: /[\/\\]\./,
