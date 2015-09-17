@@ -12,7 +12,7 @@ var fs = Meteor.npmRequire('fs');
 var MongoClient = Meteor.npmRequire('mongodb').MongoClient;
 
 //using winston.log instead of console.log
-var winston = Meteor.npmRequire('winston');
+var winston = Meteor.npmRequire('winston');LiveFeeds
 
 winston.add(winston.transports.DailyRotateFile, { 
   filename: 'datamaps.log',
