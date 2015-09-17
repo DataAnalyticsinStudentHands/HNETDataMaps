@@ -1,30 +1,46 @@
+
+Meteor.subscribe('LiveFeeds');
+
 Template.currentsites.helpers({
-    theSiteRef: function() {
-        return Session.get("selectedSite");
-    },
     
 	chartObj: function() {
         // need to 
-		var ozoneCursor = OzoneData.find({theSiteRef}, {limit: 240});
-		var ozoneConDataforGraph = [];
-		ozoneCursor.forEach(function(time) {
-			ozoneConDataforGraph.push({ x: parseFloat(time.TheTime),
-									y: parseFloat(time.O3_conc),
-									name: parseInt(time.TheTime)/10});
-		});
+		var CLcursor = LiveFeedMonitors.find({'siteRef': 'UHCLH_DAQData'});
+		var CCcursor = LiveFeedMonitors.find({'siteRef': 'UHCCH_DAQData'});
+		var CBcursor = LiveFeedMonitors.find({'siteRef': 'UHCBH_DAQData'});
+		var CLarray;
+		var CBarray;
+		var CCarray;
+		Tracker.autorun(function() {
+			CLarray = [];
+			CLcursor.forEach(function(time) {
+				CLarray.push({ x: new Date(time.epoch*1000),
+										y: parseFloat(time.O3_conc)});
+										//name: new Date(time.epoch*1000)});
+			});
+		
+			CBarray = [];
+			CBcursor.forEach(function(time) {
+				CBarray.push({ x: new Date(time.epoch*1000),
+										y: parseFloat(time.O3_conc)});
+			});
 
-		//var ozoneTempCursor = OzoneData.find({}, {limit: 288});
-		var ozoneTempDataforGraph = [];
-		ozoneCursor.forEach(function(time) {
-			ozoneTempDataforGraph.push({ x: parseFloat(time.TheTime),
-									y: parseFloat(time.O3_temp),
-									name: parseInt(time.TheTime)});
+			CCarray = [];
+			CCcursor.forEach(function(time) {
+				CCarray.push({ x: new Date(time.epoch*1000),
+										y: parseFloat(time.ccr_o3_conc)});
+			});
 		});
-
 		return {
-			title: {
-				text: 'Ozone Concentration and Temperature for the last 24h'
+			chart: {
+				zoomType: 'x'
 			},
+			title: {
+				text: 'Ozone Concentration for the last 24h'
+			},
+			xAxis: {
+                    type: 'datetime'
+            },
 			credits: {
 				href: "http://hnet.uh.edu",
 				text: "UH-HNET" 
@@ -32,29 +48,40 @@ Template.currentsites.helpers({
 			legend: {
 				layout: 'vertical',
 				align: "left",
-                verticalAlign: "top",
                 floating: true,
-                x: 100,
-                y: 50,
                 borderWidth: 1
 			},
+			plotOptions: {
+				series: {
+					dataGrouping: {
+						approximation: "average"
+					},
+					turboThreshold: 10000,
+					marker: {
+                    	radius: 2
+                	}
+				}
+			},
 			series: [                 
-                {
-                    
+                {                    
                     type: "scatter",
-                    name: "Ozone Concentration",
-                    data: ozoneConDataforGraph,
-                    color: '#5CA221'                    
+                    name: "Clear Brook",
+                    data: CBarray                    
                 }
                 ,
                 {
                     type: "scatter",
-                    name: "Ozone Temperature",
-                    data: ozoneTempDataforGraph,
-                    color: '#C764FC'
+                    name: "Clear Creek",
+                    data: CCarray
+                }
+                ,
+                {
+                    type: "scatter",
+                    name: "Clear Lake",
+                    data: CLarray
                 }
             ]
-		}
-	}
+		};
+	last}
 });
 

@@ -9,12 +9,6 @@
                          ]
                          });
 });*/
-Meteor.publish('airdata', function() {
-    return Air.find();
-});
-Meteor.publish('maincampus', function() {
-    return UHMain.find();
-});
 
 Meteor.publish('sitesdata', function(latLng) {
     return Sites.find({'location': {
@@ -29,10 +23,6 @@ Meteor.publish('sitesdata', function(latLng) {
   });
 });
 
-
-// Meteor.publish('sitesdata', function() {
-//     return Sites.find();
-// })
 Meteor.publish('userData', function () {
   if (this.userId) {
     return Meteor.users.find({_id: this.userId},
@@ -44,7 +34,4 @@ Meteor.publish('userData', function () {
 
 Meteor.publish('favorites', function () {
     return Favorites.find({ owner: this.userId});
-});
-Meteor.publish('ozonedata', function(siteRef) {
-    return OzoneData.find({'siteRef': siteRef}, {sort: {"TheTime": -1}});
 });
