@@ -3,7 +3,7 @@ Meteor.publish("LiveFeeds", function () {
         var now = new Date();
         var adayAgo = now.getTime()/1000 - 12*3600;
         console.log('timestamp: ' + adayAgo);
-        return LiveFeedMonitors.find({'epoch': {$gt: adayAgo}});
+        return LiveFeedMonitors.find({'epoch': {$gt: adayAgo}}, {sort: {'epoch': -1}});
     });
 
 var chokidar = Meteor.npmRequire('chokidar');
@@ -12,7 +12,7 @@ var fs = Meteor.npmRequire('fs');
 var MongoClient = Meteor.npmRequire('mongodb').MongoClient;
 
 //using winston.log instead of console.log
-var winston = Meteor.npmRequire('winston');LiveFeeds
+var winston = Meteor.npmRequire('winston');
 
 winston.add(winston.transports.DailyRotateFile, { 
   filename: 'datamaps.log',

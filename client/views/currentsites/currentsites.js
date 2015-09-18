@@ -52,10 +52,7 @@ Template.currentsites.helpers({
                 borderWidth: 1
 			},
 			plotOptions: {
-				series: {
-					dataGrouping: {
-						approximation: "average"
-					},
+				series: {					
 					turboThreshold: 10000,
 					marker: {
                     	radius: 2
