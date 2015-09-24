@@ -1,9 +1,10 @@
 
 Meteor.publish("LiveFeeds", function () {
         var now = new Date();
-        var adayAgo = now.getTime()/1000 - 12*3600;
+        var adayAgo = now.getTime()/1000 - 24*3600;
         console.log('timestamp: ' + adayAgo);
-        return LiveFeedMonitors.find({'epoch': {$gt: adayAgo}}, {sort: {'epoch': -1}});
+        return LiveFeedMonitors.find({'epoch': {$gt: adayAgo}, 'type': 300}, 
+									 {sort: {'epoch': -1}});
     });
 
 var chokidar = Meteor.npmRequire('chokidar');
@@ -27,7 +28,7 @@ var watcher = chokidar.watch('/hnet/incoming/2015/', {
  
 watcher
   .on('add', function(path) { 
-   winstonlog('info', "File", path, "has been added");
+   winston.log('info', "File", path, "has been added");
    watcher.add(path);
   })
   .on('change', function(path) { 
@@ -66,8 +67,10 @@ function processFile(file) {
             		tempRecord['epoch'] = parseInt((tempRecord['TheTime'] - 25569) * 86400) + 6*3600;
 		  			
 		  			//categorizing record type
-		  			if (tempRecord.epoch % 300 <5) {
+		  			if (tempRecord.epoch % 300 <= 9) {
+						//report2TCEQ(tempRecord);  // report before adding type
 						tempRecord['type'] = 300;
+						tempRecord['dateModified'] = tempRecord.epoch;
 					} else {
 						tempRecord['type'] = 10;
 					}
@@ -78,9 +81,26 @@ function processFile(file) {
      //if (err) console.log(err); 
         });    
         };
-    winston.log('info',"Done!. Closing mongodb...");
+    winston.log('info',"Done! Closing mongodb...");
     db.close();
     winston.log('info', "mognodb closed!");
   });
 };
  
+function report2TCEQ(aRecord) {
+	var tempString;
+	for (var attrib in aRecord) {
+		tempString += aRecord[attrib];
+		tempString += ','
+	}
+	tempString.slice(0, -1);
+	tempString+= '\n';
+	
+	fs.appendFile('/home/hthoang6/TCEQreport/sampleReport.txt', tempString, 'utf8', function(err) {
+		if (err) {
+			winston.log('error', "Something wrong, can't append to file!");
+			throw err;
+		}
+		winston.log('info', "data has been appended to a file");
+	})
+};
