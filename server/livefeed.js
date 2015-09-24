@@ -64,6 +64,13 @@ function processFile(file) {
                     var temp = file.split('/');
                     tempRecord['siteRef'] = temp[temp.length-2];
             		tempRecord['epoch'] = parseInt((tempRecord['TheTime'] - 25569) * 86400) + 6*3600;
+		  			
+		  			//categorizing record type
+		  			if (tempRecord.epoch % 300 <5) {
+						tempRecord['type'] = 300;
+					} else {
+						tempRecord['type'] = 10;
+					}
                     jsonarray.push(tempRecord);
             };
             for (i in jsonarray) {
