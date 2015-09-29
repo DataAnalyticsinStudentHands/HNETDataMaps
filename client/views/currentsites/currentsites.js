@@ -15,20 +15,19 @@ Template.currentsites.helpers({
 			CLarray = [];
 			CLcursor.forEach(function(time) {
 				CLarray.push({ x: new Date(time.epoch*1000),
-										y: parseFloat(time.O3_conc)});
-										//name: new Date(time.epoch*1000)});
+										y: parseFloat(time.HNET_CLH_O3_conc)});										
 			});
 		
 			CBarray = [];
 			CBcursor.forEach(function(time) {
 				CBarray.push({ x: new Date(time.epoch*1000),
-										y: parseFloat(time.O3_conc)});
+										y: parseFloat(time.HNET_CBH_O3_conc)});
 			});
 
 			CCarray = [];
 			CCcursor.forEach(function(time) {
 				CCarray.push({ x: new Date(time.epoch*1000),
-										y: parseFloat(time.ccr_o3_conc)});
+										y: parseFloat(time.HNET_CCH_O3_conc)});
 			});
 		});
 		return {
@@ -79,6 +78,6 @@ Template.currentsites.helpers({
                 }
             ]
 		};
-	last}
+	}
 });
 

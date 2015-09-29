@@ -3,7 +3,7 @@ Meteor.publish("LiveFeeds", function () {
         var now = new Date();
         var adayAgo = now.getTime()/1000 - 24*3600;
         console.log('timestamp: ' + adayAgo);
-        return LiveFeedMonitors.find({'epoch': {$gt: adayAgo}, 'type': 300}, 
+        return LiveFeedMonitors.find({'epoch': {$gt: adayAgo}}, 
 									 {sort: {'epoch': -1}});
     });
 
@@ -61,26 +61,26 @@ function processFile(file) {
             recordArray.splice(0,1); recordArray.splice(recordArray.length-1);
             
       for (i in recordArray) {
-                    var tempRecord = _.object(key, recordArray[i]);
-                    var temp = file.split('/');
-                    tempRecord['siteRef'] = temp[temp.length-2];
-            		tempRecord['epoch'] = parseInt((tempRecord['TheTime'] - 25569) * 86400) + 6*3600;
+            var tempRecord = _.object(key, recordArray[i]);
+            var temp = file.split('/');
+            tempRecord['siteRef'] = temp[temp.length-2];
+            tempRecord['epoch'] = parseInt((tempRecord['TheTime'] - 25569) * 86400) + 6*3600;
 		  			
 		  			//categorizing record type
 		  			if (tempRecord.epoch % 300 <= 9) {
 						//report2TCEQ(tempRecord);  // report before adding type
-						tempRecord['type'] = 300;
-						tempRecord['dateModified'] = tempRecord.epoch;
-					} else {
-						tempRecord['type'] = 10;
-					}
-                    jsonarray.push(tempRecord);
+						  db.collection('LiveData5min').update({'siteRef': tempRecord.siteRef, 'epoch': tempRecord.epoch}, {$setOnInsert: tempRecord}, {upsert: true}, function(err) {
+                //if (err) console.log(err); 
+              });
+					  } ;						
+            jsonarray.push(tempRecord);
             };
-            for (i in jsonarray) {
-                db.collection('LiveData2').update({'siteRef': jsonarray[i].siteRef, 'epoch': jsonarray[i].epoch}, {$setOnInsert: jsonarray[i]}, {upsert: true}, function(err) {
-     //if (err) console.log(err); 
+      // Adding json array into the database      
+      for (i in jsonarray) {
+        db.collection('LiveData').update({'siteRef': jsonarray[i].siteRef, 'epoch': jsonarray[i].epoch}, {$setOnInsert: jsonarray[i]}, {upsert: true}, function(err) {
+                  //if (err) console.log(err); 
         });    
-        };
+      };
     winston.log('info',"Done! Closing mongodb...");
     db.close();
     winston.log('info', "mognodb closed!");
