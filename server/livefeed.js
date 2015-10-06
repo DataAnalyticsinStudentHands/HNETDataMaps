@@ -46,6 +46,11 @@ watcher
 // Function to process a file
 function processFile(file) {
   var jsonarray = [];
+  var latestEpoch, this5minEpoch;  
+  var temp = file.split('/');
+  var currentSiteRef = temp[temp.length-2];
+  var time2Epoch;
+
   MongoClient.connect('mongodb://127.0.0.1:27017/DataMaps', function(err, db) {    
     if (err) { 
     	winston.log('error', "Error connecting to mongodb", err);
@@ -53,40 +58,47 @@ function processFile(file) {
     };
     winston.log('info', "Connected to mongodb");
     winston.log('info', "Starting processing file ", file);
+    var lastEpochAdded;
+    db.collection('LiveData').find({'siteRef': currentSiteRef}, {'epoch': 1}).sort('epoch': -1).limit(1).forEach(function(rec) {
+        lastEpochAdded = rec['epoch'];        
+    });
     var recordArray = fs.readFileSync(file).toString().split("\r\n");
-            for (i in recordArray) {
+            for (var i in recordArray) {
                     recordArray[i] = recordArray[i].split(",");
             };
             var key = recordArray[0];
             recordArray.splice(0,1); recordArray.splice(recordArray.length-1);
             
-      for (i in recordArray) {
+      for (var i in recordArray) {
             var tempRecord = _.object(key, recordArray[i]);
-            var temp = file.split('/');
-            tempRecord['siteRef'] = temp[temp.length-2];
-            tempRecord['epoch'] = parseInt((tempRecord['TheTime'] - 25569) * 86400) + 6*3600;
-		  			
-		  			//categorizing record type
-		  			if (tempRecord.epoch % 300 <= 9) {
-						//report2TCEQ(tempRecord);  // report before adding type
-						  db.collection('LiveData5min').update({'siteRef': tempRecord.siteRef, 'epoch': tempRecord.epoch}, {$setOnInsert: tempRecord}, {upsert: true}, function(err) {
+            time2Epoch = parseInt((tempRecord['TheTime'] - 25569) * 86400) + 6*3600;		  							
+            if (time2Epoch >=  lastEpochAdded) {
+              tempRecord['epoch'] = time2Epoch;
+              tempRecord['siteRef'] = currentSiteRef;
+              jsonarray.push(tempRecord);
+            }
+      };
+      
+
+      for (var j=0; j < jsonarray.length; j++) {
+
+      }
+      db.collection('LiveData5min').update({'siteRef': tempRecord.siteRef, 'epoch': tempRecord.epoch}, {$setOnInsert: tempRecord}, {upsert: true}, function(err) {
                 //if (err) console.log(err); 
               });
-					  } ;						
-            jsonarray.push(tempRecord);
-            };
       // Adding json array into the database      
-      for (i in jsonarray) {
+      for (var i in jsonarray) {
         db.collection('LiveData').update({'siteRef': jsonarray[i].siteRef, 'epoch': jsonarray[i].epoch}, {$setOnInsert: jsonarray[i]}, {upsert: true}, function(err) {
                   //if (err) console.log(err); 
         });    
       };
-    winston.log('info',"Done! Closing mongodb...");
+    winston.log('info', "Done! Closing mongodb...");
     db.close();
     winston.log('info', "mognodb closed!");
   });
 };
- 
+
+/* 
 function report2TCEQ(aRecord) {
 	var tempString;
 	for (var attrib in aRecord) {
@@ -104,3 +116,4 @@ function report2TCEQ(aRecord) {
 		winston.log('info', "data has been appended to a file");
 	})
 };
+*/
