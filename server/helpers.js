@@ -1,7 +1,5 @@
 //required packages
-var converter = Meteor.npmRequire('json-2-csv');
 var fs = Meteor.npmRequire('fs');
-var logger = Meteor.npmRequire('winston'); // this retrieves default logger which was configured in server.js
 
 var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpoch) {
 
@@ -40,9 +38,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
                     var instruments = e.subTypes[subType];
                     for (var instrument in instruments) {
                         if (instruments.hasOwnProperty(instrument)) {
-                            logger.info('instrument: ', subType);
                             var data = instruments[instrument];
-                            logger.info('data: ', instrument);
                             var label = subType + '_' + instrument + '_flag';
                             obj[label] = data[3].val.toFixed(3); //Flag
                             label = subType + '_' + instrument + '_value';
@@ -60,19 +56,17 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
             obj.QCstatus_value = 99000;
             dataObject.push(obj);
         });
-        
-        logger.info('Data: ', dataObject);
 
-        converter.json2csv(dataObject, function (err, csv) {
+        json2csv(dataObject, true, false, function (err, csv) {
             if (err) {
-                console.log(err);
+                logger.log(err);
             }
-            //console.log(csv);
+
             fs.writeFile(outputFile, csv, function (err) {
                 if (err) {
                     throw err;
                 }
-                console.log('file saved');
+                logger.log('file saved');
             });
         });
         

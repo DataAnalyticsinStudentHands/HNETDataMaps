@@ -95,10 +95,12 @@
         "test": false,
         "emit": false,
         // App specific globals
-        "winston": false,
+        "Winston": false,
+        "logger": false,
         "JSON": false,
         "Mongo": false,
         "Nodemailer": false,
+        "chokidar": false,
         "Monitors": false,
         "LiveData": false,
         "TCEQData": false,

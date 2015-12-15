@@ -1,8 +1,6 @@
 //required packages
-var chokidar = Meteor.npmRequire('chokidar');
 var csvmodule = Meteor.npmRequire('csv');
 var fs = Meteor.npmRequire('fs');
-var logger = Meteor.npmRequire('winston'); // this retrieves default logger which was configured in server.js
 
 var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 

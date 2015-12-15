@@ -35,8 +35,11 @@ reactive-dict
 bevanhunt:leaflet
 meteorhacks:kadira              # Remote performance watch
 makalu:better-dateinput-polyfill # Date picker
-semantic:ui
+semantic:ui                     # Semantic UI
 flemay:less-autoprefixer
 epaminond:nodemailer
-jhuenges:highstock              #Charts
-harrison:papa-parse
+jhuenges:highstock              # Charts
+harrison:papa-parse             # csv parsing used for push file generation
+infinitedg:winston              # Winston logger
+velocity:chokidar               # chokidar - A neat wrapper around node.js fs.watch / fs.watchFile / fsevents
+axw:json2csv
