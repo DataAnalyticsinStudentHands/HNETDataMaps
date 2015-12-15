@@ -80,13 +80,11 @@ var Charts = new Meteor.Collection(null); //This will store our synths
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
-
     // Select points only for series where allowPointSelect
     Highcharts.each(this.series, function (series) {
         if (series.options.allowPointSelect === 'true') {
             Highcharts.each(series.points, function (point) {
-                if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max &&
-                    point.y >= e.yAxis[0].min && point.y <= e.yAxis[0].max) {
+                if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
                     point.select(true, true);
                 }
             });
