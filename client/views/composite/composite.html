@@ -1,0 +1,17 @@
+<template name="composite">
+
+    <div class="ui message">
+        <div class="header">
+            Composite Plot
+        </div>
+        <div class="inline field">
+            <label>Select Date: </label>
+            <input type="date" value="{{selectedDate}}" id="datepicker">
+        </div>
+    </div>
+
+    <!-- container for charts -->
+    {{#each charts}}
+        <div id="container-chart-{{id}}" style="width: 100%"></div>
+    {{/each}}
+</template>

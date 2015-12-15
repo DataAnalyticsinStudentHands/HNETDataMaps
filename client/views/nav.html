@@ -1,0 +1,26 @@
+<template name="nav">
+    <div class="ui inverted blue top attached menu">
+
+        <a class="item" href="{{pathFor 'mainMap'}}">Home</a>
+
+        <a class="ui dropdown item">Sites
+                  <i class="dropdown icon"></i>
+                  <div class="menu">
+                    <div class="item"><a href="{{ pathFor 'site' _id='482010570'}}" style='color: black'>Clear Brook Highschool</a></div>
+    <div class="item"><a href="{{ pathFor 'site' _id='481670571'}}" style='color: black'>Clear Creek Highschool</a></div>
+    <div class="item"><a href="{{ pathFor 'site' _id='482010572'}}" style='color: black'>Clear Lake Highschool</a></div>
+    <div class="item"><a href="{{ pathFor 'site' _id='480710013'}}" style='color: black'>Smith Point</a></div>
+    </div>
+    </a>
+
+    <a class="item" href="{{pathFor 'composite'}}">Composites</a>
+
+    <a class="item" href="{{pathFor 'testing'}}">Admin</a>
+
+    <div class="right menu">
+        {{> atNavButton}}
+    </div>
+
+
+    </div>
+</template>

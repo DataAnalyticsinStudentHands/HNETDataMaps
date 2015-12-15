@@ -1,1 +1,10 @@
-Accounts.config({sendVerificationEmail: true, forbidClientAccountCreation: false});
+Accounts.config({
+    sendVerificationEmail: true,
+    //forbidClientAccountCreation: false //interfered with yogiben:admin
+});
+AdminConfig = {
+  collections: {
+	  Monitors: {},
+	  AggrData: {}
+  }
+};

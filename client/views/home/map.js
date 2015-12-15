@@ -1,86 +1,65 @@
-Meteor.subscribe('airdata');
+Template.mainMap.onRendered(function () {
 
-
-
-Template.map.rendered = function() {
-    if (!Session.get('map'))
-        gmaps.initialize();
-
-	
-    var instance = this;
-    var marker;
-        
-    // keep updating info on map with changes in database
-    Tracker.autorun(function() {
-        // var locations = Air.find().fetch();        
-        // _.each(locations, function(loc) {           
-        //         var markerInfo= '<h3>' + loc.siteName + '</h3>' +
-        //                         'Temperature: ' + loc.temperature + '&#186F<br/>' +
-        //                         'Humidity: ' + loc.humidity + '&#37<br/>' + 
-        //                         'Wind: ' + loc.wind.direction + '&#186 at ' + loc.wind.speed + 'mph<br/>' +
-        //                         'Barometer: ' + loc.barometer + 'hpa<br/>' + 
-        //                         '<a href="/' + loc.url + '">Click here for details</a>';
-        //         var objMarker = {
-        //             lat: loc.location.lat,
-        //             lng: loc.location.lng,
-        //             title: loc.siteName,
-        //             content: markerInfo
-        //         };
-        //         gmaps.addMarker(objMarker);
-            
-            // });
-        
-
-        var latLng = Geolocation.latLng();
-        console.log(latLng);
-      if (latLng){
-        
-
-      // If the marker doesn't yet exist, create it.
-      if (! marker) {
-        marker = {
-          lat:latLng.lat,
-          lng:latLng.lng,
-          title: 'CurrentLocation',
-          content: 'You are here'
-        };
-        gmaps.addMarker(marker);
-      }
-      
-  }
-        Meteor.subscribe('sitesdata', latLng);
-        var sites = Sites.find({}).fetch();
-        var contentString = null;
-        var currentSiteRef = null;
-
-
-        _.each(sites, function(site) {   
-                contentString = document.createElement('a');
-                contentString.setAttribute('href', site.url);
-                contentString.appendChild(document.createTextNode(site.siteName));  
-                currentSiteRef = site.siteRef;
-                var aMarker = {
-                    lat: site.location[1],
-                    lng: site.location[0],
-                    title: site.siteName,
-                    content: contentString
-                };
-                
-                gmaps.addMarker(aMarker);  
-        });
-        Meteor.subscribe('userData');
-});
- 
+    var latude = 29.721; //Houston
+    var lngtude = -95.3443;
     
-}
+    var AQmap = L.map('displayMap', {
+        doubleClickZoom: false
+    });
+    
+    var geoloc = function () {
+        var geooptions = {
+            enableHighAccuracy: true,
+            timeout: 80000,
+            maximumAge: 10000
+        };
 
+        function success(pos) {
+            console.log('your position', pos);
+            latude = pos.coords.latitude;
+            lngtude = pos.coords.longitude;
+            AQmap.setView([latude, lngtude], 9);
+            var marker = L.marker([latude, lngtude], {
+                title: 'You are here'
+            }).addTo(AQmap);
+            var contentHTML = '<div>This is where you are</div>';
+            marker.bindPopup(contentHTML);
+        }
 
-Template.map.events({
-    "click .add-favorite": function () {
-      // Set the checked property to the opposite of its current value
-      Meteor.call("addFave", latLng);
-    },
-    "click .delete-favorite": function () {
-      Meteor.call("deleteFave", this._id);
+        function error(err) {
+            latude = 29.7604;
+            lngtude = -95.3698;
+            console.warn('Warning(' + err.code + '): ' + err.message);
+        }
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(success, error, geooptions);
+        }
+        Meteor.subscribe('monitors', [lngtude, latude]);
+        return [lngtude, latude];
+    };
+    var herenow = geoloc('hereNow'); //later for passing clicks, etc. - hereNow should allow to get around no navigator etc.
+
+    Monitors.find().observeChanges({
+        added: function (id, line) {
+                var marker = L.marker([line.loc.coordinates[1], line.loc.coordinates[0]], {
+                    title: line['site name'] + line.AQSID
+                }).addTo(AQmap);
+                
+                var content = "<a href='/site/" + line.AQSID + "'> pathfor this AQSID" + line.AQSID + ":  " + line['site name'] + "</a>";
+                marker.bindPopup(content);
+            } //end of added
+
+    });
+    $('#displayMap').css('height', window.innerHeight - 20);
+    L.Icon.Default.imagePath = 'packages/bevanhunt_leaflet/images';
+
+    AQmap.setView(herenow, 9);
+    L.tileLayer.provider('OpenStreetMap.DE').addTo(AQmap);
+
+});
+
+Template.mainMap.helpers({ 
+    mapCollectionDistance: function () {
+        return Monitors.find().count();
     }
-  });
+});

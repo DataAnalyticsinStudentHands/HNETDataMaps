@@ -1,0 +1,75 @@
+<template name="site">
+
+    <div class="ui message">
+        <div class="header">
+            Site: {{site.name}}
+        </div>
+        <div class="inline field">
+            <label>Select Date: </label>
+            <input type="date" value="{{selectedDate}}" id="datepicker">
+            <button class="ui button" id="createPush">
+                Create Push File
+            </button>
+        
+        </div>
+    </div>
+
+    <!-- container for charts -->
+    {{#each charts}}
+    <div id="container-chart-{{id}}" style="width: 100%"></div>
+    <!-- placeholder for editPoints modal -->
+    {{/each}} {{> editPoints}}
+</template>
+
+<!-- Modal for editing points -->
+<template name="editPoints">
+    <div class="ui basic modal" id="editPointsModal">
+        <i class="close icon"></i>
+        <div class="header">
+            Edit Flags
+        </div>
+        <div class="content">
+            <div class="ui sub header">Flag</div>
+            <div class="ui selection dropdown" id="drop">
+                <input type="hidden" name="flag">
+                <i class="dropdown icon"></i>
+                <div class="default text">Select one ...</div>
+                <div class="menu">
+                    <div class="item" data-value="1" data-text="K">
+                        <i class="square red icon"></i> K (Valid)
+                    </div>
+                    <div class="item" data-value="2" data-text="Q">
+                        <i class="square orange icon"></i> Q (Span)
+                    </div>
+                    <div class="item" data-value="8" data-text="P">
+                        <i class="square grey icon"></i> P (Maintenance)
+                    </div>
+                    <div class="item" data-value="9" data-text="N">
+                        <i class="square black icon"></i> N (Not representative)
+                    </div>
+                </div>
+            </div>
+
+            <div class="description">
+                <p>Flag(s) will be changed for the follwoing selected Points:</p>
+                <div class="ui list">
+                    {{#each points}} {{> point}} {{/each}}
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="two fluid ui inverted buttons">
+                <div class="ui deny red basic inverted button">
+                    <i class="remove icon"></i> Cancel
+                </div>
+                <div class="ui approve green basic inverted button">
+                    <i class="checkmark icon"></i> Submit
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template name="point">
+    <div class="item">{{formatDate x}} from {{flag.label}} ({{flag.description}}) to {{flagSelected.label}}</div>
+</template>

@@ -1,0 +1,15 @@
+<template name="Frame">
+    <header>
+    <div>
+      {{> yield region='nav'}}
+    </div>
+    </header>
+    <div>
+      {{> yield}}
+    </div>
+	<!--haven't decided whether to do left and right side with content in a fun way...-->
+
+    <div>
+      {{> yield "rightside"}}
+    </div>
+</template>
