@@ -1,12 +1,10 @@
-# Fork: DataMaps
+# DataMaps
 
-This is a development fork of the DataMaps repository. It expects a certain data folder structure.
-
-Since we are planning to deploy on our own server, we should also run this with a local MongoDB instance for testing:
+This is a development repository. 
 
 ## Prerequisites
 
-* [MongoDB](https://docs.mongodb.org/manual/installation/)
+* We are running with a local [MongoDB](https://docs.mongodb.org/manual/installation/)
 
 On Mac OS install via [homebrew](http://brew.sh/):
 
@@ -18,7 +16,7 @@ On Mac OS or Linux:
 
 `curl https://install.meteor.com/ | sh`
 
-* Data Folder: `/hnet/incoming/2015`
+* Data Folder: It expects a certain data folder structure. `/hnet/incoming/2015`
 
 ## Testing in local development environment
 
