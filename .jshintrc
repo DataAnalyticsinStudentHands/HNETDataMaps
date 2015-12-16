@@ -101,6 +101,7 @@
         "Mongo": false,
         "Nodemailer": false,
         "chokidar": false,
+        "flagsHash": false,
         "Monitors": false,
         "LiveData": false,
         "TCEQData": false,

@@ -14,57 +14,6 @@ Highcharts.setOptions({
 //local only collection
 var EditPoints = new Mongo.Collection(null);
 
-var flagsHash = {
-    0: {
-        val: 0,
-        description: 'zero',
-        label: 'Q',
-        color: 'white'
-    },
-    1: {
-        val: 1,
-        description: 'valid',
-        label: 'K',
-        color: 'red'
-    },
-    2: {
-        val: 2,
-        description: 'span',
-        label: 'Q',
-        color: 'orange'
-    },
-    3: {
-        val: 3,
-        description: 'span',
-        label: 'Q',
-        color: 'orange'
-    },
-    4: {
-        val: 4,
-        description: 'span',
-        label: 'Q',
-        color: 'orange'
-    },
-    5: {
-        val: 5,
-        description: 'span',
-        label: 'Q',
-        color: 'orange'
-    },
-    8: {
-        val: 8,
-        description: 'maintenance',
-        label: 'P',
-        color: 'grey'
-    },
-    9: {
-        val: 9,
-        description: 'offline',
-        label: 'N',
-        color: 'black'
-    }
-};
-
 var unitsHash = {
     conc: 'pbbv',
     Speed: 'miles/hour',
@@ -156,6 +105,24 @@ function unselectByClick() {
 //checking autorun
 var autoCounter = 1;
 
+
+Meteor.subscribe('aggregatedata5min', Router.current().params._id, startEpoch.get(), endEpoch.get(), function() {
+ 
+    // Find in items and observe changes
+    var items = AggrData.find().observe({
+ 
+      // When collection changed, find #results element and publish result inside it
+      changed:function(res) {
+        console.log(res);
+        //document.getElementById("results").innerHTML = JSON.stringify(res);
+      },
+      added:function(res) {
+        console.log(res);
+        //document.getElementById("results").innerHTML = JSON.stringify(res);
+      }
+    });
+  });
+
 Template.site.onRendered(function () {
     Tracker.autorun(function () {
         //add notes to documents?
@@ -165,7 +132,6 @@ Template.site.onRendered(function () {
         console.log('auto counter:', autoCounter);
         console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
         Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get());
-        Meteor.subscribe('aggregatedata5min');
 
         var seriesOptions = {};
         Charts.remove({});
