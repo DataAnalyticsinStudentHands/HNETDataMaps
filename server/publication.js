@@ -1,4 +1,4 @@
-var flagColors = ['white', 'red', 'orange', 'orange', 'orange', 'orange', 'white', 'white', 'grey', 'black'];
+logger.info('flagsHash: ', flagsHash);
 
 Meteor.publish('aggregatedata5min', function (site, startEpoch, endEpoch) {
     return AggrData.find({
@@ -72,7 +72,7 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
                                 var datapoint = {
                                     x: epoch * 1000,
                                     y: sub[1].val,
-                                    color: flagColors[_.last(sub).val], //the last element contains the latest flag
+                                    color: flagsHash[_.last(sub).val].color, //the last element contains the latest flag
                                     name: _.last(sub).val //will use the name of the point to hold the flag value
                                 }; //milliseconds
                                 poll5Data[subType][key].push(datapoint);
@@ -245,7 +245,7 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
                                 var datapoint = {
                                     x: epoch * 1000,
                                     y: sub[1].val,
-                                    color: flagColors[sub[3].val]
+                                    color: flagsHash[sub[3].val].color
                                 }; //milliseconds
                                 poll5Data[subType][key].push(datapoint);
                             }
