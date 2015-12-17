@@ -245,7 +245,7 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
                                 var datapoint = {
                                     x: epoch * 1000,
                                     y: sub[1].val,
-                                    color: flagsHash[sub[3].val].color
+                                    color: flagsHash[_.last(sub).val].color
                                 }; //milliseconds
                                 poll5Data[subType][key].push(datapoint);
                             }

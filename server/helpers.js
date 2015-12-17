@@ -40,7 +40,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
                         if (instruments.hasOwnProperty(instrument)) {
                             var data = instruments[instrument];
                             var label = subType + '_' + instrument + '_flag';
-                            obj[label] = data[3].val.toFixed(3); //Flag
+                            obj[label] = _.last(data).val.toFixed(3); //Flag
                             label = subType + '_' + instrument + '_value';
                             obj[label] = data[1].val.toFixed(3); //avg
                         }

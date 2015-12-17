@@ -109,7 +109,7 @@ var autoCounter = 1;
 Meteor.subscribe('aggregatedata5min', Router.current().params._id, startEpoch.get(), endEpoch.get(), function() {
  
     // Find in items and observe changes
-    var items = AggrData.find().observe({
+    var items = AggrData.find().observeChanges({
  
       // When collection changed, find #results element and publish result inside it
       changed:function(res) {
