@@ -30,17 +30,18 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
             obj.siteID = e.site.substring(e.site.length - 3, e.site.length);
             obj.dateGMT = moment.unix(e.epoch).format('YY/MM/DD');
             obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
-            obj.BIT = 1;
-            obj.o3_channel = 25;
+            obj.status = 1;
             
             for (var subType in e.subTypes) {
                 if (e.subTypes.hasOwnProperty(subType)) {
                     var instruments = e.subTypes[subType];
                     for (var instrument in instruments) {
                         if (instruments.hasOwnProperty(instrument)) {
+                            var label = subType + '_' + instrument + '_channel';
+                            obj[label] = channelHash[subType + '_' + instrument]; //channel
                             var data = instruments[instrument];
-                            var label = subType + '_' + instrument + '_flag';
-                            obj[label] = _.last(data).val.toFixed(3); //Flag
+                            label = subType + '_' + instrument + '_flag';
+                            obj[label] = flagsHash[_.last(data).val].label; //Flag
                             label = subType + '_' + instrument + '_value';
                             obj[label] = data[1].val.toFixed(3); //avg
                         }
@@ -57,16 +58,17 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
             dataObject.push(obj);
         });
 
+        
         json2csv(dataObject, true, false, function (err, csv) {
             if (err) {
                 logger.log(err);
             }
+            console.log('csv: ', csv);
 
             fs.writeFile(outputFile, csv, function (err) {
                 if (err) {
                     throw err;
                 }
-                logger.log('file saved');
             });
         });
         

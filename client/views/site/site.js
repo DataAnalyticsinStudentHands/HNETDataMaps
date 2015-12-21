@@ -71,7 +71,7 @@ function selectedPoints(e) {
     for (var i = 0; i < points.length; i++) {
         EditPoints.insert(points[i]);
     }
-    
+
     $('.ui.dropdown').dropdown('clear');
 
     $('#editPointsModal').modal({
@@ -84,7 +84,7 @@ function selectedPoints(e) {
             var updatedPoints = EditPoints.find({});
             updatedPoints.forEach(function (point) {
                 Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
-            });                     
+            });
         }
     }).modal('show');
 }
@@ -105,25 +105,8 @@ function unselectByClick() {
 //checking autorun
 var autoCounter = 1;
 
-
-Meteor.subscribe('aggregatedata5min', Router.current().params._id, startEpoch.get(), endEpoch.get(), function() {
- 
-    // Find in items and observe changes
-    var items = AggrData.find().observeChanges({
- 
-      // When collection changed, find #results element and publish result inside it
-      changed:function(res) {
-        console.log(res);
-        //document.getElementById("results").innerHTML = JSON.stringify(res);
-      },
-      added:function(res) {
-        console.log(res);
-        //document.getElementById("results").innerHTML = JSON.stringify(res);
-      }
-    });
-  });
-
 Template.site.onRendered(function () {
+
     Tracker.autorun(function () {
         //add notes to documents?
         //need to figure out better management of Tracker.autorun - it runs too often
@@ -132,6 +115,24 @@ Template.site.onRendered(function () {
         console.log('auto counter:', autoCounter);
         console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
         Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get());
+
+        Meteor.subscribe('aggregatedata5min', Router.current().params._id, startEpoch.get(), endEpoch.get(), function () {
+
+            // Find in items and observe changes
+            var items = AggrData.find().observeChanges({
+
+                // When collection changed, find #results element and publish result inside it
+                changed: function (res) {
+                    console.log('changed: ', res);
+                    //document.getElementById("results").innerHTML = JSON.stringify(res);
+                },
+                added: function (res) {
+                    console.log('added: ', res);
+                    //document.getElementById("results").innerHTML = JSON.stringify(res);
+                }
+            });
+        });
+
 
         var seriesOptions = {};
         Charts.remove({});
@@ -270,30 +271,30 @@ Template.site.onRendered(function () {
                     inputEnabled: false,
                     allButtonsEnabled: true,
                     buttons: [{
-                        type: 'minute',
-                        count: 60,
-                        text: 'Hour',
-                        dataGrouping: {
-                            forced: true,
-                            units: [['hour', [60]]]
-                        }
+                            type: 'minute',
+                            count: 60,
+                            text: 'Hour',
+                            dataGrouping: {
+                                forced: true,
+                                units: [['hour', [60]]]
+                            }
 			    }, {
-                        type: 'day',
-                        count: 3,
-                        text: '3 Days',
-                        dataGrouping: {
-                            forced: true,
-                            units: [['month', [1]]]
-                        }
+                            type: 'day',
+                            count: 3,
+                            text: '3 Days',
+                            dataGrouping: {
+                                forced: true,
+                                units: [['month', [1]]]
+                            }
 			    },
-                             {
-                        type: 'day',
-                        count: 1,
-                        text: '1 Day',
-                        dataGrouping: {
-                            forced: true,
-                            units: [['day', [1]]]
-                        }
+                        {
+                            type: 'day',
+                            count: 1,
+                            text: '1 Day',
+                            dataGrouping: {
+                                forced: true,
+                                units: [['day', [1]]]
+                            }
 			    }],
                     buttonTheme: {
                         width: 60
@@ -357,7 +358,7 @@ Template.site.events({
         startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
         endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix()); //always to current?
     },
-    'click #createPush': function() {
-		DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
-	}
+    'click #createPush': function () {
+        DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
+    }
 });

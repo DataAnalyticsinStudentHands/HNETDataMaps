@@ -102,6 +102,7 @@
         "Nodemailer": false,
         "chokidar": false,
         "flagsHash": false,
+        "channelHash": false,
         "Monitors": false,
         "LiveData": false,
         "TCEQData": false,

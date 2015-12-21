@@ -1,5 +1,3 @@
-logger.info('flagsHash: ', flagsHash);
-
 Meteor.publish('aggregatedata5min', function (site, startEpoch, endEpoch) {
     return AggrData.find({
         site: site
