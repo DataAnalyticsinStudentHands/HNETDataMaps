@@ -286,6 +286,14 @@ Meteor.publish('monitors', function (latLng) {
     });
 });
 
+Meteor.publish('mymonitors', function () {
+    return Monitors.find({
+        'incoming': {
+            $exists: true
+        }
+    });
+});
+
 Meteor.publish('sites', function () {
     return Sites.find({});
 });

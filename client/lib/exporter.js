@@ -2,6 +2,7 @@
 DataExporter = {
     exportForTCEQ: function (siteId, startEpoch, endEpoch) {
         var self = this;
+        Meteor.subscribe('mymonitors');
         Meteor.call("exportData", siteId, startEpoch, endEpoch, function (error, data) {
 
             if (error) {
@@ -9,16 +10,15 @@ DataExporter = {
                 return false;
             }
 
-            var dir = Monitors.find({
+            var dir = Monitors.findOne({
                 AQSID: siteId
-            }).fetch()[0];
+            });
 
             if (dir !== undefined) {
                 var csv = Papa.unparse(data);
                 var siteName = dir.incoming.match(/[^_]*/);
-                self._downloadCSV(csv, siteName + startEpoch + endEpoch);
+                self._downloadCSV(csv, siteName + startEpoch + endEpoch + '.txt');
             }
-
         });
     },
 

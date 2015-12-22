@@ -171,6 +171,7 @@ Template.site.onRendered(function () {
             });
         });
 
+        console.log('seriesOptions: ', seriesOptions);
         _.each(seriesOptions, function (series, id) {
             Charts.insert({
                 id: id
@@ -187,7 +188,8 @@ Template.site.onRendered(function () {
                     style: {
                         color: Highcharts.getOptions().colors[0]
                     }
-                }
+                },
+                opposite: false
             }];
 
             if (series.length > 2) {
@@ -203,8 +205,7 @@ Template.site.onRendered(function () {
                         style: {
                             color: Highcharts.getOptions().colors[1]
                         }
-                    },
-                    opposite: false
+                    }
                 });
                 for (var i = 0; i < series.length; i++) {
                     //put axis for each series

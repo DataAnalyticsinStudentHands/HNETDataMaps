@@ -31,7 +31,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
             obj.dateGMT = moment.unix(e.epoch).format('YY/MM/DD');
             obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
             obj.status = 1;
-            
+
             for (var subType in e.subTypes) {
                 if (e.subTypes.hasOwnProperty(subType)) {
                     var instruments = e.subTypes[subType];
@@ -46,9 +46,9 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
                             obj[label] = data[1].val.toFixed(3); //avg
                         }
                     }
-                }    
+                }
             }
-            
+
             obj.QCref_channel = 50;
             obj.QCref_flag = 'K';
             obj.QCref_value = 0;
@@ -58,23 +58,17 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
             dataObject.push(obj);
         });
 
-        
-        json2csv(dataObject, true, false, function (err, csv) {
-            if (err) {
-                logger.log(err);
-            }
-            console.log('csv: ', csv);
+        var csv = Papa.unparse(dataObject);
 
-            fs.writeFile(outputFile, csv, function (err) {
-                if (err) {
-                    throw err;
-                }
-            });
+        fs.writeFile(outputFile, csv, function (err) {
+            if (err) {
+                throw err;
+            }
         });
-        
+
         return dataObject;
     } else {
-        logger.info('Could not find dir for AQSID: ', aqsid, ' in Monitors.');
+        logger.error('Could not find dir for AQSID: ', aqsid, ' in Monitors.');
     }
 
 });
