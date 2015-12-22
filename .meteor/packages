@@ -42,4 +42,3 @@ jhuenges:highstock              # Charts
 harrison:papa-parse             # csv parsing used for push file generation
 infinitedg:winston              # Winston logger
 velocity:chokidar               # chokidar - A neat wrapper around node.js fs.watch / fs.watchFile / fsevents
-axw:json2csv
