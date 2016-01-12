@@ -108,7 +108,8 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 else {
                                     for (var k = 1; k < data.length; k++) {
                                         numValid = 1;
-                                        if (data[k].val === '') {
+
+                                        if (data[0].val !== 1) { //if flag is not 1 (valid) don't increase numValid
                                             numValid = 0;
                                         }
                                         newkey = subType + '_' + data[k].metric;
@@ -129,7 +130,8 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             }
 
                                         }
-                                        if ((aggrSubTypes[newkey].numValid / i) < 0.75) {
+                                        logger.info('numvalid: ', numValid, 'k: ', k);
+                                        if ((aggrSubTypes[newkey].numValid / k) < 0.75) {
                                             aggrSubTypes[newkey].Flag = 0; //should discuss how to use
                                         }
                                     }
@@ -332,7 +334,7 @@ Meteor.methods({
     },
     insertUpdateFlag: function (siteId, epoch, instrument, measurement, flag) {
         //id that will receive the update
-        var id = siteId + '_' + epoch/1000; //seconds
+        var id = siteId + '_' + epoch / 1000; //seconds
         //new field
         var insertField = 'subTypes.' + instrument + '.' + measurement.split(/[ ]+/)[0];
         //update value
@@ -343,9 +345,11 @@ Meteor.methods({
         qry.$push[insertField].metric = 'Overwrite Flag';
         qry.$push[insertField].user = 'peggy';
         qry.$push[insertField].note = 'test';
-        AggrData.update({_id: id}, qry);
-                       
-        
+        AggrData.update({
+            _id: id
+        }, qry);
+
+
     }
 });
 
