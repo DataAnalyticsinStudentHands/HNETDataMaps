@@ -123,11 +123,11 @@ Template.site.onRendered(function () {
 
                 // When collection changed, find #results element and publish result inside it
                 changed: function (res) {
-                    console.log('changed: ', res);
+                    //console.log('changed: ', res);
                     //document.getElementById("results").innerHTML = JSON.stringify(res);
                 },
                 added: function (res) {
-                    console.log('added: ', res);
+                    //console.log('added: ', res);
                     //document.getElementById("results").innerHTML = JSON.stringify(res);
                 }
             });
@@ -176,40 +176,86 @@ Template.site.onRendered(function () {
             Charts.insert({
                 id: id
             });
-            var yAxis = [{ // Primary yAxis
-                labels: {
-                    format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
-                    style: {
-                        color: Highcharts.getOptions().colors[0]
-                    }
-                },
-                title: {
-                    text: series[0].name.split(/[ ]+/)[0],
-                    style: {
-                        color: Highcharts.getOptions().colors[0]
-                    }
-                },
-                opposite: false
-            }];
-
-            if (series.length > 2) {
-                yAxis.push({ // Secondary yAxis
-                    title: {
-                        text: series[1].name.split(/[ ]+/)[0],
+            var yAxis = [];
+            if (id.indexOf('Wind') >= 0) { //special treatment for wind instruments
+                yAxis.push({ // Primary yAxis
+                    labels: {
+                        format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
                         style: {
-                            color: Highcharts.getOptions().colors[1]
+                            color: Highcharts.getOptions().colors[0]
                         }
                     },
-                    labels: {
-                        format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
+                    title: {
+                        text: series[0].name.split(/[ ]+/)[0],
                         style: {
-                            color: Highcharts.getOptions().colors[1]
+                            color: Highcharts.getOptions().colors[0]
                         }
-                    }
+                    },
+                    opposite: false,
+                    floor: 0,
+                    ceiling: 360,
+                    tickInterval: 90
                 });
-                for (var i = 0; i < series.length; i++) {
-                    //put axis for each series
-                    series[i].yAxis = !(i & 1) ? 0 : 1;
+                if (series.length > 2) {
+                    yAxis.push({ // Secondary yAxis
+                        title: {
+                            text: series[1].name.split(/[ ]+/)[0],
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        labels: {
+                            format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        floor: 0,
+                        ceiling: 360,
+                        tickInterval: 90
+                    });
+                    for (var i = 0; i < series.length; i++) {
+                        //put axis for each series
+                        series[i].yAxis = !(i & 1) ? 0 : 1;
+                    }
+                }
+            } else {
+                yAxis.push({ // Primary yAxis
+                    labels: {
+                        format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    title: {
+                        text: series[0].name.split(/[ ]+/)[0],
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    opposite: false,
+                    floor: 0
+                });
+                if (series.length > 2) {
+                    yAxis.push({ // Secondary yAxis
+                        title: {
+                            text: series[1].name.split(/[ ]+/)[0],
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        labels: {
+                            format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        floor: 0
+                    });
+                    for (var i = 0; i < series.length; i++) {
+                        //put axis for each series
+                        series[i].yAxis = !(i & 1) ? 0 : 1;
+                    }
                 }
             }
             createCharts('container-chart-' + id, id, yAxis, series);
