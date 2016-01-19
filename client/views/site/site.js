@@ -14,57 +14,6 @@ Highcharts.setOptions({
 //local only collection
 var EditPoints = new Mongo.Collection(null);
 
-var flagsHash = {
-    0: {
-        val: 0,
-        description: 'zero',
-        label: 'Q',
-        color: 'white'
-    },
-    1: {
-        val: 1,
-        description: 'valid',
-        label: 'K',
-        color: 'red'
-    },
-    2: {
-        val: 2,
-        description: 'span',
-        label: 'Q',
-        color: 'orange'
-    },
-    3: {
-        val: 3,
-        description: 'span',
-        label: 'Q',
-        color: 'orange'
-    },
-    4: {
-        val: 4,
-        description: 'span',
-        label: 'Q',
-        color: 'orange'
-    },
-    5: {
-        val: 5,
-        description: 'span',
-        label: 'Q',
-        color: 'orange'
-    },
-    8: {
-        val: 8,
-        description: 'maintenance',
-        label: 'P',
-        color: 'grey'
-    },
-    9: {
-        val: 9,
-        description: 'offline',
-        label: 'N',
-        color: 'black'
-    }
-};
-
 var unitsHash = {
     conc: 'pbbv',
     Speed: 'miles/hour',
@@ -80,13 +29,11 @@ var Charts = new Meteor.Collection(null); //This will store our synths
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
-
     // Select points only for series where allowPointSelect
     Highcharts.each(this.series, function (series) {
         if (series.options.allowPointSelect === 'true') {
             Highcharts.each(series.points, function (point) {
-                if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max &&
-                    point.y >= e.yAxis[0].min && point.y <= e.yAxis[0].max) {
+                if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
                     point.select(true, true);
                 }
             });
@@ -124,7 +71,7 @@ function selectedPoints(e) {
     for (var i = 0; i < points.length; i++) {
         EditPoints.insert(points[i]);
     }
-    
+
     $('.ui.dropdown').dropdown('clear');
 
     $('#editPointsModal').modal({
@@ -137,7 +84,7 @@ function selectedPoints(e) {
             var updatedPoints = EditPoints.find({});
             updatedPoints.forEach(function (point) {
                 Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
-            });                     
+            });
         }
     }).modal('show');
 }
@@ -159,6 +106,7 @@ function unselectByClick() {
 var autoCounter = 1;
 
 Template.site.onRendered(function () {
+
     Tracker.autorun(function () {
         //add notes to documents?
         //need to figure out better management of Tracker.autorun - it runs too often
@@ -167,7 +115,24 @@ Template.site.onRendered(function () {
         console.log('auto counter:', autoCounter);
         console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
         Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get());
-        Meteor.subscribe('aggregatedata5min');
+
+        Meteor.subscribe('aggregatedata5min', Router.current().params._id, startEpoch.get(), endEpoch.get(), function () {
+
+            // Find in items and observe changes
+            var items = AggrData.find().observeChanges({
+
+                // When collection changed, find #results element and publish result inside it
+                changed: function (res) {
+                    //console.log('changed: ', res);
+                    //document.getElementById("results").innerHTML = JSON.stringify(res);
+                },
+                added: function (res) {
+                    //console.log('added: ', res);
+                    //document.getElementById("results").innerHTML = JSON.stringify(res);
+                }
+            });
+        });
+
 
         var seriesOptions = {};
         Charts.remove({});
@@ -206,44 +171,91 @@ Template.site.onRendered(function () {
             });
         });
 
+        console.log('seriesOptions: ', seriesOptions);
         _.each(seriesOptions, function (series, id) {
             Charts.insert({
                 id: id
             });
-            var yAxis = [{ // Primary yAxis
-                labels: {
-                    format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
-                    style: {
-                        color: Highcharts.getOptions().colors[0]
-                    }
-                },
-                title: {
-                    text: series[0].name.split(/[ ]+/)[0],
-                    style: {
-                        color: Highcharts.getOptions().colors[0]
+            var yAxis = [];
+            if (id.indexOf('Wind') >= 0) { //special treatment for wind instruments
+                yAxis.push({ // Primary yAxis
+                    labels: {
+                        format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    title: {
+                        text: series[0].name.split(/[ ]+/)[0],
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    opposite: false,
+                    floor: 0,
+                    ceiling: 360,
+                    tickInterval: 90
+                });
+                if (series.length > 2) {
+                    yAxis.push({ // Secondary yAxis
+                        title: {
+                            text: series[1].name.split(/[ ]+/)[0],
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        labels: {
+                            format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        floor: 0,
+                        ceiling: 360,
+                        tickInterval: 90
+                    });
+                    for (var i = 0; i < series.length; i++) {
+                        //put axis for each series
+                        series[i].yAxis = !(i & 1) ? 0 : 1;
                     }
                 }
-            }];
-
-            if (series.length > 2) {
-                yAxis.push({ // Secondary yAxis
-                    title: {
-                        text: series[1].name.split(/[ ]+/)[0],
-                        style: {
-                            color: Highcharts.getOptions().colors[1]
-                        }
-                    },
+            } else {
+                yAxis.push({ // Primary yAxis
                     labels: {
-                        format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
+                        format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
                         style: {
-                            color: Highcharts.getOptions().colors[1]
+                            color: Highcharts.getOptions().colors[0]
                         }
                     },
-                    opposite: false
+                    title: {
+                        text: series[0].name.split(/[ ]+/)[0],
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    opposite: false,
+                    floor: 0
                 });
-                for (var i = 0; i < series.length; i++) {
-                    //put axis for each series
-                    series[i].yAxis = !(i & 1) ? 0 : 1;
+                if (series.length > 2) {
+                    yAxis.push({ // Secondary yAxis
+                        title: {
+                            text: series[1].name.split(/[ ]+/)[0],
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        labels: {
+                            format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
+                            style: {
+                                color: Highcharts.getOptions().colors[1]
+                            }
+                        },
+                        floor: 0
+                    });
+                    for (var i = 0; i < series.length; i++) {
+                        //put axis for each series
+                        series[i].yAxis = !(i & 1) ? 0 : 1;
+                    }
                 }
             }
             createCharts('container-chart-' + id, id, yAxis, series);
@@ -306,30 +318,30 @@ Template.site.onRendered(function () {
                     inputEnabled: false,
                     allButtonsEnabled: true,
                     buttons: [{
-                        type: 'minute',
-                        count: 60,
-                        text: 'Hour',
-                        dataGrouping: {
-                            forced: true,
-                            units: [['hour', [60]]]
-                        }
+                            type: 'minute',
+                            count: 60,
+                            text: 'Hour',
+                            dataGrouping: {
+                                forced: true,
+                                units: [['hour', [60]]]
+                            }
 			    }, {
-                        type: 'day',
-                        count: 3,
-                        text: '3 Days',
-                        dataGrouping: {
-                            forced: true,
-                            units: [['month', [1]]]
-                        }
+                            type: 'day',
+                            count: 3,
+                            text: '3 Days',
+                            dataGrouping: {
+                                forced: true,
+                                units: [['month', [1]]]
+                            }
 			    },
-                             {
-                        type: 'day',
-                        count: 1,
-                        text: '1 Day',
-                        dataGrouping: {
-                            forced: true,
-                            units: [['day', [1]]]
-                        }
+                        {
+                            type: 'day',
+                            count: 1,
+                            text: '1 Day',
+                            dataGrouping: {
+                                forced: true,
+                                units: [['day', [1]]]
+                            }
 			    }],
                     buttonTheme: {
                         width: 60
@@ -393,7 +405,7 @@ Template.site.events({
         startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
         endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix()); //always to current?
     },
-    'click #createPush': function() {
-		DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
-	}
+    'click #createPush': function () {
+        DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
+    }
 });
