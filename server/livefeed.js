@@ -1,8 +1,6 @@
 //required packages
-var chokidar = Meteor.npmRequire('chokidar');
 var csvmodule = Meteor.npmRequire('csv');
 var fs = Meteor.npmRequire('fs');
-var logger = Meteor.npmRequire('winston'); // this retrieves default logger which was configured in server.js
 
 var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
@@ -63,14 +61,15 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 if (data[0].val !== 1) { //if flag is not 1 (valid) don't increase numValid
                                     numValid = 0;
                                 }
-                                //special calculation for wind data
-                                if (subType.indexOf('Wind') >= 0) {
+                                var j;
+
+                                if (subType.indexOf('Wind') >= 0) { //special calculation for wind data
                                     //get windDir and windSpd
                                     var windDir, windSpd;
-                                    for (var j = 1; j < data.length; j++) {
+                                    for (j = 1; j < data.length; j++) {
                                         if (data[j].val === '') {
                                             numValid = 0;
-                                        }
+                                        } //need to ask Jimmy about data points without flag (old data)
                                         if (data[j].metric === 'Direction') {
                                             windDir = data[j].val;
                                         }
@@ -90,8 +89,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             'sumWindEast': windEast,
                                             'avgWindNord': windNord,
                                             'avgWindEast': windEast,
-                                            'numValid': numValid,
-                                            'Flag': 1
+                                            'numValid': numValid
                                         };
                                     } else {
                                         aggrSubTypes[newkey].numValid += numValid;
@@ -102,39 +100,31 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
                                         }
                                     }
-                                    if ((aggrSubTypes[newkey].numValid / i) < 0.75) {
-                                        aggrSubTypes[newkey].Flag = 0; //should discuss how to use
-                                    }
-                                }
-                                //normal aggreagation for all other subTypes
-                                else {
-                                    for (var k = 1; k < data.length; k++) {
-                                        numValid = 1;
-                                        if (data[k].val === '') {
-                                            numValid = 0;
-                                        }
-                                        newkey = subType + '_' + data[k].metric;
+                                } else { //normal aggreagation for all other subTypes
+                                    for (j = 1; j < data.length; j++) {
+                                        newkey = subType + '_' + data[j].metric;
                                         if (!aggrSubTypes[newkey]) {
                                             aggrSubTypes[newkey] = {
-                                                'sum': data[k].val,
-                                                'avg': data[k].val,
-                                                'numValid': numValid,
-                                                'Flag': 1
+                                                'sum': data[j].val,
+                                                'avg': data[j].val,
+                                                'numValid': numValid
                                             };
                                         } else {
                                             aggrSubTypes[newkey].numValid += numValid;
-                                            if (data[k].val !== '') {
-                                                aggrSubTypes[newkey].sum += data[k].val; //holds sum until end
+                                            if (data[j].val !== '') {
+                                                aggrSubTypes[newkey].sum += data[j].val; //holds sum until end
                                             }
                                             if (aggrSubTypes[newkey].numValid !== 0) {
                                                 aggrSubTypes[newkey].avg = aggrSubTypes[newkey].sum / aggrSubTypes[newkey].numValid;
                                             }
-
-                                        }
-                                        if ((aggrSubTypes[newkey].numValid / i) < 0.75) {
-                                            aggrSubTypes[newkey].Flag = 0; //should discuss how to use
                                         }
                                     }
+                                }
+
+                                logger.info('numvalid: ', numValid, 'j: ', j);
+                                
+                                if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
+                                    aggrSubTypes[newkey].Flag = 0; //should discuss how to use
                                 }
                             }
                         }
@@ -334,7 +324,7 @@ Meteor.methods({
     },
     insertUpdateFlag: function (siteId, epoch, instrument, measurement, flag) {
         //id that will receive the update
-        var id = siteId + '_' + epoch/1000; //seconds
+        var id = siteId + '_' + epoch / 1000; //seconds
         //new field
         var insertField = 'subTypes.' + instrument + '.' + measurement.split(/[ ]+/)[0];
         //update value
@@ -345,9 +335,11 @@ Meteor.methods({
         qry.$push[insertField].metric = 'Overwrite Flag';
         qry.$push[insertField].user = 'peggy';
         qry.$push[insertField].note = 'test';
-        AggrData.update({_id: id}, qry);
-                       
-        
+        AggrData.update({
+            _id: id
+        }, qry);
+
+
     }
 });
 

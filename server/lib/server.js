@@ -1,9 +1,4 @@
 //using winston.log instead of console log
-winston = Meteor.npmRequire('winston');
+logger = Winston;
 
-winston.add(winston.transports.DailyRotateFile, {
-    filename: 'datamaps.log',
-    dirname: '/var/log/meteor/'
-});
-
-winston.info('Winston logs are being captured console and file (/var/log/meteor/datamaps.log)');
+logger.info('Winston logs are being captured on the console.');

@@ -1,26 +1,36 @@
 //Exporting data in certain formats and download client side
 DataExporter = {
-	exportForTCEQ: function(siteId, startEpoch, endEpoch) {
-		var self = this;
-		Meteor.call("exportData", siteId, startEpoch, endEpoch, function(error, data) {
+    exportForTCEQ: function (siteId, startEpoch, endEpoch) {
+        var self = this;
+        Meteor.subscribe('mymonitors');
+        Meteor.call("exportData", siteId, startEpoch, endEpoch, function (error, data) {
 
-			if ( error ) {
-				alert(error); 
-				return false;
-			}
-			
-			var csv = Papa.unparse(data);
-			self._downloadCSV(csv);
-		});
-	},
+            if (error) {
+                alert(error);
+                return false;
+            }
 
-	_downloadCSV: function(csv) {
-		var blob = new Blob([csv]);
-		var a = window.document.createElement("a");
-	    a.href = window.URL.createObjectURL(blob, {type: "text/plain"});
-	    a.download = "test.csv";
-	    document.body.appendChild(a);
-	    a.click();
-	    document.body.removeChild(a);
-	}
+            var dir = Monitors.findOne({
+                AQSID: siteId
+            });
+
+            if (dir !== undefined) {
+                var csv = Papa.unparse(data);
+                var siteName = dir.incoming.match(/[^_]*/);
+                self._downloadCSV(csv, siteName + startEpoch + endEpoch + '.txt');
+            }
+        });
+    },
+
+    _downloadCSV: function (csv, fileName) {
+        var blob = new Blob([csv]);
+        var a = window.document.createElement("a");
+        a.href = window.URL.createObjectURL(blob, {
+            type: "text/plain"
+        });
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
 };

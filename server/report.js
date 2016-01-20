@@ -1,6 +1,5 @@
 //required packages
 var fs = Meteor.npmRequire('fs');
-var logger = Meteor.npmRequire('winston'); // this retrieves default logger which was configured in server.js
 
 var lastPeriodicReportTime = 0;
 
