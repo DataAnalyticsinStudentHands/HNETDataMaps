@@ -49,22 +49,26 @@
                 {{else}}
                     <p>Flag will be changed for the following point:</p>
                 {{/if}}
-                <table class="ui compact single line fixed table">
+                <table class="ui compact table">
                     <thead>
                         <tr>
                             <th>Timestamp</th>
+                            <th>Value</th>
+                            <th>Instrument</th>
+                            <th>Measurement</th>
                             <th>Current Flag</th>
                             <th>New Flag</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                     {{#each points}}
                         <tr>
                             <td>{{formatDate x}}</td>
+                            <td>{{formatDataValue y}}</td>
+                            <td>{{instrument}}</td>
+                            <td>{{measurement}}</td>
                             <td>{{> flagLabel flag}}</td>
                             <td>{{> flagLabel flagSelected}}</td>
-                            <td></td>
                         </tr>
                     {{/each}}
                     </tbody>

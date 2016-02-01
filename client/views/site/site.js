@@ -369,16 +369,12 @@ Template.editPoints.onRendered(function () {
     this.$('.ui.dropdown').dropdown({
         //onChange: function (value, text, $selectedItem) {
         onChange: function (value) {
-            console.log(value, parseInt(value));
             selectedFlag.set(parseInt(value));
         }
     });
 });
 
 Template.editPoints.helpers({
-    series: function () {
-        return selectedSeries.get();
-    },
     points: function () {
         return EditPoints.find({});
     },
@@ -393,6 +389,9 @@ Template.editPoints.helpers({
     },
     numPointsSelected: function () {
         return EditPoints.find().count();
+    },
+    formatDataValue: function (val) {
+        return val.toFixed(3);
     }
 });
 
