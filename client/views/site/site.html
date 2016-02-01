@@ -23,53 +23,66 @@
 
 <!-- Modal for editing points -->
 <template name="editPoints">
-    <div class="ui basic modal" id="editPointsModal">
-        <i class="close icon"></i>
+    <div class="ui modal" id="editPointsModal">
         <div class="header">
+            <i class="flag icon"></i>
             Edit Flags
         </div>
         <div class="content">
-            <div class="ui sub header">Flag</div>
+            <div class="ui sub header">Select New Flag</div>
             <div class="ui selection dropdown" id="drop">
                 <input type="hidden" name="flag">
                 <i class="dropdown icon"></i>
                 <div class="default text">Select one ...</div>
                 <div class="menu">
-                    <div class="item" data-value="1" data-text="K">
-                        <i class="square red icon"></i> K (Valid)
+                    {{#each availableFlags}}
+                    <div class="item" data-value="{{val}}" data-text="{{label}} ({{description}})">
+                        {{> flagLabel}}
                     </div>
-                    <div class="item" data-value="2" data-text="Q">
-                        <i class="square orange icon"></i> Q (Span)
-                    </div>
-                    <div class="item" data-value="8" data-text="P">
-                        <i class="square grey icon"></i> P (Maintenance)
-                    </div>
-                    <div class="item" data-value="9" data-text="N">
-                        <i class="square black icon"></i> N (Offline)
-                    </div>
+                    {{/each}}
                 </div>
             </div>
 
             <div class="description">
-                <p>Flag(s) will be changed for the follwoing selected Points:</p>
-                <div class="ui list">
-                    {{#each points}} {{> point}} {{/each}}
-                </div>
+                {{#if multiple}}
+                    <p>Flags will be changed for the following {{numPointsSelected}} points:</p>
+                {{else}}
+                    <p>Flag will be changed for the following point:</p>
+                {{/if}}
+                <table class="ui compact single line fixed table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Current Flag</th>
+                            <th>New Flag</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {{#each points}}
+                        <tr>
+                            <td>{{formatDate x}}</td>
+                            <td>{{> flagLabel flag}}</td>
+                            <td>{{> flagLabel flagSelected}}</td>
+                            <td></td>
+                        </tr>
+                    {{/each}}
+                    </tbody>
+                </table>
             </div>
         </div>
         <div class="actions">
-            <div class="two fluid ui inverted buttons">
-                <div class="ui deny red basic inverted button">
-                    <i class="remove icon"></i> Cancel
-                </div>
-                <div class="ui approve green basic inverted button">
-                    <i class="checkmark icon"></i> Submit
-                </div>
+            <div class="ui deny labeled icon button">
+                <i class="remove icon"></i> Cancel
+            </div>
+            <div class="ui primary approve labeled icon button">
+                <i class="checkmark icon"></i> Submit
             </div>
         </div>
     </div>
 </template>
 
-<template name="point">
-    <div class="item">{{formatDate x}} from {{flag.label}} ({{flag.description}}) to {{flagSelected.label}}</div>
+<template name="flagLabel">
+    <span class="ui mini {{color}} circular label" title="{{description}}">{{label}}</span>
+    {{description}}
 </template>

@@ -33,6 +33,8 @@ function selectPointsByDrag(e) {
     Highcharts.each(this.series, function (series) {
         if (series.options.allowPointSelect === 'true') {
             Highcharts.each(series.points, function (point) {
+                // Uncomment to always select new points instead of adding points to selection
+                // point.select(false)
                 if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
                     point.select(true, true);
                 }
@@ -66,6 +68,8 @@ function selectedPoints(e) {
             points.push(selectedPoint);
         }
     });
+
+    if (points.length === 0) return;
 
     EditPoints.remove({});
     for (var i = 0; i < points.length; i++) {
@@ -365,20 +369,30 @@ Template.editPoints.onRendered(function () {
     this.$('.ui.dropdown').dropdown({
         //onChange: function (value, text, $selectedItem) {
         onChange: function (value) {
-            selectedFlag.set(value);
+            console.log(value, parseInt(value));
+            selectedFlag.set(parseInt(value));
         }
     });
 });
 
 Template.editPoints.helpers({
+    series: function () {
+        return selectedSeries.get();
+    },
     points: function () {
         return EditPoints.find({});
-    }
-});
-
-Template.point.helpers({
+    },
+    multiple: function () {
+        return EditPoints.find().count() > 1;
+    },
+    availableFlags: function () {
+        return _.where(flagsHash, {selectable: true});
+    },
     flagSelected: function () {
         return flagsHash[selectedFlag.get()];
+    },
+    numPointsSelected: function () {
+        return EditPoints.find().count();
     }
 });
 
