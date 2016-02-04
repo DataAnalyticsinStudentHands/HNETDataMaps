@@ -215,8 +215,8 @@ Template.site.onRendered(function () {
                             }
                         },
                         floor: 0,
-                        ceiling: 360,
-                        tickInterval: 90
+                        ceiling: 20,
+                        tickInterval: 5
                     });
                     for (var i = 0; i < series.length; i++) {
                         //put axis for each series
