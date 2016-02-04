@@ -1,6 +1,6 @@
 var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix()); //24 hours ago - seconds
 var endEpoch = new ReactiveVar(moment().unix());
-var selectedFlag = new ReactiveVar(1);
+var selectedFlag = new ReactiveVar(null);
 
 Meteor.subscribe('sites');
 
@@ -392,6 +392,10 @@ Template.editPoints.helpers({
     },
     formatDataValue: function (val) {
         return val.toFixed(3);
+    },
+    isValid: function () {
+        var validFlagSet = _.pluck(_.where(flagsHash, {selectable: true}), 'val');
+        return _.contains(validFlagSet, selectedFlag.get());
     }
 });
 
