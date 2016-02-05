@@ -28,12 +28,10 @@
             <i class="flag icon"></i>
             <span>Edit Flags</span>
             <span style="float: right; font-size: 0.8em; font-weight: normal;">
-                <span style="margin-right: 1em;">Select a new flag:</span>
-                <div class="ui inline dropdown" id="drop">
+                <span style="margin-right: 1em;">New flag:</span>
+                <div class="ui selection dropdown" id="drop" style="padding: 0.4em 2em 0.4em 1em; min-height: 1.8em;">
                     <input type="hidden" name="flag">
-                    <div class="text">
-                        {{> flagLabel flagSelected}}
-                    </div>
+                    <div class="default text">Select one...</div>
                     <i class="dropdown icon"></i>
                     <div class="menu">
                         {{#each availableFlags}}
