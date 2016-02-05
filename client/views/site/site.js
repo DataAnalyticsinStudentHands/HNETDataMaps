@@ -90,7 +90,11 @@ function selectedPoints(e) {
                 Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
             });
             // Update local point color to reflect new flag
-            // e.points[0].
+            _.each(e.points, function (point) {
+                point.update({ color: flagsHash[selectedFlag.get()].color }, false);
+            });
+            // Redraw chart
+            e.points[0].series.chart.redraw();
         }
     }).modal('show');
 }
