@@ -29,6 +29,7 @@ var Charts = new Meteor.Collection(null); //This will store our synths
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
+    var selection = [];
     // Select points only for series where allowPointSelect
     Highcharts.each(this.series, function (series) {
         if (series.options.allowPointSelect === 'true') {
@@ -36,7 +37,8 @@ function selectPointsByDrag(e) {
                 // Uncomment to always select new points instead of adding points to selection
                 // point.select(false)
                 if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
-                    point.select(true, true);
+                    // point.select(true, true);
+                    selection.push(point);
                 }
             });
         }
@@ -44,7 +46,8 @@ function selectPointsByDrag(e) {
 
     // Fire a custom event
     HighchartsAdapter.fireEvent(this, 'selectedpoints', {
-        points: this.getSelectedPoints()
+        // points: this.getSelectedPoints()
+        points: selection
     });
 
     return false; // Don't zoom
