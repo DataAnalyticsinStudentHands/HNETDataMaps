@@ -89,6 +89,8 @@ function selectedPoints(e) {
             updatedPoints.forEach(function (point) {
                 Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
             });
+            // Update local point color to reflect new flag
+            // e.points[0].
         }
     }).modal('show');
 }
@@ -215,6 +217,8 @@ Template.site.onRendered(function () {
                             }
                         },
                         floor: 0,
+                        // NOTE: there are some misreads with the sensor, and so
+                        // it occasionally reports wind speeds upwards of 250mph.
                         ceiling: 20,
                         tickInterval: 5
                     });
@@ -378,14 +382,16 @@ Template.editPoints.helpers({
     points: function () {
         return EditPoints.find({});
     },
-    multiple: function () {
-        return EditPoints.find().count() > 1;
-    },
     availableFlags: function () {
         return _.where(flagsHash, {selectable: true});
     },
     flagSelected: function () {
         return flagsHash[selectedFlag.get()];
+    },
+    numFlagsWillChange: function () {
+        var newFlag = selectedFlag.get();
+        if (newFlag === null || isNaN(newFlag)) return 0;
+        return EditPoints.find({ 'flag.val': { $not: newFlag } }).count();
     },
     numPointsSelected: function () {
         return EditPoints.find().count();

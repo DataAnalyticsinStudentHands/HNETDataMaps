@@ -26,56 +26,53 @@
     <div class="ui modal" id="editPointsModal">
         <div class="header">
             <i class="flag icon"></i>
-            Edit Flags
-        </div>
-        <div class="content">
-            <div class="ui sub header">Select New Flag</div>
-            <div class="ui selection dropdown" id="drop">
-                <input type="hidden" name="flag">
-                <i class="dropdown icon"></i>
-                <div class="default text">Select one ...</div>
-                <div class="menu">
-                    {{#each availableFlags}}
-                    <div class="item" data-value="{{val}}" data-text="{{label}} ({{description}})">
-                        {{> flagLabel}}
+            <span>Edit Flags</span>
+            <span style="float: right; font-size: 0.8em; font-weight: normal;">
+                <span style="margin-right: 1em;">Select a new flag:</span>
+                <div class="ui inline dropdown" id="drop">
+                    <input type="hidden" name="flag">
+                    <div class="text">
+                        {{> flagLabel flagSelected}}
                     </div>
-                    {{/each}}
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        {{#each availableFlags}}
+                        <div class="item" data-value="{{val}}">
+                            {{> flagLabel}}
+                        </div>
+                        {{/each}}
+                    </div>
                 </div>
-            </div>
-
-            <div class="description">
-                {{#if multiple}}
-                    <p>Flags will be changed for the following {{numPointsSelected}} points:</p>
-                {{else}}
-                    <p>Flag will be changed for the following point:</p>
-                {{/if}}
-                <table class="ui compact table">
-                    <thead>
-                        <tr>
-                            <th>Timestamp</th>
-                            <th>Value</th>
-                            <th>Instrument</th>
-                            <th>Measurement</th>
-                            <th>Current Flag</th>
-                            <th>New Flag</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {{#each points}}
-                        <tr>
-                            <td>{{formatDate x}}</td>
-                            <td>{{formatDataValue y}}</td>
-                            <td>{{instrument}}</td>
-                            <td>{{measurement}}</td>
-                            <td>{{> flagLabel flag}}</td>
-                            <td>{{> flagLabel flagSelected}}</td>
-                        </tr>
-                    {{/each}}
-                    </tbody>
-                </table>
-            </div>
+            </span>
+        </div>
+        <div class="content" style="overflow-y: auto; max-height: 500px;">
+            <table class="ui very basic compact table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Value</th>
+                        <th>Instrument</th>
+                        <th>Measurement</th>
+                        <th>Current Flag</th>
+                        <th>New Flag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {{#each points}}
+                    <tr>
+                        <td>{{formatDate x}}</td>
+                        <td>{{formatDataValue y}}</td>
+                        <td>{{instrument}}</td>
+                        <td>{{measurement}}</td>
+                        <td>{{> flagLabel flag}}</td>
+                        <td>{{> flagLabel flagSelected}}</td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
         </div>
         <div class="actions">
+            <span>Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.</span>
             <div class="ui deny labeled icon button">
                 <i class="remove icon"></i> Cancel
             </div>
