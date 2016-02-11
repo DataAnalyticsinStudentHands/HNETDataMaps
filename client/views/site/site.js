@@ -1,6 +1,6 @@
 var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix()); //24 hours ago - seconds
 var endEpoch = new ReactiveVar(moment().unix());
-var selectedFlag = new ReactiveVar(1);
+var selectedFlag = new ReactiveVar(null);
 
 Meteor.subscribe('sites');
 
@@ -29,12 +29,16 @@ var Charts = new Meteor.Collection(null); //This will store our synths
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
+    var selection = [];
     // Select points only for series where allowPointSelect
     Highcharts.each(this.series, function (series) {
         if (series.options.allowPointSelect === 'true') {
             Highcharts.each(series.points, function (point) {
+                // Uncomment to always select new points instead of adding points to selection
+                // point.select(false)
                 if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
-                    point.select(true, true);
+                    // point.select(true, true);
+                    selection.push(point);
                 }
             });
         }
@@ -42,7 +46,8 @@ function selectPointsByDrag(e) {
 
     // Fire a custom event
     HighchartsAdapter.fireEvent(this, 'selectedpoints', {
-        points: this.getSelectedPoints()
+        // points: this.getSelectedPoints()
+        points: selection
     });
 
     return false; // Don't zoom
@@ -67,6 +72,8 @@ function selectedPoints(e) {
         }
     });
 
+    if (points.length === 0) return;
+
     EditPoints.remove({});
     for (var i = 0; i < points.length; i++) {
         EditPoints.insert(points[i]);
@@ -85,6 +92,12 @@ function selectedPoints(e) {
             updatedPoints.forEach(function (point) {
                 Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
             });
+            // Update local point color to reflect new flag
+            _.each(e.points, function (point) {
+                point.update({ color: flagsHash[selectedFlag.get()].color }, false);
+            });
+            // Redraw chart
+            e.points[0].series.chart.redraw();
         }
     }).modal('show');
 }
@@ -211,8 +224,10 @@ Template.site.onRendered(function () {
                             }
                         },
                         floor: 0,
-                        ceiling: 360,
-                        tickInterval: 90
+                        // NOTE: there are some misreads with the sensor, and so
+                        // it occasionally reports wind speeds upwards of 250mph.
+                        ceiling: 20,
+                        tickInterval: 5
                     });
                     for (var i = 0; i < series.length; i++) {
                         //put axis for each series
@@ -365,7 +380,7 @@ Template.editPoints.onRendered(function () {
     this.$('.ui.dropdown').dropdown({
         //onChange: function (value, text, $selectedItem) {
         onChange: function (value) {
-            selectedFlag.set(value);
+            selectedFlag.set(parseInt(value));
         }
     });
 });
@@ -373,12 +388,27 @@ Template.editPoints.onRendered(function () {
 Template.editPoints.helpers({
     points: function () {
         return EditPoints.find({});
-    }
-});
-
-Template.point.helpers({
+    },
+    availableFlags: function () {
+        return _.where(flagsHash, {selectable: true});
+    },
     flagSelected: function () {
         return flagsHash[selectedFlag.get()];
+    },
+    numFlagsWillChange: function () {
+        var newFlag = selectedFlag.get();
+        if (newFlag === null || isNaN(newFlag)) return 0;
+        return EditPoints.find({ 'flag.val': { $not: newFlag } }).count();
+    },
+    numPointsSelected: function () {
+        return EditPoints.find().count();
+    },
+    formatDataValue: function (val) {
+        return val.toFixed(3);
+    },
+    isValid: function () {
+        var validFlagSet = _.pluck(_.where(flagsHash, {selectable: true}), 'val');
+        return _.contains(validFlagSet, selectedFlag.get());
     }
 });
 

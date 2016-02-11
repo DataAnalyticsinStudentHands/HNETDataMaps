@@ -23,53 +23,65 @@
 
 <!-- Modal for editing points -->
 <template name="editPoints">
-    <div class="ui basic modal" id="editPointsModal">
-        <i class="close icon"></i>
+    <div class="ui modal" id="editPointsModal">
         <div class="header">
-            Edit Flags
+            <i class="flag icon"></i>
+            <span>Edit Flags</span>
+            <span style="float: right; font-size: 0.8em; font-weight: normal;">
+                <span style="margin-right: 1em;">New flag:</span>
+                <div class="ui selection dropdown" id="drop" style="padding: 0.4em 2em 0.4em 1em; min-height: 1.8em;">
+                    <input type="hidden" name="flag">
+                    <div class="default text">Select one...</div>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        {{#each availableFlags}}
+                        <div class="item" data-value="{{val}}">
+                            {{> flagLabel}}
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </span>
         </div>
-        <div class="content">
-            <div class="ui sub header">Flag</div>
-            <div class="ui selection dropdown" id="drop">
-                <input type="hidden" name="flag">
-                <i class="dropdown icon"></i>
-                <div class="default text">Select one ...</div>
-                <div class="menu">
-                    <div class="item" data-value="1" data-text="K">
-                        <i class="square red icon"></i> K (Valid)
-                    </div>
-                    <div class="item" data-value="2" data-text="Q">
-                        <i class="square orange icon"></i> Q (Span)
-                    </div>
-                    <div class="item" data-value="8" data-text="P">
-                        <i class="square grey icon"></i> P (Maintenance)
-                    </div>
-                    <div class="item" data-value="9" data-text="N">
-                        <i class="square black icon"></i> N (Offline)
-                    </div>
-                </div>
-            </div>
-
-            <div class="description">
-                <p>Flag(s) will be changed for the follwoing selected Points:</p>
-                <div class="ui list">
-                    {{#each points}} {{> point}} {{/each}}
-                </div>
-            </div>
+        <div class="content" style="overflow-y: auto; max-height: 500px;">
+            <table class="ui very basic compact table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Value</th>
+                        <th>Instrument</th>
+                        <th>Measurement</th>
+                        <th>Current Flag</th>
+                        <th>New Flag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {{#each points}}
+                    <tr>
+                        <td>{{formatDate x}}</td>
+                        <td>{{formatDataValue y}}</td>
+                        <td>{{instrument}}</td>
+                        <td>{{measurement}}</td>
+                        <td>{{> flagLabel flag}}</td>
+                        <td>{{> flagLabel flagSelected}}</td>
+                    </tr>
+                {{/each}}
+                </tbody>
+            </table>
         </div>
         <div class="actions">
-            <div class="two fluid ui inverted buttons">
-                <div class="ui deny red basic inverted button">
-                    <i class="remove icon"></i> Cancel
-                </div>
-                <div class="ui approve green basic inverted button">
-                    <i class="checkmark icon"></i> Submit
-                </div>
+            <span>Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.</span>
+            <div class="ui deny labeled icon button">
+                <i class="remove icon"></i> Cancel
+            </div>
+            <div class="ui primary approve labeled icon button{{#unless isValid}} disabled{{/unless}}">
+                <i class="checkmark icon"></i> Submit
             </div>
         </div>
     </div>
 </template>
 
-<template name="point">
-    <div class="item">{{formatDate x}} from {{flag.label}} ({{flag.description}}) to {{flagSelected.label}}</div>
+<template name="flagLabel">
+    <span class="ui mini {{color}} circular label" title="{{description}}">{{label}}</span>
+    {{description}}
 </template>
