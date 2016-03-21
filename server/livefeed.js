@@ -231,12 +231,15 @@ var makeObj = function (keys) {
     var metron = [];
     for (var key in keys) {
         if (keys.hasOwnProperty(key)) {
-            var subKeys = key.split('_');
+            //Fix for wrong headers _Wind
+            var newKey = key;
+            if (key.indexOf('_Wind') >= 0) {
+                newKey = key.replace('_Wind','');
+            }
+            var subKeys = newKey.split('_'); //split each column header
             if (subKeys.length > 1) { //skipping 'TheTime'
-                var alphaSite = subKeys[0] + '_' + subKeys[1];
-                var metric = subKeys[subKeys.length - 1]; //i.e. conc., direction, etc.
-                var metrized = key.replace(alphaSite + '_', '');
-                metron = metrized.replace('_' + metric, ''); //wind, O3, etc.
+                metron = subKeys[2]; //instrument i.e. wind, O3, etc.
+                var metric = subKeys[3]; //
                 var val = keys[key];
                 if (!obj.subTypes[metron]) {
                     obj.subTypes[metron] = [{
