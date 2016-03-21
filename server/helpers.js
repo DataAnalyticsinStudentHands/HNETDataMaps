@@ -11,7 +11,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
 
         //output folder
         var siteName = dir.incoming.match(/[^_]*/);
-        var outputFile = '/hnet/outgoing/2015/' + dir.incoming + '/' + siteName + moment.unix(startEpoch).format('YYMMDDHHmmss') + '.uh';
+        var outputFile = '/hnet/outgoing/2016/' + dir.incoming + '/' + siteName + moment.unix(startEpoch).format('YYMMDDHHmmss') + '.uh';
 
         var aggregatData = AggrData.find({
             $and: [{

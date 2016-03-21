@@ -24,7 +24,7 @@ function sendEmail(reportType, reportString) {
 
 Meteor.setInterval(function () {
 
-    var watchedPath = '/hnet/incoming/2015/';
+    var watchedPath = '/hnet/incoming/2016/';
     var emergencyReportString = '';
     var periodicReportString = '';
     var timeDiff;
