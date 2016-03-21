@@ -51,11 +51,13 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                     subObj.site = e.site;
                     subObj.epoch = e._id;
                     var subTypes = e.subTypes;
+                    
                     var aggrSubTypes = {}; //hold subTypes
                     for (var i = 0; i < subTypes.length; i++) {
                         for (var subType in subTypes[i]) {
                             if (subTypes[i].hasOwnProperty(subType)) {
                                 var data = subTypes[i][subType];
+                                //logger.info("data for subtype: ", subType, data);
                                 var newkey;
                                 var numValid = 1;
                                 if (data[0].val !== 1) { //if flag is not 1 (valid) don't increase numValid
@@ -63,7 +65,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 }
                                 var j;
 
-                                if (subType.indexOf('Wind') >= 0) { //special calculation for wind data
+                                if (subType.indexOf('RMY') >= 0) { //special calculation for wind data
                                     //get windDir and windSpd
                                     var windDir, windSpd;
                                     for (j = 1; j < data.length; j++) {
@@ -82,7 +84,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                     var windEast = Math.sin(windDir / 180 * Math.PI) * windSpd;
 
                                     //Aggregate data points
-                                    newkey = subType + '_' + 'Wind';
+                                    newkey = subType + '_' + 'RMY';
                                     if (!aggrSubTypes[newkey]) {
                                         aggrSubTypes[newkey] = {
                                             'sumWindNord': windNord,
@@ -107,7 +109,8 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             aggrSubTypes[newkey] = {
                                                 'sum': data[j].val,
                                                 'avg': data[j].val,
-                                                'numValid': numValid
+                                                'numValid': numValid,
+                                                'Flag': 1
                                             };
                                         } else {
                                             aggrSubTypes[newkey].numValid += numValid;
@@ -119,13 +122,19 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             }
                                         }
                                     }
+                                    
+                                    
                                 }
-
-                                logger.info('numvalid: ', numValid, 'j: ', j);
                                 
-                                if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
-                                    aggrSubTypes[newkey].Flag = 0; //should discuss how to use
-                                }
+                                //logger.info('numValid for ' , subType, ': ', aggrSubTypes[newkey].numValid);
+                                //logger.info('j for ' , subType, ': ', j);
+                                aggrSubTypes[newkey].Flag = 1; //set default flag to 1
+                                //dealing with Flags
+                                //if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
+                                  //      aggrSubTypes[newkey].Flag = 0; //should discuss how to use
+                                //}
+
+                                
                             }
                         }
                     }
@@ -142,7 +151,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
                             var obj = aggrSubTypes[aggr];
 
-                            if (measurement === 'Wind') { //special treatment for wind measurements 
+                            if (measurement === 'RMY') { //special treatment for wind measurements 
                                 if (!newaggr[instrument].Direction) {
                                     newaggr[instrument].Direction = [];
                                 }
