@@ -190,7 +190,7 @@ Template.site.onRendered(function () {
                 id: id
             });
             var yAxis = [];
-            if (id.indexOf('Wind') >= 0) { //special treatment for wind instruments
+            if (id.indexOf('RMY') >= 0) { //special treatment for wind instruments
                 yAxis.push({ // Primary yAxis
                     labels: {
                         format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],

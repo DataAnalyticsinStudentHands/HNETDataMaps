@@ -161,7 +161,7 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
                 if (pollData.hasOwnProperty(pubKey)) {
                     var chartType = 'line';
                     //wind data should never be shown as line
-                    if (pubKey.indexOf('Wind') >= 0) {
+                    if (pubKey.indexOf('RMY') >= 0) {
                         chartType = 'scatter';
                     }
                     subscription.added('dataSeries', pubKey + '_10s', {
