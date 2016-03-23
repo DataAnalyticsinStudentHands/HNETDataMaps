@@ -19,7 +19,9 @@ var unitsHash = {
     WS: 'miles/hour',
     WD: 'degree',
     Temp: 'degree C',
-    RH: 'percent'
+    RH: 'percent',
+    MassConc: 'ugm3',
+    AmbTemp: 'C'
 };
 
 //placeholder for dynamic chart containers
