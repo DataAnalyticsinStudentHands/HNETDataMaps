@@ -282,12 +282,7 @@ Meteor.publish('monitors', function (latLng) {
                 },
                 $maxDistance: 80000
             }
-        }
-    });
-});
-
-Meteor.publish('mymonitors', function () {
-    return Monitors.find({
+        },
         'incoming': {
             $exists: true
         }
