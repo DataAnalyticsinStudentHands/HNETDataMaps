@@ -2,7 +2,7 @@
 DataExporter = {
     exportForTCEQ: function (siteId, startEpoch, endEpoch) {
         var self = this;
-        Meteor.subscribe('mymonitors');
+        Meteor.subscribe('monitors');
         Meteor.call("exportData", siteId, startEpoch, endEpoch, function (error, data) {
 
             if (error) {

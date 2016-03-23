@@ -16,8 +16,8 @@ var EditPoints = new Mongo.Collection(null);
 
 var unitsHash = {
     conc: 'pbbv',
-    Speed: 'miles/hour',
-    Direction: 'degree',
+    WS: 'miles/hour',
+    WD: 'degree',
     Temp: 'degree C',
     RH: 'percent'
 };
@@ -190,7 +190,7 @@ Template.site.onRendered(function () {
                 id: id
             });
             var yAxis = [];
-            if (id.indexOf('Wind') >= 0) { //special treatment for wind instruments
+            if (id.indexOf('RMY') >= 0) { //special treatment for wind instruments
                 yAxis.push({ // Primary yAxis
                     labels: {
                         format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
@@ -346,7 +346,7 @@ Template.site.onRendered(function () {
                             text: '3 Days',
                             dataGrouping: {
                                 forced: true,
-                                units: [['month', [1]]]
+                                units: [['day', [1]]]
                             }
 			    },
                         {

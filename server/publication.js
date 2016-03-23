@@ -161,7 +161,7 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
                 if (pollData.hasOwnProperty(pubKey)) {
                     var chartType = 'line';
                     //wind data should never be shown as line
-                    if (pubKey.indexOf('Wind') >= 0) {
+                    if (pubKey.indexOf('RMY') >= 0) {
                         chartType = 'scatter';
                     }
                     subscription.added('dataSeries', pubKey + '_10s', {
@@ -272,21 +272,7 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
     );
 });
 
-Meteor.publish('monitors', function (latLng) {
-    return Monitors.find({
-        'loc': {
-            $near: {
-                $geometry: {
-                    type: 'Point',
-                    coordinates: latLng
-                },
-                $maxDistance: 80000
-            }
-        }
-    });
-});
-
-Meteor.publish('mymonitors', function () {
+Meteor.publish('monitors', function () {
     return Monitors.find({
         'incoming': {
             $exists: true

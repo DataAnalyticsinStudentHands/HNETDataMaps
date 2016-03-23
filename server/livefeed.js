@@ -51,29 +51,32 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                     subObj.site = e.site;
                     subObj.epoch = e._id;
                     var subTypes = e.subTypes;
-                    var aggrSubTypes = {}; //hold subTypes
+                    var aggrSubTypes = {}; //hold aggregated data
                     for (var i = 0; i < subTypes.length; i++) {
                         for (var subType in subTypes[i]) {
                             if (subTypes[i].hasOwnProperty(subType)) {
                                 var data = subTypes[i][subType];
-                                var newkey;
                                 var numValid = 1;
+                                var newkey;
+                                if (data[0].val == '') { //if flag is not existing, put 1 as default, need to ask Jim?
+                                    data[0].val = 1;
+                                }
                                 if (data[0].val !== 1) { //if flag is not 1 (valid) don't increase numValid
                                     numValid = 0;
                                 }
                                 var j;
 
-                                if (subType.indexOf('Wind') >= 0) { //special calculation for wind data
+                                if (subType.indexOf('RMY') >= 0) { //special calculation for wind data
                                     //get windDir and windSpd
                                     var windDir, windSpd;
                                     for (j = 1; j < data.length; j++) {
-                                        if (data[j].val === '') {
+                                        if (data[j].val === '') { //taking care of empty data values
                                             numValid = 0;
-                                        } //need to ask Jimmy about data points without flag (old data)
-                                        if (data[j].metric === 'Direction') {
+                                        }
+                                        if (data[j].metric === 'WD') {
                                             windDir = data[j].val;
                                         }
-                                        if (data[j].metric === 'Speed') {
+                                        if (data[j].metric === 'WS') {
                                             windSpd = data[j].val;
                                         }
                                     }
@@ -82,7 +85,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                     var windEast = Math.sin(windDir / 180 * Math.PI) * windSpd;
 
                                     //Aggregate data points
-                                    newkey = subType + '_' + 'Wind';
+                                    newkey = subType + '_' + 'RMY';
                                     if (!aggrSubTypes[newkey]) {
                                         aggrSubTypes[newkey] = {
                                             'sumWindNord': windNord,
@@ -92,10 +95,10 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             'numValid': numValid
                                         };
                                     } else {
-                                        aggrSubTypes[newkey].numValid += numValid;
-                                        aggrSubTypes[newkey].sumWindNord += windNord; //holds sum until end
-                                        aggrSubTypes[newkey].sumWindEast += windEast;
-                                        if (aggrSubTypes[newkey].numValid !== 0) {
+                                        if (numValid !== 0) { //taking care of empty data values
+                                            aggrSubTypes[newkey].numValid += numValid;
+                                            aggrSubTypes[newkey].sumWindNord += windNord; //holds sum until end
+                                            aggrSubTypes[newkey].sumWindEast += windEast;
                                             aggrSubTypes[newkey].avgWindNord = aggrSubTypes[newkey].sumWindNord / aggrSubTypes[newkey].numValid;
                                             aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
                                         }
@@ -107,25 +110,32 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             aggrSubTypes[newkey] = {
                                                 'sum': data[j].val,
                                                 'avg': data[j].val,
-                                                'numValid': numValid
+                                                'numValid': numValid,
+                                                'Flag': data[0].val //initial flag
                                             };
                                         } else {
-                                            aggrSubTypes[newkey].numValid += numValid;
-                                            if (data[j].val !== '') {
+                                            if (data[j].val !== '') { //taking care of empty data values
+                                                aggrSubTypes[newkey].numValid += numValid;
                                                 aggrSubTypes[newkey].sum += data[j].val; //holds sum until end
-                                            }
-                                            if (aggrSubTypes[newkey].numValid !== 0) {
-                                                aggrSubTypes[newkey].avg = aggrSubTypes[newkey].sum / aggrSubTypes[newkey].numValid;
+                                                if (aggrSubTypes[newkey].numValid !== 0) {
+                                                    aggrSubTypes[newkey].avg = aggrSubTypes[newkey].sum / aggrSubTypes[newkey].numValid;
+                                                }
                                             }
                                         }
                                     }
+
+
                                 }
 
-                                logger.info('numvalid: ', numValid, 'j: ', j);
                                 
-                                if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
-                                    aggrSubTypes[newkey].Flag = 0; //should discuss how to use
-                                }
+                                logger.info('aggrSubTypes[newkey].numValid ' , aggrSubTypes[newkey].numValid);
+                                aggrSubTypes[newkey].Flag = 1; //set default flag to 1
+                                //dealing with Flags
+                                //if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
+                                //      aggrSubTypes[newkey].Flag = 0; //should discuss how to use
+                                //}
+
+
                             }
                         }
                     }
@@ -142,46 +152,46 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
                             var obj = aggrSubTypes[aggr];
 
-                            if (measurement === 'Wind') { //special treatment for wind measurements 
-                                if (!newaggr[instrument].Direction) {
-                                    newaggr[instrument].Direction = [];
+                            if (measurement === 'RMY') { //special treatment for wind measurements 
+                                if (!newaggr[instrument].WD) {
+                                    newaggr[instrument].WD = [];
                                 }
-                                if (!newaggr[instrument].Speed) {
-                                    newaggr[instrument].Speed = [];
+                                if (!newaggr[instrument].WS) {
+                                    newaggr[instrument].WS = [];
                                 }
                                 var windDirAvg = (Math.atan2(obj.avgWindEast, obj.avgWindNord) / Math.PI * 180 + 360) % 360;
                                 var windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
 
-                                newaggr[instrument].Direction.push({
+                                newaggr[instrument].WD.push({
                                     metric: 'sum',
                                     val: 'Nan'
                                 });
-                                newaggr[instrument].Direction.push({
+                                newaggr[instrument].WD.push({
                                     metric: 'avg',
                                     val: windDirAvg
                                 });
-                                newaggr[instrument].Direction.push({
+                                newaggr[instrument].WD.push({
                                     metric: 'numValid',
                                     val: obj.numValid
                                 });
-                                newaggr[instrument].Direction.push({
+                                newaggr[instrument].WD.push({
                                     metric: 'Flag',
                                     val: obj.Flag
                                 });
 
-                                newaggr[instrument].Speed.push({
+                                newaggr[instrument].WS.push({
                                     metric: 'sum',
                                     val: 'Nan'
                                 });
-                                newaggr[instrument].Speed.push({
+                                newaggr[instrument].WS.push({
                                     metric: 'avg',
                                     val: windSpdAvg
                                 });
-                                newaggr[instrument].Speed.push({
+                                newaggr[instrument].WS.push({
                                     metric: 'numValid',
                                     val: obj.numValid
                                 });
-                                newaggr[instrument].Speed.push({
+                                newaggr[instrument].WS.push({
                                     metric: 'Flag',
                                     val: obj.Flag
                                 });
@@ -231,12 +241,15 @@ var makeObj = function (keys) {
     var metron = [];
     for (var key in keys) {
         if (keys.hasOwnProperty(key)) {
-            var subKeys = key.split('_');
+            //Fix for wrong headers _Wind
+            var newKey = key;
+            if (key.indexOf('_Wind') >= 0) {
+                newKey = key.replace('_Wind', '');
+            }
+            var subKeys = newKey.split('_'); //split each column header
             if (subKeys.length > 1) { //skipping 'TheTime'
-                var alphaSite = subKeys[0] + '_' + subKeys[1];
-                var metric = subKeys[subKeys.length - 1]; //i.e. conc., direction, etc.
-                var metrized = key.replace(alphaSite + '_', '');
-                metron = metrized.replace('_' + metric, ''); //wind, O3, etc.
+                metron = subKeys[2]; //instrument i.e. wind, O3, etc.
+                var metric = subKeys[3]; //
                 var val = keys[key];
                 if (!obj.subTypes[metron]) {
                     obj.subTypes[metron] = [{
@@ -343,7 +356,7 @@ Meteor.methods({
     }
 });
 
-var liveWatcher = chokidar.watch('/hnet/incoming/2015', {
+var liveWatcher = chokidar.watch('/hnet/incoming/2016', {
     ignored: /[\/\\]\./,
     ignoreInitial: true,
     usePolling: true,
@@ -366,5 +379,5 @@ liveWatcher
         logger.error('Error happened', error);
     })
     .on('ready', function () {
-        logger.info('Ready for changes in /hnet/incoming/2015/.');
+        logger.info('Ready for changes in /hnet/incoming/2016/.');
     });

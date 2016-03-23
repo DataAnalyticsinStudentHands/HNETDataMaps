@@ -16,7 +16,7 @@ On Mac OS or Linux:
 
 `curl https://install.meteor.com/ | sh`
 
-* Data Folder: It expects a certain data folder structure. `/hnet/incoming/2015` + `/hnet/outgoing/2015` should exists.
+* Data Folder: It expects a certain data folder structure. `/hnet/incoming/2016` + `/hnet/outgoing/2016` should exist.
 
 ## Testing in local development environment
 
