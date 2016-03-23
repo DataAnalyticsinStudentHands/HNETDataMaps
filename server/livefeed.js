@@ -58,6 +58,9 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 var data = subTypes[i][subType];
                                 var numValid = 1;
                                 var newkey;
+                                if (data[0].val == '') { //if flag is not existing, put 1 as default, need to ask Jim?
+                                    data[0].val = 1;
+                                }
                                 if (data[0].val !== 1) { //if flag is not 1 (valid) don't increase numValid
                                     numValid = 0;
                                 }
@@ -70,10 +73,10 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                         if (data[j].val === '') { //taking care of empty data values
                                             numValid = 0;
                                         }
-                                        if (data[j].metric === 'Direction') {
+                                        if (data[j].metric === 'WD') {
                                             windDir = data[j].val;
                                         }
-                                        if (data[j].metric === 'Speed') {
+                                        if (data[j].metric === 'WS') {
                                             windSpd = data[j].val;
                                         }
                                     }
@@ -108,7 +111,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                                 'sum': data[j].val,
                                                 'avg': data[j].val,
                                                 'numValid': numValid,
-                                                'Flag': 1
+                                                'Flag': data[0].val //initial flag
                                             };
                                         } else {
                                             if (data[j].val !== '') { //taking care of empty data values
@@ -124,8 +127,8 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
                                 }
 
-                                //logger.info('for: ', aggrSubTypes[newkey]);
-                                //logger.info('j for ' , subType, ': ', j);
+                                
+                                logger.info('aggrSubTypes[newkey].numValid ' , aggrSubTypes[newkey].numValid);
                                 aggrSubTypes[newkey].Flag = 1; //set default flag to 1
                                 //dealing with Flags
                                 //if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
@@ -150,45 +153,45 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                             var obj = aggrSubTypes[aggr];
 
                             if (measurement === 'RMY') { //special treatment for wind measurements 
-                                if (!newaggr[instrument].Direction) {
-                                    newaggr[instrument].Direction = [];
+                                if (!newaggr[instrument].WD) {
+                                    newaggr[instrument].WD = [];
                                 }
-                                if (!newaggr[instrument].Speed) {
-                                    newaggr[instrument].Speed = [];
+                                if (!newaggr[instrument].WS) {
+                                    newaggr[instrument].WS = [];
                                 }
                                 var windDirAvg = (Math.atan2(obj.avgWindEast, obj.avgWindNord) / Math.PI * 180 + 360) % 360;
                                 var windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
 
-                                newaggr[instrument].Direction.push({
+                                newaggr[instrument].WD.push({
                                     metric: 'sum',
                                     val: 'Nan'
                                 });
-                                newaggr[instrument].Direction.push({
+                                newaggr[instrument].WD.push({
                                     metric: 'avg',
                                     val: windDirAvg
                                 });
-                                newaggr[instrument].Direction.push({
+                                newaggr[instrument].WD.push({
                                     metric: 'numValid',
                                     val: obj.numValid
                                 });
-                                newaggr[instrument].Direction.push({
+                                newaggr[instrument].WD.push({
                                     metric: 'Flag',
                                     val: obj.Flag
                                 });
 
-                                newaggr[instrument].Speed.push({
+                                newaggr[instrument].WS.push({
                                     metric: 'sum',
                                     val: 'Nan'
                                 });
-                                newaggr[instrument].Speed.push({
+                                newaggr[instrument].WS.push({
                                     metric: 'avg',
                                     val: windSpdAvg
                                 });
-                                newaggr[instrument].Speed.push({
+                                newaggr[instrument].WS.push({
                                     metric: 'numValid',
                                     val: obj.numValid
                                 });
-                                newaggr[instrument].Speed.push({
+                                newaggr[instrument].WS.push({
                                     metric: 'Flag',
                                     val: obj.Flag
                                 });
