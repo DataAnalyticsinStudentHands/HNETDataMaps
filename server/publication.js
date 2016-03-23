@@ -272,17 +272,8 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
     );
 });
 
-Meteor.publish('monitors', function (latLng) {
+Meteor.publish('monitors', function () {
     return Monitors.find({
-        'loc': {
-            $near: {
-                $geometry: {
-                    type: 'Point',
-                    coordinates: latLng
-                },
-                $maxDistance: 80000
-            }
-        },
         'incoming': {
             $exists: true
         }

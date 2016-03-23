@@ -51,15 +51,13 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                     subObj.site = e.site;
                     subObj.epoch = e._id;
                     var subTypes = e.subTypes;
-                    
-                    var aggrSubTypes = {}; //hold subTypes
+                    var aggrSubTypes = {}; //hold aggregated data
                     for (var i = 0; i < subTypes.length; i++) {
                         for (var subType in subTypes[i]) {
                             if (subTypes[i].hasOwnProperty(subType)) {
                                 var data = subTypes[i][subType];
-                                //logger.info("data for subtype: ", subType, data);
-                                var newkey;
                                 var numValid = 1;
+                                var newkey;
                                 if (data[0].val !== 1) { //if flag is not 1 (valid) don't increase numValid
                                     numValid = 0;
                                 }
@@ -69,9 +67,9 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                     //get windDir and windSpd
                                     var windDir, windSpd;
                                     for (j = 1; j < data.length; j++) {
-                                        if (data[j].val === '') {
+                                        if (data[j].val === '') { //taking care of empty data values
                                             numValid = 0;
-                                        } //need to ask Jimmy about data points without flag (old data)
+                                        }
                                         if (data[j].metric === 'Direction') {
                                             windDir = data[j].val;
                                         }
@@ -94,10 +92,10 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             'numValid': numValid
                                         };
                                     } else {
-                                        aggrSubTypes[newkey].numValid += numValid;
-                                        aggrSubTypes[newkey].sumWindNord += windNord; //holds sum until end
-                                        aggrSubTypes[newkey].sumWindEast += windEast;
-                                        if (aggrSubTypes[newkey].numValid !== 0) {
+                                        if (numValid !== 0) { //taking care of empty data values
+                                            aggrSubTypes[newkey].numValid += numValid;
+                                            aggrSubTypes[newkey].sumWindNord += windNord; //holds sum until end
+                                            aggrSubTypes[newkey].sumWindEast += windEast;
                                             aggrSubTypes[newkey].avgWindNord = aggrSubTypes[newkey].sumWindNord / aggrSubTypes[newkey].numValid;
                                             aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
                                         }
@@ -113,28 +111,28 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                                 'Flag': 1
                                             };
                                         } else {
-                                            aggrSubTypes[newkey].numValid += numValid;
-                                            if (data[j].val !== '') {
+                                            if (data[j].val !== '') { //taking care of empty data values
+                                                aggrSubTypes[newkey].numValid += numValid;
                                                 aggrSubTypes[newkey].sum += data[j].val; //holds sum until end
-                                            }
-                                            if (aggrSubTypes[newkey].numValid !== 0) {
-                                                aggrSubTypes[newkey].avg = aggrSubTypes[newkey].sum / aggrSubTypes[newkey].numValid;
+                                                if (aggrSubTypes[newkey].numValid !== 0) {
+                                                    aggrSubTypes[newkey].avg = aggrSubTypes[newkey].sum / aggrSubTypes[newkey].numValid;
+                                                }
                                             }
                                         }
                                     }
-                                    
-                                    
+
+
                                 }
-                                
-                                //logger.info('numValid for ' , subType, ': ', aggrSubTypes[newkey].numValid);
+
+                                //logger.info('for: ', aggrSubTypes[newkey]);
                                 //logger.info('j for ' , subType, ': ', j);
                                 aggrSubTypes[newkey].Flag = 1; //set default flag to 1
                                 //dealing with Flags
                                 //if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
-                                  //      aggrSubTypes[newkey].Flag = 0; //should discuss how to use
+                                //      aggrSubTypes[newkey].Flag = 0; //should discuss how to use
                                 //}
 
-                                
+
                             }
                         }
                     }
@@ -243,7 +241,7 @@ var makeObj = function (keys) {
             //Fix for wrong headers _Wind
             var newKey = key;
             if (key.indexOf('_Wind') >= 0) {
-                newKey = key.replace('_Wind','');
+                newKey = key.replace('_Wind', '');
             }
             var subKeys = newKey.split('_'); //split each column header
             if (subKeys.length > 1) { //skipping 'TheTime'
