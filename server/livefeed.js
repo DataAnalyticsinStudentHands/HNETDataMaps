@@ -126,7 +126,6 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
 
                                 }
-
                                 
                                 logger.info('aggrSubTypes[newkey].numValid ' , aggrSubTypes[newkey].numValid);
                                 aggrSubTypes[newkey].Flag = 1; //set default flag to 1
@@ -134,8 +133,6 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 //if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
                                 //      aggrSubTypes[newkey].Flag = 0; //should discuss how to use
                                 //}
-
-
                             }
                         }
                     }
@@ -334,25 +331,6 @@ Meteor.methods({
     new5minAggreg: function (siteId, startEpoch, endEpoch) {
         logger.info('Helper called 5minAgg for site: ', siteId, ' start: ', startEpoch, ' end: ', endEpoch);
         perform5minAggregat(siteId, startEpoch, endEpoch);
-    },
-    insertUpdateFlag: function (siteId, epoch, instrument, measurement, flag) {
-        //id that will receive the update
-        var id = siteId + '_' + epoch / 1000; //seconds
-        //new field
-        var insertField = 'subTypes.' + instrument + '.' + measurement.split(/[ ]+/)[0];
-        //update value
-        var qry = {};
-        qry.$push = {};
-        qry.$push[insertField] = {};
-        qry.$push[insertField].val = flag;
-        qry.$push[insertField].metric = 'Overwrite Flag';
-        qry.$push[insertField].user = 'peggy';
-        qry.$push[insertField].note = 'test';
-        AggrData.update({
-            _id: id
-        }, qry);
-
-
     }
 });
 

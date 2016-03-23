@@ -77,5 +77,24 @@ Meteor.methods({
     exportData: function (site, startEpoch, endEpoch) {
         logger.info('Helper called export for site: ', site, ' and start: ', startEpoch, ' and end: ', endEpoch);
         return exportDataAsCSV(site, startEpoch, endEpoch);
+    },
+    insertUpdateFlag: function (siteId, epoch, instrument, measurement, flag) {
+        logger.info('Helper called insert update flag: ', siteId, epoch, instrument, measurement, flag);
+        var currentUserId = Meteor.userId();
+        //id that will receive the update
+        var id = siteId + '_' + epoch / 1000; //seconds
+        //new field
+        var insertField = 'subTypes.' + instrument + '.' + measurement.split(/[ ]+/)[0];
+        //update value
+        var qry = {};
+        qry.$push = {};
+        qry.$push[insertField] = {};
+        qry.$push[insertField].val = flag;
+        qry.$push[insertField].metric = 'Overwrite Flag';
+        qry.$push[insertField].user = Meteor.user().emails[0].address;
+        qry.$push[insertField].note = 'test';
+        AggrData.update({
+            _id: id
+        }, qry);
     }
 });
