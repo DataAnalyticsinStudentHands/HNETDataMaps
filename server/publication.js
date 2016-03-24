@@ -146,9 +146,8 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
                             if (!pollData[subType][sub.metric]) {
                                 pollData[subType][sub.metric] = [];
                             }
-
                             var xy = [epoch * 1000, sub.val]; //milliseconds
-                            if (isNaN(sub.val)) {
+                            if (isNaN(sub.val) || sub.val === '') {
                                 xy = [epoch * 1000, null];
                             }
                             pollData[subType][sub.metric].push(xy);

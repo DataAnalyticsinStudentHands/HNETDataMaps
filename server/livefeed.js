@@ -58,7 +58,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 var data = subTypes[i][subType];
                                 var numValid = 1;
                                 var newkey;
-                                if (data[0].val == '') { //if flag is not existing, put 1 as default, need to ask Jim?
+                                if (data[0].val === '') { //if flag is not existing, put 1 as default, need to ask Jim?
                                     data[0].val = 1;
                                 }
                                 if (data[0].val !== 1) { //if flag is not 1 (valid) don't increase numValid
@@ -127,7 +127,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
                                 }
                                 
-                                logger.info('aggrSubTypes[newkey].numValid ' , aggrSubTypes[newkey].numValid);
+                                //logger.info('aggrSubTypes[newkey].numValid ' , aggrSubTypes[newkey].numValid);
                                 aggrSubTypes[newkey].Flag = 1; //set default flag to 1
                                 //dealing with Flags
                                 //if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
