@@ -52,13 +52,15 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                     subObj.epoch = e._id;
                     var subTypes = e.subTypes;
                     var aggrSubTypes = {}; //hold aggregated data
+
                     for (var i = 0; i < subTypes.length; i++) {
                         for (var subType in subTypes[i]) {
                             if (subTypes[i].hasOwnProperty(subType)) {
                                 var data = subTypes[i][subType];
                                 var numValid = 1;
                                 var newkey;
-                                if (data[0].val == '') { //if flag is not existing, put 1 as default, need to ask Jim?
+
+                                if (data[0].val === '') { //if flag is not existing, put 1 as default, need to ask Jim?
                                     data[0].val = 1;
                                 }
                                 if (data[0].val !== 1) { //if flag is not 1 (valid) don't increase numValid
@@ -92,7 +94,9 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             'sumWindEast': windEast,
                                             'avgWindNord': windNord,
                                             'avgWindEast': windEast,
-                                            'numValid': numValid
+                                            'numValid': numValid,
+                                            'totalCounter': 1, //initial total counter
+                                            'flagstore': [data[0].val] //store all incoming flags in case we need to evaluate
                                         };
                                     } else {
                                         if (numValid !== 0) { //taking care of empty data values
@@ -102,40 +106,42 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                             aggrSubTypes[newkey].avgWindNord = aggrSubTypes[newkey].sumWindNord / aggrSubTypes[newkey].numValid;
                                             aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
                                         }
+                                        aggrSubTypes[newkey].totalCounter += 1; //increase counter
+                                        aggrSubTypes[newkey].flagstore.push(data[0].val); //store incoming flag 
                                     }
                                 } else { //normal aggreagation for all other subTypes
                                     for (j = 1; j < data.length; j++) {
                                         newkey = subType + '_' + data[j].metric;
+
+                                        if (data[j].val === '') { //taking care of empty data values
+                                            numValid = 0;
+                                        }
                                         if (!aggrSubTypes[newkey]) {
                                             aggrSubTypes[newkey] = {
-                                                'sum': data[j].val,
-                                                'avg': data[j].val,
+                                                'sum': Number(data[j].val),
+                                                'avg': Number(data[j].val),
                                                 'numValid': numValid,
-                                                'Flag': data[0].val //initial flag
+                                                'totalCounter': 1, //initial total counter
+                                                'flagstore': [data[0].val] //store all incoming flags in case we need to evaluate
                                             };
                                         } else {
                                             if (data[j].val !== '') { //taking care of empty data values
                                                 aggrSubTypes[newkey].numValid += numValid;
-                                                aggrSubTypes[newkey].sum += data[j].val; //holds sum until end
+                                                aggrSubTypes[newkey].sum += Number(data[j].val); //holds sum until end
                                                 if (aggrSubTypes[newkey].numValid !== 0) {
                                                     aggrSubTypes[newkey].avg = aggrSubTypes[newkey].sum / aggrSubTypes[newkey].numValid;
                                                 }
                                             }
+                                            aggrSubTypes[newkey].totalCounter += 1; //increase counter
+                                            aggrSubTypes[newkey].flagstore.push(data[0].val); ///store incoming flag
                                         }
+                                        numValid = 1; //reset numvalid
                                     }
-
-
                                 }
-                                
-                                logger.info('aggrSubTypes[newkey].numValid ' , aggrSubTypes[newkey].numValid);
-                                aggrSubTypes[newkey].Flag = 1; //set default flag to 1
-                                //dealing with Flags
-                                //if ((aggrSubTypes[newkey].numValid / j) < 0.75) {
-                                //      aggrSubTypes[newkey].Flag = 0; //should discuss how to use
-                                //}
                             }
                         }
                     }
+
                     //transform aggregated data to generic data format using subtypes etc.
                     var newaggr = {};
                     for (var aggr in aggrSubTypes) {
@@ -147,7 +153,23 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 newaggr[instrument] = {};
                             }
 
-                            var obj = aggrSubTypes[aggr];
+                            var obj = aggrSubTypes[aggr]; //makes it a liitle bit easier
+
+                            //dealing with flags
+                            if ((obj.numValid / obj.totalCounter) >= 0.75) {
+                                obj.Flag = 1; //valid
+                            } else {
+                                //found out which flag was majority
+                                var counts = {};
+                                for (var k = 0; k < obj.flagstore.length; k++) {
+                                    counts[obj.flagstore[k]] = 1 + (counts[obj.flagstore[k]] || 0);
+                                }
+                                var maxObj = _.max(counts, function (obj) {
+                                    return obj;
+                                });
+                                var majorityFlag = (_.invert(counts))[maxObj];
+                                obj.Flag = majorityFlag; 
+                            }
 
                             if (measurement === 'RMY') { //special treatment for wind measurements 
                                 if (!newaggr[instrument].WD) {
@@ -158,6 +180,12 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 }
                                 var windDirAvg = (Math.atan2(obj.avgWindEast, obj.avgWindNord) / Math.PI * 180 + 360) % 360;
                                 var windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
+                                
+                                //set average to 0 for spans
+                                if (obj.Flag === 2 || obj.Flag === 3 || obj.Flag === 4 || obj.Flag === 5) {
+                                    windDirAvg = 0;
+                                    windSpdAvg = 0;
+                                }
 
                                 newaggr[instrument].WD.push({
                                     metric: 'sum',
@@ -193,6 +221,11 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                     val: obj.Flag
                                 });
                             } else { //all other measurements
+                                //set average to 0 for spans
+                                if (obj.Flag === "2" || obj.Flag === "3" || obj.Flag === "4" || obj.Flag === "5") {
+                                    obj.avg = 0;
+                                }
+                                
                                 if (!newaggr[instrument][measurement]) {
                                     newaggr[instrument][measurement] = [];
                                 }
