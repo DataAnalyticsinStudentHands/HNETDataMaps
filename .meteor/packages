@@ -6,14 +6,14 @@
 
 mdg:geolocation
 iron:router
-accounts-password
+accounts-password               # Password based authentication
 meteorhacks:npm                 # Handling of npm packages
 npm-container                   # Handling of npm packages
 momentjs:moment                 # Time calculations
 udondan:bulk-collection-update  # Collection bulk update
 useraccounts:iron-routing
 useraccounts:semantic-ui
-alanning:roles
+alanning:roles                  # Managing roles for users
 fortawesome:fontawesome
 standard-minifiers              # JS/CSS minifiers run for production mode
 meteor-base                     # Packages every Meteor app needs to have
