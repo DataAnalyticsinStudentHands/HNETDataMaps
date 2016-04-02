@@ -1,30 +1,36 @@
 <template name="nav">
     <div class="ui inverted blue top attached menu">
-        <a class="item" href="{{pathFor 'mainMap'}}">Home</a>
+        <a class="item" href="{{pathFor 'home'}}">Home</a> {{#if currentUser}}
         <a class="ui dropdown item">Sites
             <i class="dropdown icon"></i>
             <div class="menu">
                 <div class="item">
                     <a href="{{ pathFor 'site' _id='482010570'}}" style='color: black'>Clear Brook Highschool</a></div>
-                <div class="item">
-                    <a href="{{ pathFor 'site' _id='481670571'}}" style='color: black'>Clear Creek Highschool</a></div>
-                <div class="item">
-                    <a href="{{ pathFor 'site' _id='482010572'}}" style='color: black'>Clear Lake Highschool</a></div>
-                <div class="item">
-                    <a href="{{ pathFor 'site' _id='481670697'}}" style='color: black'>Coastal Center</a></div>
-                <div class="item">
-                    <a href="{{ pathFor 'site' _id='482010695'}}" style='color: black'>Moody Towers</a></div>
-                <div class="item">
-                    <a href="{{ pathFor 'site' _id='480710013'}}" style='color: black'>Smith Point</a></div>
-                <div class="item">
-                    <a href="{{ pathFor 'site' _id='482910699'}}" style='color: black'>West Liberty</a></div>
-            </div>
+    <div class="item">
+        <a href="{{ pathFor 'site' _id='481670571'}}" style='color: black'>Clear Creek Highschool</a></div>
+    <div class="item">
+        <a href="{{ pathFor 'site' _id='482010572'}}" style='color: black'>Clear Lake Highschool</a></div>
+    <div class="item">
+        <a href="{{ pathFor 'site' _id='481670697'}}" style='color: black'>Coastal Center</a></div>
+    <div class="item">
+        <a href="{{ pathFor 'site' _id='482010695'}}" style='color: black'>Moody Towers</a></div>
+    <div class="item">
+        <a href="{{ pathFor 'site' _id='480710013'}}" style='color: black'>Smith Point</a></div>
+    <div class="item">
+        <a href="{{ pathFor 'site' _id='482910699'}}" style='color: black'>West Liberty</a></div>
+    </div>
     </a>
+    {{/if}}
 
-    <a class="item" href="{{pathFor 'composite'}}">Composites</a>
+    <a class="item" href="{{pathFor 'composite'}}">Composites</a> 
+        {{#if isInRole 'admin'}}
+    <a class="item" href="{{pathFor 'testing'}}">Data Management</a> 
+        {{/if}} 
+        {{#if isInRole 'admin'}}
+    <a class="item" href="admin">Admin</a> 
+        {{/if}}
 
-    <a class="item" href="{{pathFor 'testing'}}">Admin</a>
-
+    <!-- Place for side menu - sign in etc.       -->
     <div class="right menu">
         {{> atNavButton}}
     </div>

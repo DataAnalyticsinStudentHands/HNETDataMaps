@@ -1,6 +1,0 @@
-AdminConfig = {
-  collections: {
-	Sites: {},
-	AggrData: {}
-  }
-};

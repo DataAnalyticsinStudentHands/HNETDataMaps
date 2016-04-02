@@ -131,24 +131,6 @@ Template.site.onRendered(function () {
         console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
         Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get());
 
-        Meteor.subscribe('aggregatedata5min', Router.current().params._id, startEpoch.get(), endEpoch.get(), function () {
-
-            // Find in items and observe changes
-            var items = AggrData.find().observeChanges({
-
-                // When collection changed, find #results element and publish result inside it
-                changed: function (res) {
-                    //console.log('changed: ', res);
-                    //document.getElementById("results").innerHTML = JSON.stringify(res);
-                },
-                added: function (res) {
-                    //console.log('added: ', res);
-                    //document.getElementById("results").innerHTML = JSON.stringify(res);
-                }
-            });
-        });
-
-
         var seriesOptions = {};
         Charts.remove({});
 
@@ -399,7 +381,9 @@ Template.editPoints.helpers({
     },
     numFlagsWillChange: function () {
         var newFlag = selectedFlag.get();
-        if (newFlag === null || isNaN(newFlag)) return 0;
+        if (newFlag === null || isNaN(newFlag)) {
+            return 0;
+        }
         return EditPoints.find({ 'flag.val': { $not: newFlag } }).count();
     },
     numPointsSelected: function () {
@@ -419,11 +403,13 @@ Template.registerHelper('formatDate', function (epoch) {
 });
 
 Template.site.helpers({
-    site: function () {
-        return Sites.findOne({
-            _id: Router.current().params._id
+    sitename: function () {
+        var site = Sites.findOne({
+            AQSID: Router.current().params._id
         });
+        return site["site name"];
     },
+    
     selectedDate: function () {
         return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
     },

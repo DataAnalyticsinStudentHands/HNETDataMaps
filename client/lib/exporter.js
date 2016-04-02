@@ -2,7 +2,7 @@
 DataExporter = {
     exportForTCEQ: function (siteId, startEpoch, endEpoch) {
         var self = this;
-        Meteor.subscribe('monitors');
+        Meteor.subscribe('sites');
         Meteor.call("exportData", siteId, startEpoch, endEpoch, function (error, data) {
 
             if (error) {
@@ -10,7 +10,7 @@ DataExporter = {
                 return false;
             }
 
-            var dir = Monitors.findOne({
+            var dir = Sites.findOne({
                 AQSID: siteId
             });
 
