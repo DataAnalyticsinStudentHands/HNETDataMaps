@@ -7,7 +7,6 @@
 mdg:geolocation
 iron:router
 accounts-password               # Password based authentication
-meteorhacks:npm                 # Handling of npm packages
 npm-container                   # Handling of npm packages
 momentjs:moment                 # Time calculations
 udondan:bulk-collection-update  # Collection bulk update

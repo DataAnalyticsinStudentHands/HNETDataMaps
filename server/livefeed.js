@@ -1,5 +1,4 @@
 //required packages
-var csvmodule = Meteor.npmRequire('csv');
 var fs = Meteor.npmRequire('fs');
 
 var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
@@ -168,7 +167,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                     return obj;
                                 });
                                 var majorityFlag = (_.invert(counts))[maxObj];
-                                obj.Flag = majorityFlag; 
+                                obj.Flag = majorityFlag;
                             }
 
                             if (measurement === 'RMY') { //special treatment for wind measurements 
@@ -180,7 +179,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 }
                                 var windDirAvg = (Math.atan2(obj.avgWindEast, obj.avgWindNord) / Math.PI * 180 + 360) % 360;
                                 var windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
-                                
+
                                 //set average to 0 for spans
                                 if (obj.Flag === 2 || obj.Flag === 3 || obj.Flag === 4 || obj.Flag === 5) {
                                     windDirAvg = 0;
@@ -225,7 +224,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                                 if (obj.Flag === "2" || obj.Flag === "3" || obj.Flag === "4" || obj.Flag === "5") {
                                     obj.avg = 0;
                                 }
-                                
+
                                 if (!newaggr[instrument][measurement]) {
                                     newaggr[instrument][measurement] = [];
                                 }
@@ -278,7 +277,7 @@ var makeObj = function (keys) {
             }
             var subKeys = newKey.split('_'); //split each column header
             if (subKeys.length > 1) { //skipping 'TheTime'
-                metron = subKeys[2]; //instrument i.e. wind, O3, etc.
+                metron = subKeys[2]; //instrument i.e. wind, O3, etc.               
                 var metric = subKeys[3]; //
                 var val = keys[key];
                 if (!obj.subTypes[metron]) {
@@ -307,7 +306,7 @@ var makeObj = function (keys) {
 };
 
 var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
-    //find the site information
+    //find the site information using the location of the file that is being read
     var pathArray = path.split('/');
     var parentDir = pathArray[pathArray.length - 2];
     var site = Sites.find({
@@ -348,16 +347,16 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
 var readFile = Meteor.bindEnvironment(function (path) {
 
     fs.readFile(path, 'utf-8', function (err, output) {
-        csvmodule.parse(output, {
-            auto_parse: true,
-            columns: true
-        }, function (err, parsedLines) {
-            if (err) {
-                logger.error(err);
+        Papa.parse(output, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+            complete: function (results) {
+                batchLiveDataUpsert(results.data, path);
             }
-            batchLiveDataUpsert(parsedLines, path);
         });
     });
+
 });
 
 Meteor.methods({
