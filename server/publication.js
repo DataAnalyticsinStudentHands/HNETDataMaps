@@ -1,14 +1,3 @@
-Meteor.publish('aggregatedata5min', function (site, startEpoch, endEpoch) {
-    return AggrData.find({
-        site: site
-    }, {
-        epoch: {
-            $gt: parseInt(startEpoch, 10),
-            $lt: parseInt(endEpoch, 10)
-        }
-    });
-});
-
 //aggregation of live and aggregated data to be plotted with highstock
 Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
 
@@ -271,16 +260,12 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
     );
 });
 
-Meteor.publish('monitors', function () {
-    return Monitors.find({
+Meteor.publish('sites', function () {
+    return Sites.find({
         'incoming': {
             $exists: true
         }
     });
-});
-
-Meteor.publish('sites', function () {
-    return Sites.find({});
 });
 
 Meteor.publish('userData', function () {

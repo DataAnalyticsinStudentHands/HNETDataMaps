@@ -3,7 +3,7 @@ var fs = Meteor.npmRequire('fs');
 
 var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpoch) {
 
-    var dir = Monitors.find({
+    var dir = Sites.find({
         AQSID: aqsid
     }).fetch()[0];
 
@@ -68,7 +68,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
 
         return dataObject;
     } else {
-        logger.error('Could not find dir for AQSID: ', aqsid, ' in Monitors.');
+        logger.error('Could not find dir for AQSID: ', aqsid, ' in Sites.');
     }
 
 });
@@ -79,8 +79,6 @@ Meteor.methods({
         return exportDataAsCSV(site, startEpoch, endEpoch);
     },
     insertUpdateFlag: function (siteId, epoch, instrument, measurement, flag) {
-        logger.info('Helper called insert update flag: ', siteId, epoch, instrument, measurement, flag);
-        var currentUserId = Meteor.userId();
         //id that will receive the update
         var id = siteId + '_' + epoch / 1000; //seconds
         //new field
@@ -91,7 +89,7 @@ Meteor.methods({
         qry.$push[insertField] = {};
         qry.$push[insertField].val = flag;
         qry.$push[insertField].metric = 'Overwrite Flag';
-        qry.$push[insertField].user = Meteor.user().emails[0].address;
+        qry.$push[insertField].user = Meteor.user().emails[0].address; //user is doing the edit
         qry.$push[insertField].note = 'test';
         AggrData.update({
             _id: id

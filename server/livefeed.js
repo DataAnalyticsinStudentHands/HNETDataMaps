@@ -310,7 +310,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
     //find the site information
     var pathArray = path.split('/');
     var parentDir = pathArray[pathArray.length - 2];
-    var site = Monitors.find({
+    var site = Sites.find({
         incoming: parentDir
     }).fetch()[0];
 

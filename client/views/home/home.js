@@ -1,4 +1,4 @@
-Template.mainMap.onRendered(function () {
+Template.home.onRendered(function () {
 
     var latude = 29.721; //Houston
     var lngtude = -95.3443;
@@ -7,8 +7,8 @@ Template.mainMap.onRendered(function () {
         doubleClickZoom: false
     });
     
-    Meteor.subscribe('monitors', [lngtude, latude]);
-    Monitors.find().observeChanges({
+    Meteor.subscribe('sites', [lngtude, latude]);
+    Sites.find().observeChanges({
         added: function (id, line) {
                 var marker = L.marker([line.loc.coordinates[1], line.loc.coordinates[0]], {
                     title: line['site name'] + line.AQSID
