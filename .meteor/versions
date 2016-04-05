@@ -35,8 +35,8 @@ ecmascript-runtime@0.2.8
 ejson@1.0.9
 email@1.0.10
 epaminond:nodemailer@1.4.0
+es5-shim@4.5.8
 fastclick@1.0.9
-flemay:less-autoprefixer@1.2.0
 fortawesome:fontawesome@4.5.0
 geojson-utils@1.0.6
 harrison:papa-parse@1.1.1
@@ -83,7 +83,6 @@ mongo@1.1.5
 mongo-id@1.0.2
 mongo-livedata@1.0.10
 npm-bcrypt@0.7.8_2
-npm-container@1.2.0
 npm-mongo@1.4.41
 observe-sequence@1.0.9
 ordered-dict@1.0.5

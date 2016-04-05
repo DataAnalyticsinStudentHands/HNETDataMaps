@@ -1,5 +1,5 @@
 //required packages
-var fs = Meteor.npmRequire('fs');
+var fs = Npm.require('fs');
 
 var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 

@@ -74,7 +74,9 @@ function selectedPoints(e) {
         }
     });
 
-    if (points.length === 0) return;
+    if (points.length === 0) {
+        return;
+    }
 
     EditPoints.remove({});
     for (var i = 0; i < points.length; i++) {
@@ -251,9 +253,9 @@ Template.site.onRendered(function () {
                         },
                         floor: 0
                     });
-                    for (var i = 0; i < series.length; i++) {
+                    for (var j = 0; j < series.length; j++) {
                         //put axis for each series
-                        series[i].yAxis = !(i & 1) ? 0 : 1;
+                        series[j].yAxis = !(j & 1) ? 0 : 1;
                     }
                 }
             }

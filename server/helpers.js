@@ -1,5 +1,5 @@
 //required packages
-var fs = Meteor.npmRequire('fs');
+var fs = Npm.require('fs');
 
 var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpoch) {
 

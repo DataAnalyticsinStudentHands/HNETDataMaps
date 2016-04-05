@@ -2,7 +2,7 @@
     // == Enforcing Options ===============================================    
     "curly": true, // Require {} for every new block or scope.
     "eqeqeq": true, // Require triple equals i.e. `===`.
-    "es3": true, // Enforce ECMAScript 3 specification.
+    "esversion": 6, // Enforce ECMAScript 6 specification.
     "forin": true, // Tolerate `for in` loops without `hasOwnPrototype`.
     "freeze": true, // Prohibits overwriting prototypes of native objects such as Array, Date and so on.
     "immed": true, // Require immediate invocations to be wrapped in parens e.g. `( function(){}() );`

@@ -1,5 +1,5 @@
-//required packages
-var fs = Meteor.npmRequire('fs');
+//import packages
+import fs from 'fs';
 
 var lastPeriodicReportTime = 0;
 
