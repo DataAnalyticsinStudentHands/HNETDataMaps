@@ -44,9 +44,10 @@
             </span>
         </div>
         <div class="content" style="overflow-y: auto; max-height: 500px;">
-            <table class="ui very basic compact table">
+            <table class="ui very basic compact selectable table">
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Timestamp</th>
                         <th>Value</th>
                         <th>Instrument</th>
@@ -58,6 +59,7 @@
                 <tbody>
                 {{#each points}}
                     <tr>
+                        <td><i class="close icon" data-id="{{x}}"></i></td>
                         <td>{{formatDate x}}</td>
                         <td>{{formatDataValue y}}</td>
                         <td>{{instrument}}</td>

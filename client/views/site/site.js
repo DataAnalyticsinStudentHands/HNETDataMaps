@@ -102,6 +102,26 @@ function selectedPoints(e) {
             e.points[0].series.chart.redraw();
         }
     }).modal('show');
+
+    $('#editPointsModal table tr .close').click(function (event) {
+        // Get X value stored in the data-id attribute of the button
+        var xValue = $(event.currentTarget).data('id');
+
+        // Query the local selected points db for that point, and remove it
+        // This triggers a reactive render of the EditPoints
+        EditPoints.remove({ x: xValue });
+
+        // Also remove the point from the HighCharts selection
+        // (so it doesn't change color temporarily on approval)
+        for (var i = 0; i < e.points.length; i++) {
+            var p = e.points[i];
+            if (p.x === xValue) {
+                p.select(false);
+                e.points.splice(i, 1);
+                break;
+            }
+        }
+    });
 }
 
 
