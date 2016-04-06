@@ -70,6 +70,8 @@ function selectedPoints(e) {
             selectedPoint.site = Router.current().params._id;
             selectedPoint.instrument = point.series.chart.title.textStr;
             selectedPoint.measurement = point.series.name;
+            selectedPoint.id = point.series.chart.title.textStr + '_' + point.series.name + '_' + point.x;
+            point.id = selectedPoint.id;
             points.push(selectedPoint);
         }
     });
@@ -102,6 +104,27 @@ function selectedPoints(e) {
             e.points[0].series.chart.redraw();
         }
     }).modal('show');
+
+    $('#editPointsModal table tr .close').click(function (event) {
+        // Get X value stored in the data-id attribute of the button
+        var id = $(event.currentTarget).data('id');
+        console.log(id);
+
+        // Query the local selected points db for that point, and remove it
+        // This triggers a reactive render of the EditPoints
+        EditPoints.remove({ id: id });
+
+        // Also remove the point from the HighCharts selection
+        // (so it doesn't change color temporarily on approval)
+        for (var i = 0; i < e.points.length; i++) {
+            var p = e.points[i];
+            if (p.id === id) {
+                p.select(false);
+                e.points.splice(i, 1);
+                break;
+            }
+        }
+    });
 }
 
 
