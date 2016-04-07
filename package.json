@@ -6,9 +6,38 @@
   "dependencies": {
     "ftps": "^0.4.6"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^2.7.0",
+    "eslint-config-airbnb": "^6.2.0",
+    "eslint-plugin-meteor": "^3.4.0",
+    "eslint-plugin-react": "^4.2.3"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "pretest": "npm run lint --silent"
+  },
+  "eslintConfig": {
+    "env": {
+            "browser": true,
+            "meteor": true
+    },
+    "plugins": [
+      "meteor"
+    ],
+    "extends": [
+      "airbnb/base",
+      "plugin:meteor/guide"
+    ],
+    "globals": {
+      "chokidar": true,
+      "Nodemailer": true,
+      "moment": true,
+      "logger": true,
+      "LiveData": true,
+      "Sites": true
+    },
+    "rules": {}
   },
   "repository": {
     "type": "git",
