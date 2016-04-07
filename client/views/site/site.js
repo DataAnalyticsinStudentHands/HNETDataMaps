@@ -1,27 +1,28 @@
-var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix()); // 24 hours ago - seconds
-var endEpoch = new ReactiveVar(moment().unix());
-var selectedFlag = new ReactiveVar(null);
+// 24 hours ago - seconds
+this.startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
+this.endEpoch = new ReactiveVar(moment().unix());
+this.selectedFlag = new ReactiveVar(null);
 
 Meteor.subscribe('sites');
 
 Highcharts.setOptions({
   global: {
-    useUTC: false
-  }
+    useUTC: false,
+  },
 });
 
 // pass null as collection name, it will create
 // local only collection
 var EditPoints = new Mongo.Collection(null);
 
-var unitsHash = {
+const unitsHash = {
   conc: 'pbbv',
   WS: 'miles/hour',
   WD: 'degree',
   Temp: 'degree C',
   RH: 'percent',
   MassConc: 'ugm3',
-  AmbTemp: 'C'
+  AmbTemp: 'C',
 };
 
 // placeholder for dynamic chart containers
@@ -31,11 +32,11 @@ var Charts = new Meteor.Collection(null); // This will store our synths
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
-  var selection = [];
+  const selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function (series) {
+  Highcharts.each(this.series, function(series) {
     if (series.options.allowPointSelect === 'true') {
-      Highcharts.each(series.points, function (point) {
+      Highcharts.each(series.points, function(point) {
         // Uncomment to always select new points instead of adding points to selection
         // point.select(false)
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
@@ -59,11 +60,11 @@ function selectPointsByDrag(e) {
  * The handler for a custom event, fired from selection event
  */
 function selectedPoints(e) {
-  var points = [];
+  const points = [];
 
-  _.each(e.points, function (point) {
+  _.each(e.points, function(point) {
     if (point.series.type === 'scatter') {
-      var selectedPoint = {};
+      const selectedPoint = {};
       selectedPoint.x = point.x;
       selectedPoint.y = point.y;
       selectedPoint.flag = flagsHash[point.name];
@@ -79,32 +80,32 @@ function selectedPoints(e) {
   }
 
   EditPoints.remove({});
-  for (var i = 0; i < points.length; i++) {
+  for (let i = 0; i < points.length; i++) {
     EditPoints.insert(points[i]);
   }
 
   $('.ui.dropdown').dropdown('clear');
 
   $('#editPointsModal').modal({
-    onDeny: function () {
+    onDeny() {
       // do nothing
     },
-    onApprove: function () {
+    onApprove() {
       // update the edited points with the selected flag on the server
-      var newFlagVal = flagsHash[selectedFlag.get()].val;
+      const newFlagVal = flagsHash[selectedFlag.get()].val;
       var updatedPoints = EditPoints.find({});
-      updatedPoints.forEach(function (point) {
+      updatedPoints.forEach(function(point) {
         Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
       });
       // Update local point color to reflect new flag
-      _.each(e.points, function (point) {
+      _.each(e.points, function(point) {
         point.update({
           color: flagsHash[selectedFlag.get()].color
         }, false);
       });
       // Redraw chart
       e.points[0].series.chart.redraw();
-    }
+    },
   }).modal('show');
 }
 
@@ -113,25 +114,16 @@ function selectedPoints(e) {
  * On click, unselect all points
  */
 function unselectByClick() {
-  var points = this.getSelectedPoints();
+  const points = this.getSelectedPoints();
   if (points.length > 0) {
-    Highcharts.each(points, function (point) {
+    Highcharts.each(points, function(point) {
       point.select(false);
     });
   }
 }
 
-// checking autorun
-var autoCounter = 1;
-
-Template.site.onRendered(function () {
-
-  Tracker.autorun(function () {
-    // add notes to documents?
-    // need to figure out better management of Tracker.autorun - it runs too often
-
-    autoCounter += 1;
-    console.log('auto counter:', autoCounter);
+Template.site.onRendered(function() {
+  Tracker.autorun(function() {
     console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
     Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get());
 
@@ -139,14 +131,14 @@ Template.site.onRendered(function () {
     Charts.remove({});
 
     var allSeries = DataSeries.find({}).fetch();
-    _.each(allSeries, function (data) {
+    _.each(allSeries, function(data) {
       // console.log('data: ', data);
       // Create data series for plotting
       if (!seriesOptions[data.subType]) {
         seriesOptions[data.subType] = [];
       }
       // console.log('data: ', data);
-      _.each(data.datapoints, function (datapoints, i) {
+      _.each(data.datapoints, function(datapoints, i) {
         if (data.chartType === 'line') {
           seriesOptions[data.subType].push({
             type: data.chartType,
@@ -173,51 +165,51 @@ Template.site.onRendered(function () {
     });
 
     console.log('seriesOptions: ', seriesOptions);
-    _.each(seriesOptions, function (series, id) {
+    _.each(seriesOptions, function(series, id) {
       Charts.insert({
         id: id
       });
-      var yAxis = [];
+      const yAxis = [];
       if (id.indexOf('RMY') >= 0) { // special treatment for wind instruments
         yAxis.push({ // Primary yAxis
           labels: {
             format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
             style: {
-              color: Highcharts.getOptions().colors[0]
-            }
+              color: Highcharts.getOptions().colors[0],
+            },
           },
           title: {
             text: series[0].name.split(/[ ]+/)[0],
             style: {
-              color: Highcharts.getOptions().colors[0]
-            }
+              color: Highcharts.getOptions().colors[0],
+            },
           },
           opposite: false,
           floor: 0,
           ceiling: 360,
-          tickInterval: 90
+          tickInterval: 90,
         });
         if (series.length > 2) {
           yAxis.push({ // Secondary yAxis
             title: {
               text: series[1].name.split(/[ ]+/)[0],
               style: {
-                color: Highcharts.getOptions().colors[1]
-              }
+                color: Highcharts.getOptions().colors[1],
+              },
             },
             labels: {
               format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
               style: {
-                color: Highcharts.getOptions().colors[1]
-              }
+                color: Highcharts.getOptions().colors[1],
+              },
             },
             floor: 0,
             // NOTE: there are some misreads with the sensor, and so
             // it occasionally reports wind speeds upwards of 250mph.
             ceiling: 20,
-            tickInterval: 5
+            tickInterval: 5,
           });
-          for (var i = 0; i < series.length; i++) {
+          for (let i = 0; i < series.length; i++) {
             // put axis for each series
             series[i].yAxis = !(i & 1) ? 0 : 1;
           }
@@ -227,33 +219,33 @@ Template.site.onRendered(function () {
           labels: {
             format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
             style: {
-              color: Highcharts.getOptions().colors[0]
-            }
+              color: Highcharts.getOptions().colors[0],
+            },
           },
           title: {
             text: series[0].name.split(/[ ]+/)[0],
             style: {
-              color: Highcharts.getOptions().colors[0]
-            }
+              color: Highcharts.getOptions().colors[0],
+            },
           },
           opposite: false,
-          floor: 0
+          floor: 0,
         });
         if (series.length > 2) {
           yAxis.push({ // Secondary yAxis
             title: {
               text: series[1].name.split(/[ ]+/)[0],
               style: {
-                color: Highcharts.getOptions().colors[1]
-              }
+                color: Highcharts.getOptions().colors[1],
+              },
             },
             labels: {
               format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
               style: {
-                color: Highcharts.getOptions().colors[1]
-              }
+                color: Highcharts.getOptions().colors[1],
+              },
             },
-            floor: 0
+            floor: 0,
           });
           for (var j = 0; j < series.length; j++) {
             // put axis for each series
@@ -267,31 +259,31 @@ Template.site.onRendered(function () {
     function createCharts(chartName, subType, yAxis, seriesOptions) {
       $('#' + chartName).highcharts('StockChart', {
         exporting: {
-          enabled: true
+          enabled: true,
         },
         chart: {
           events: {
             selection: selectPointsByDrag,
             selectedpoints: selectedPoints,
-            click: unselectByClick
+            click: unselectByClick,
           },
-          zoomType: 'xy'
+          zoomType: 'xy',
         },
         title: {
-          text: subType
+          text: subType,
         },
         xAxis: {
           type: 'datetime',
           title: {
-            text: 'Local Time'
-          }
+            text: 'Local Time',
+          },
         },
         yAxis: yAxis,
         series: seriesOptions,
         tooltip: {
           enabled: true,
           crosshairs: [true],
-          positioner: function (labelWidth, labelHeight, point) {
+          positioner: function(labelWidth, labelHeight, point) {
             var tooltipX, tooltipY;
             if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
               tooltipX = this.chart.plotLeft;
@@ -302,20 +294,20 @@ Template.site.onRendered(function () {
             }
             return {
               x: tooltipX,
-              y: tooltipY
+              y: tooltipY,
             };
           },
-          formatter: function () {
+          formatter: function() {
             var s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
             s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
 
 
             return s;
           },
-          shared: false
+          shared: false,
         },
         credits: {
-          enabled: false
+          enabled: false,
         },
         rangeSelector: {
           inputEnabled: false,
@@ -326,26 +318,31 @@ Template.site.onRendered(function () {
             text: 'Hour',
             dataGrouping: {
               forced: true,
-              units: [['hour', [60]]]
+              units: [
+                ['hour', [60]]
+              ],
+            },
+          }, {
+            type: 'day',
+            count: 3,
+            text: '3 Days',
+            dataGrouping: {
+              forced: true,
+              units: [
+                ['day', [1]]
+              ],
             }
-			                                  }, {
-  type: 'day',
-  count: 3,
-  text: '3 Days',
-  dataGrouping: {
-    forced: true,
-    units: [['day', [1]]]
-  }
-			    },
-          {
+          }, {
             type: 'day',
             count: 1,
             text: '1 Day',
             dataGrouping: {
               forced: true,
-              units: [['day', [1]]]
+              units: [
+                ['day', [1]]
+              ]
             }
-			                                  }],
+          }],
           buttonTheme: {
             width: 60
           },
@@ -363,51 +360,51 @@ Template.site.onRendered(function () {
   }); // end autorun
 }); // end of onRendered
 
-Template.editPoints.onRendered(function () {
+Template.editPoints.onRendered(function() {
   // Need to call dropdown render
   this.$('.ui.dropdown').dropdown({
     // onChange: function (value, text, $selectedItem) {
-    onChange: function (value) {
+    onChange: function(value) {
       selectedFlag.set(parseInt(value));
     }
   });
 });
 
 Template.editPoints.helpers({
-  points: function () {
+  points: function() {
     return EditPoints.find({});
   },
-  availableFlags: function () {
+  availableFlags: function() {
     return _.where(flagsHash, {
       selectable: true
     });
   },
-  flagSelected: function () {
+  flagSelected: function() {
     return flagsHash[selectedFlag.get()];
   },
-  numFlagsWillChange: function () {
+  numFlagsWillChange: function() {
     var newFlag = selectedFlag.get();
     if (newFlag === null || isNaN(newFlag)) {
       return 0;
     }
     return EditPoints.find({
       'flag.val': {
-        $not: newFlag
-      }
+        $not: newFlag,
+      },
     }).count();
   },
-  numPointsSelected: function () {
+  numPointsSelected() {
     return EditPoints.find().count();
   },
-  formatDataValue: function (val) {
+  formatDataValue(val) {
     return val.toFixed(3);
   },
-  isValid: function () {
-    var validFlagSet = _.pluck(_.where(flagsHash, {
-      selectable: true
+  isValid() {
+    const validFlagSet = _.pluck(_.where(flagsHash, {
+      selectable: true,
     }), 'val');
     return _.contains(validFlagSet, selectedFlag.get());
-  }
+  },
 });
 
 Template.registerHelper('formatDate', function (epoch) {
@@ -415,27 +412,27 @@ Template.registerHelper('formatDate', function (epoch) {
 });
 
 Template.site.helpers({
-  sitename: function () {
-    var site = Sites.findOne({
-      AQSID: Router.current().params._id
+  sitename() {
+    const site = Sites.findOne({
+      AQSID: Router.current().params._id,
     });
     return site['site name'];
   },
 
-  selectedDate: function () {
+  selectedDate() {
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
   },
-  charts: function () {
+  charts() {
     return Charts.find(); // This gives data to the html below
-  }
+  },
 });
 
 Template.site.events({
-  'change #datepicker': function (event) {
+  'change #datepicker'(event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
     endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix()); // always to current?
   },
-  'click #createPush': function () {
+  'click #createPush'() {
     DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
-  }
+  },
 });
