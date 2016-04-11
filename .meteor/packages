@@ -14,7 +14,6 @@ tracker
 # standard libraries
 jquery
 underscore
-less
 
 # ui
 blaze-html-templates
@@ -25,7 +24,7 @@ reactive-dict
 fortawesome:fontawesome         # fontawesome packaged for Meteor
 makalu:better-dateinput-polyfill # Date picker
 semantic:ui                     # Semantic UI
-twbs:bootstrap                  # Bootstrap UI
+flemay:less-autoprefixer				# LESS compiler for Semantic UI
 
 # data
 mongo                           # The database Meteor supports right now
@@ -42,7 +41,6 @@ accounts-password               # Password based authentication
 useraccounts:iron-routing
 useraccounts:semantic-ui
 alanning:roles                  # Managing roles for users
-yogiben:admin                   # Admin Management UI
 standard-minifier-css
 standard-minifier-js
 
@@ -70,15 +68,5 @@ meteorhacks:kadira              # Remote performance watch
 #reload
 #random
 #ejson
-
-
-
-
-
-
-
-
-
-
-
-
+nemo64:bootstrap
+yogiben:admin
