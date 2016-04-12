@@ -45,7 +45,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
       function (err, result) {
         _.each(result, function (e) {
           const subObj = {};
-          subObj._id = '${e.site}_${e._id}';
+          subObj._id = `${e.site}_${e._id}`;
           subObj.site = e.site;
           subObj.epoch = e._id;
           const subTypes = e.subTypes;
@@ -257,7 +257,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
         });
       },
       function (error) {
-        Meteor._debug('error during aggregation: ${error}');
+        Meteor._debug(`error during aggregation: ${error}`);
       }
     )
   );
@@ -323,7 +323,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
       singleObj.theTime = parsedLines[k].TheTime;
       singleObj.site = site.AQSID;
       singleObj.file = pathArray[pathArray.length - 1];
-      singleObj._id = '${site.AQSID} _  ${epoch}';
+      singleObj._id = `${site.AQSID} _  ${epoch}`;
       allObjects.push(singleObj);
     }
 
@@ -334,8 +334,8 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
         const nowEpoch = moment().unix();
         const agoEpoch = moment.unix(nowEpoch).subtract(24, 'hours').unix();
 
-        logger.info('LiveData updated for : ${site.AQSID}');
-        logger.ingo('Calling aggr for epochs of the last 24 hours: ${agoEpoch} - ${nowEpoch}');
+        logger.info(`LiveData updated for : ${site.AQSID}`);
+        logger.info(`Calling aggr for epochs of the last 24 hours: ${agoEpoch} - ${nowEpoch}`);
         perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
       },
     });
@@ -359,7 +359,7 @@ const readFile = Meteor.bindEnvironment(function (path) {
 
 Meteor.methods({
   new5minAggreg(siteId, startEpoch, endEpoch) {
-    logger.info('Helper called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}');
+    logger.info(`Helper called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}`);
     perform5minAggregat(siteId, startEpoch, endEpoch);
   },
 });
