@@ -1,6 +1,6 @@
 # DataMaps
 
-This is a development repository. 
+This is a development repository.
 
 ## Prerequisites
 
@@ -10,13 +10,18 @@ On Mac OS install via [homebrew](http://brew.sh/):
 
 `brew install mongodb`
 
-* [meteor](https://www.meteor.com/install) 
+* [meteor](https://www.meteor.com/install)
 
 On Mac OS or Linux:
 
 `curl https://install.meteor.com/ | sh`
 
 * Data Folder: It expects a certain data folder structure. `/hnet/incoming/2016` + `/hnet/outgoing/2016` should exist.
+
+
+## Get stared
+
+* Run `npm install`
 
 ## Testing in local development environment
 

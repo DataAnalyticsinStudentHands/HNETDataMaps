@@ -1,16 +1,15 @@
 <template name="site">
 
-    <div class="ui message">
-        <div class="header">
-            Site: {{sitename}}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Site: {{sitename}}</h3>
         </div>
-        <div class="inline field">
-            <label>Select Date: </label>
-            <input type="date" value="{{selectedDate}}" id="datepicker">
-            <button class="ui button" id="createPush">
-                Create Push File
-            </button>
-
+        <div class="panel-body">
+          <h5>Select Date: </h5>
+          <input type="date" value="{{selectedDate}}" id="datepicker">
+          <button class="btn btn-primary" id="createPush">
+              Create Push File
+          </button>
         </div>
     </div>
 
@@ -23,12 +22,12 @@
 
 <!-- Modal for editing points -->
 <template name="editPoints">
-  <div>
-    <div class="ui modal" id="editPointsModal">
-        <div class="header">
-            <i class="flag icon"></i>
-            <span>Edit Flags</span>
-            <span style="float: right; font-size: 0.8em; font-weight: normal;">
+    <div>
+        <div class="ui modal" id="editPointsModal">
+            <div class="header">
+                <i class="flag icon"></i>
+                <span>Edit Flags</span>
+                <span style="float: right; font-size: 0.8em; font-weight: normal;">
                 <span style="margin-right: 1em;">New flag:</span>
                 <div class="ui selection dropdown" id="drop" style="padding: 0.4em 2em 0.4em 1em; min-height: 1.8em;">
                     <input type="hidden" name="flag">
@@ -42,114 +41,49 @@
                         {{/each}}
                     </div>
                 </div>
-            </span>
-        </div>
-        <div class="content" style="overflow-y: auto; max-height: 500px;">
-            <table class="ui very basic compact selectable table">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Timestamp</th>
-                        <th>Value</th>
-                        <th>Instrument</th>
-                        <th>Measurement</th>
-                        <th>Current Flag</th>
-                        <th>New Flag</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {{#each points}}
-                    <tr>
-                        <td><i class="close icon" data-id="{{id}}"></i></td>
-                        <td>{{formatDate x}}</td>
-                        <td>{{formatDataValue y}}</td>
-                        <td>{{instrument}}</td>
-                        <td>{{measurement}}</td>
-                        <td>{{> flagLabel flag}}</td>
-                        <td>{{> flagLabel flagSelected}}</td>
-                    </tr>
-                {{/each}}
-                </tbody>
-            </table>
-        </div>
-        <div class="actions">
-            <span>Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.</span>
-            <div class="ui deny labeled icon button">
-                <i class="remove icon"></i> Cancel
+                </span>
             </div>
-            <div class="ui primary approve labeled icon button{{#unless isValid}} disabled{{/unless}}">
-                <i class="checkmark icon"></i> Submit
-            </div>
-        </div>
-    </div>
-    </div>
-</template>
-
-<!-- Modal for editing points -->
-<template name="neweditPoints">
-  <div>
-    <div class="ui modal" id="editPointsModal">
-        <div class="header">
-            <i class="flag icon"></i>
-            <span>Edit Flags</span>
-            <span style="float: right; font-size: 0.8em; font-weight: normal;">
-                <span style="margin-right: 1em;">New flag:</span>
-                <div class="ui selection dropdown" id="drop" style="padding: 0.4em 2em 0.4em 1em; min-height: 1.8em;">
-                    <input type="hidden" name="flag">
-                    <div class="default text">Select one...</div>
-                    <i class="dropdown icon"></i>
-                    <div class="menu">
-                        {{#each availableFlags}}
-                        <div class="item" data-value="{{val}}">
-                            {{> flagLabel}}
-                        </div>
+            <div class="content" style="overflow-y: auto; max-height: 500px;">
+                <table class="ui very basic compact selectable table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Timestamp</th>
+                            <th>Value</th>
+                            <th>Instrument</th>
+                            <th>Measurement</th>
+                            <th>Current Flag</th>
+                            <th>New Flag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each points}}
+                        <tr>
+                            <td><i class="close icon" data-id="{{id}}"></i></td>
+                            <td>{{formatDate x}}</td>
+                            <td>{{formatDataValue y}}</td>
+                            <td>{{instrument}}</td>
+                            <td>{{measurement}}</td>
+                            <td>{{> flagLabel flag}}</td>
+                            <td>{{> flagLabel flagSelected}}</td>
+                        </tr>
                         {{/each}}
-                    </div>
+                    </tbody>
+                </table>
+            </div>
+            <div class="actions">
+                <span>Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.</span>
+                <div class="ui deny labeled icon button">
+                    <i class="remove icon"></i> Cancel
                 </div>
-            </span>
-        </div>
-        <div class="content" style="overflow-y: auto; max-height: 500px;">
-            <table class="ui very basic compact selectable table">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Timestamp</th>
-                        <th>Value</th>
-                        <th>Instrument</th>
-                        <th>Measurement</th>
-                        <th>Current Flag</th>
-                        <th>New Flag</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {{#each points}}
-                    <tr>
-                        <td><i class="close icon" data-id="{{id}}"></i></td>
-                        <td>{{formatDate x}}</td>
-                        <td>{{formatDataValue y}}</td>
-                        <td>{{instrument}}</td>
-                        <td>{{measurement}}</td>
-                        <td>{{> flagLabel flag}}</td>
-                        <td>{{> flagLabel flagSelected}}</td>
-                    </tr>
-                {{/each}}
-                </tbody>
-            </table>
-        </div>
-        <div class="actions">
-            <span>Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.</span>
-            <div class="ui deny labeled icon button">
-                <i class="remove icon"></i> Cancel
-            </div>
-            <div class="ui primary approve labeled icon button{{#unless isValid}} disabled{{/unless}}">
-                <i class="checkmark icon"></i> Submit
+                <div class="ui primary approve labeled icon button{{#unless isValid}} disabled{{/unless}}">
+                    <i class="checkmark icon"></i> Submit
+                </div>
             </div>
         </div>
-    </div>
     </div>
 </template>
 
 <template name="flagLabel">
-    <span class="ui mini {{color}} circular label" title="{{description}}">{{label}}</span>
-    {{description}}
+    <span class="ui mini {{color}} circular label" title="{{description}}">{{label}}</span> {{description}}
 </template>

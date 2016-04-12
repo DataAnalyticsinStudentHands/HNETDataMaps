@@ -23,6 +23,7 @@ reactive-var
 reactive-dict
 fortawesome:fontawesome         # fontawesome packaged for Meteor
 makalu:better-dateinput-polyfill # Date picker
+twbs:bootstrap                  # UI package
 
 # data
 mongo                           # The database Meteor supports right now
@@ -38,6 +39,8 @@ iron:router
 accounts-password               # Password based authentication
 useraccounts:iron-routing
 alanning:roles                  # Managing roles for users
+yogiben:admin                   # Admin Interface for user/collection management
+ian:accounts-ui-bootstrap-3     # accounts UI
 standard-minifier-css
 standard-minifier-js
 
@@ -65,6 +68,3 @@ meteorhacks:kadira              # Remote performance watch
 #reload
 #random
 #ejson
-yogiben:admin
-twbs:bootstrap
-ian:accounts-ui-bootstrap-3
