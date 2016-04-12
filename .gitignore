@@ -2,11 +2,5 @@ semantic.less
 .custom.semantic.json
 theme.config.import.less
 theme.import.less
-client/lib/semantic.ui/definitions
-client/lib/semantic.ui/site
-client/lib/semantic.ui/themes
-client/lib/semantic-ui/definitions
-client/lib/semantic-ui/site
-client/lib/semantic-ui/themes
 node_modules
 npm-shrinkwrap.json

@@ -1,10 +1,9 @@
 // required packages
 const fs = Npm.require('fs');
 
-var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
+var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
   // gather all data, group by 5min epoch
-  const pipeline = [
-    {
+  const pipeline = [{
       $match: {
         $and: [{
           epoch: {
@@ -16,9 +15,9 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
         }],
       },
     },
-//        {
-//            $limit: 5 //testing only!
-//        },
+    //        {
+    //            $limit: 5 //testing only!
+    //        },
     {
       $project: {
         epoch5min: 1,
@@ -26,8 +25,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
         site: 1,
         subTypes: 1,
       },
-    },
-    {
+    }, {
       $group: {
         _id: '$epoch5min',
         site: {
@@ -42,8 +40,8 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
   LiveData.aggregate(pipeline,
     Meteor.bindEnvironment(
-      function (err, result) {
-        _.each(result, function (e) {
+      function(err, result) {
+        _.each(result, function(e) {
           const subObj = {};
           subObj._id = `${e.site}_${e._id}`;
           subObj.site = e.site;
@@ -51,25 +49,26 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
           const subTypes = e.subTypes;
           const aggrSubTypes = {}; // hold aggregated data
 
-          for (var i = 0; i < subTypes.length; i++) {
+          for (let i = 0; i < subTypes.length; i++) {
             for (var subType in subTypes[i]) {
               if (subTypes[i].hasOwnProperty(subType)) {
                 var data = subTypes[i][subType];
                 var numValid = 1;
                 var newkey;
 
-                if (data[0].val === '') { // if flag is not existing, put 1 as default, need to ask Jim?
+                // if flag is not existing, put 1 as default, need to ask Jim?
+                if (data[0].val === '') {
                   data[0].val = 1;
                 }
                 if (data[0].val !== 1) { // if flag is not 1 (valid) don't increase numValid
                   numValid = 0;
                 }
-                var j;
 
                 if (subType.indexOf('RMY') >= 0) { // special calculation for wind data
                   // get windDir and windSpd
-                  var windDir, windSpd;
-                  for (j = 1; j < data.length; j++) {
+                  let windDir;
+                  let windSpd;
+                  for (let j = 1; j < data.length; j++) {
                     if (data[j].val === '') { // taking care of empty data values
                       numValid = 0;
                     }
@@ -108,7 +107,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                     aggrSubTypes[newkey].flagstore.push(data[0].val); // store incoming flag
                   }
                 } else { // normal aggreagation for all other subTypes
-                  for (j = 1; j < data.length; j++) {
+                  for (let j = 1; j < data.length; j++) {
                     newkey = subType + '_' + data[j].metric;
 
                     if (data[j].val === '') { // taking care of empty data values
@@ -151,18 +150,19 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                 newaggr[instrument] = {};
               }
 
-              var obj = aggrSubTypes[aggr]; // makes it a liitle bit easier
+              const obj = aggrSubTypes[aggr]; // makes it a little bit easier
 
               // dealing with flags
               if ((obj.numValid / obj.totalCounter) >= 0.75) {
+                logger.info(`found total: ${obj.totalCounter} and numvalid: ${obj.numValid}`);
                 obj.Flag = 1; // valid
               } else {
                 // found out which flag was majority
-                var counts = {};
-                for (var k = 0; k < obj.flagstore.length; k++) {
+                const counts = {};
+                for (let k = 0; k < obj.flagstore.length; k++) {
                   counts[obj.flagstore[k]] = 1 + (counts[obj.flagstore[k]] || 0);
                 }
-                var maxObj = _.max(counts, function (obj) {
+                const maxObj = _.max(counts, function(obj) {
                   return obj;
                 });
                 const majorityFlag = (_.invert(counts))[maxObj];
@@ -249,21 +249,21 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
           subObj.subTypes = newaggr;
           AggrData.update({
-            _id: subObj._id,
-          },
+              _id: subObj._id,
+            },
             subObj, {
               upsert: true,
             });
         });
       },
-      function (error) {
+      function(error) {
         Meteor._debug(`error during aggregation: ${error}`);
       }
     )
   );
 };
 
-var makeObj = function (keys) {
+var makeObj = function(keys) {
   const obj = {};
   obj.subTypes = {};
   let metron = [];
@@ -304,7 +304,7 @@ var makeObj = function (keys) {
   return obj;
 };
 
-var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
+var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
   // find the site information using the location of the file that is being read
   const pathArray = path.split('/');
   const parentDir = pathArray[pathArray.length - 2];
@@ -323,13 +323,13 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
       singleObj.theTime = parsedLines[k].TheTime;
       singleObj.site = site.AQSID;
       singleObj.file = pathArray[pathArray.length - 1];
-      singleObj._id = `${site.AQSID} _  ${epoch}`;
+      singleObj._id = `${site.AQSID}_${epoch}`;
       allObjects.push(singleObj);
     }
 
     // using bulCollectionUpdate
     bulkCollectionUpdate(LiveData, allObjects, {
-      callback: function () {
+      callback: function() {
 
         const nowEpoch = moment().unix();
         const agoEpoch = moment.unix(nowEpoch).subtract(24, 'hours').unix();
@@ -343,7 +343,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
 });
 
 
-const readFile = Meteor.bindEnvironment(function (path) {
+const readFile = Meteor.bindEnvironment(function(path) {
 
   fs.readFile(path, 'utf-8', (err, output) => {
     Papa.parse(output, {

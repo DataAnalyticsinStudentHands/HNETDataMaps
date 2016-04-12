@@ -16,7 +16,10 @@ Highcharts.setOptions({
 var EditPoints = new Mongo.Collection(null);
 
 var unitsHash = {
-  conc: 'pbbv',
+  O3: 'pbbv',
+	NO: 'pbbv',
+	NO2: 'pbbv',
+	NOx: 'pbbv',
   WS: 'miles/hour',
   WD: 'degree',
   Temp: 'degree C',

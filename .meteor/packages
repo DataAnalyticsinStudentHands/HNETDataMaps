@@ -23,8 +23,6 @@ reactive-var
 reactive-dict
 fortawesome:fontawesome         # fontawesome packaged for Meteor
 makalu:better-dateinput-polyfill # Date picker
-semantic:ui                     # Semantic UI
-flemay:less-autoprefixer				# LESS compiler for Semantic UI
 
 # data
 mongo                           # The database Meteor supports right now
@@ -39,7 +37,6 @@ iron:router
 # accounts
 accounts-password               # Password based authentication
 useraccounts:iron-routing
-useraccounts:semantic-ui
 alanning:roles                  # Managing roles for users
 standard-minifier-css
 standard-minifier-js
@@ -68,5 +65,6 @@ meteorhacks:kadira              # Remote performance watch
 #reload
 #random
 #ejson
-nemo64:bootstrap
 yogiben:admin
+twbs:bootstrap
+ian:accounts-ui-bootstrap-3
