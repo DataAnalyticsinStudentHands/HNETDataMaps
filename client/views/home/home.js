@@ -1,7 +1,7 @@
 Template.home.onRendered(function () {
 
-  var latude = 29.721; // Houston
-  var lngtude = -95.3443;
+  const latude = 29.721; // Houston
+  const lngtude = -95.3443;
 
   var AQmap = L.map('displayMap', {
     doubleClickZoom: false
@@ -28,4 +28,3 @@ Template.home.onRendered(function () {
   L.tileLayer.provider('OpenStreetMap.DE').addTo(AQmap);
 
 });
-

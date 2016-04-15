@@ -23,7 +23,7 @@
 <!-- Modal for editing points -->
 <template name="editPoints">
 	<div class="modal fade" id="editPointsModal">
-		<div class="modal-dialog">
+		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
 				<div class="modal-header">
 
@@ -45,10 +45,8 @@
 
 					</div>
 				</div>
-				<div class="modal-body" style="max-height: calc(100vh - 210px);
-    overflow-y: auto;">
-
-					<table class="table table-condensed">
+				<div class="modal-body">
+					<table class="table">
 						<thead>
 							<tr>
 								<th></th>
@@ -63,7 +61,7 @@
 						<tbody>
 							{{#each points}}
 							<tr>
-								<td><i class="close icon" data-id="{{id}}"></i></td>
+								<td><i class="fa fa-times js-remove-point" data-id="{{id}}"></i></td>
 								<td>{{formatDate x}}</td>
 								<td>{{formatDataValue y}}</td>
 								<td>{{instrument}}</td>
@@ -78,10 +76,9 @@
 				<div class="modal-footer">
 					Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.
 					<button type="button" class="btn btn-default" aria-label="Close" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
-					<button type="button" class="btn btn-primary active {{#unless isValid}} disabled{{/unless}}"><i class="fa fa-check"></i> Submit</button>
+					<button type="submit" class="btn btn-primary active {{#unless isValid}} disabled{{/unless}}" id="btnSubmit"><i class="fa fa-check"></i> Submit</button>
 				</div>
 			</div>
-
 		</div>
 	</div>
 </template>
