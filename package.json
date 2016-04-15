@@ -36,7 +36,9 @@
       "logger": true,
       "Highcharts": true,
       "LiveData": true,
-      "Sites": true
+      "Sites": true,
+			"channelHash": true,
+			"flagsHash": true
     },
     "rules": {}
   },

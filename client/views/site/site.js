@@ -1,4 +1,4 @@
-//24 hours ago - seconds
+// 24 hours ago - seconds
 var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
 var endEpoch = new ReactiveVar(moment().unix());
 var selectedFlag = new ReactiveVar(null);
@@ -7,25 +7,25 @@ Meteor.subscribe('sites');
 
 Highcharts.setOptions({
   global: {
-    useUTC: false
-  }
+    useUTC: false,
+  },
 });
 
-//pass null as collection name, it will create
-//local only collection
+// pass null as collection name, it will create
+// local only collection
 var EditPoints = new Mongo.Collection(null);
 
-var unitsHash = {
+const unitsHash = {
   O3: 'pbbv',
-	NO: 'pbbv',
-	NO2: 'pbbv',
-	NOx: 'pbbv',
+  NO: 'pbbv',
+  NO2: 'pbbv',
+  NOx: 'pbbv',
   WS: 'miles/hour',
   WD: 'degree',
   Temp: 'degree C',
   RH: 'percent',
   MassConc: 'ugm3',
-  AmbTemp: 'C'
+  AmbTemp: 'C',
 };
 
 //placeholder for dynamic chart containers
@@ -87,13 +87,11 @@ function selectedPoints(e) {
     EditPoints.insert(points[i]);
   }
 
-  $('.ui.dropdown').dropdown('clear');
-
   $('#editPointsModal').modal({
-    onDeny: function() {
+    onDeny() {
       //do nothing
     },
-    onApprove: function() {
+    onApprove() {
       //update the edited points with the selected flag on the server
       var newFlagVal = flagsHash[selectedFlag.get()].val;
       var updatedPoints = EditPoints.find({});
@@ -140,7 +138,7 @@ function selectedPoints(e) {
  * On click, unselect all points
  */
 function unselectByClick() {
-  var points = this.getSelectedPoints();
+  const points = this.getSelectedPoints();
   if (points.length > 0) {
     Highcharts.each(points, function(point) {
       point.select(false);
@@ -167,12 +165,12 @@ Template.site.onRendered(function() {
 
     var allSeries = DataSeries.find({}).fetch();
     _.each(allSeries, function(data) {
-      //console.log('data: ', data);
-      //Create data series for plotting
+      // console.log('data: ', data);
+      // Create data series for plotting
       if (!seriesOptions[data.subType]) {
         seriesOptions[data.subType] = [];
       }
-      //console.log('data: ', data);
+      // console.log('data: ', data);
       _.each(data.datapoints, function(datapoints, i) {
         if (data.chartType === 'line') {
           seriesOptions[data.subType].push({
@@ -199,7 +197,7 @@ Template.site.onRendered(function() {
       });
     });
 
-    console.log('seriesOptions: ', seriesOptions);
+    console.log('seriesOptions: ${seriesOptions}');
     _.each(seriesOptions, function(series, id) {
       Charts.insert({
         id: id
@@ -254,36 +252,36 @@ Template.site.onRendered(function() {
           labels: {
             format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
             style: {
-              color: Highcharts.getOptions().colors[0]
-            }
+              color: Highcharts.getOptions().colors[0],
+            },
           },
           title: {
             text: series[0].name.split(/[ ]+/)[0],
             style: {
-              color: Highcharts.getOptions().colors[0]
-            }
+              color: Highcharts.getOptions().colors[0],
+            },
           },
           opposite: false,
-          floor: 0
+          floor: 0,
         });
         if (series.length > 2) {
           yAxis.push({ // Secondary yAxis
             title: {
               text: series[1].name.split(/[ ]+/)[0],
               style: {
-                color: Highcharts.getOptions().colors[1]
-              }
+                color: Highcharts.getOptions().colors[1],
+              },
             },
             labels: {
               format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
               style: {
-                color: Highcharts.getOptions().colors[1]
-              }
+                color: Highcharts.getOptions().colors[1],
+              },
             },
-            floor: 0
+            floor: 0,
           });
-          for (var i = 0; i < series.length; i++) {
-            //put axis for each series
+          for (let i = 0; i < series.length; i++) {
+            // put axis for each series
             series[i].yAxis = !(i & 1) ? 0 : 1;
           }
         }
@@ -294,32 +292,33 @@ Template.site.onRendered(function() {
     function createCharts(chartName, subType, yAxis, seriesOptions) {
       $('#' + chartName).highcharts('StockChart', {
         exporting: {
-          enabled: true
+          enabled: true,
         },
         chart: {
           events: {
             selection: selectPointsByDrag,
             selectedpoints: selectedPoints,
-            click: unselectByClick
+            click: unselectByClick,
           },
-          zoomType: 'xy'
+          zoomType: 'xy',
         },
         title: {
-          text: subType
+          text: subType,
         },
         xAxis: {
           type: 'datetime',
           title: {
-            text: 'Local Time'
-          }
+            text: 'Local Time',
+          },
         },
         yAxis: yAxis,
         series: seriesOptions,
         tooltip: {
           enabled: true,
           crosshairs: [true],
-          positioner: function(labelWidth, labelHeight, point) {
-            var tooltipX, tooltipY;
+          positioner(labelWidth, labelHeight, point) {
+            let tooltipX;
+						let tooltipY;
             if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
               tooltipX = this.chart.plotLeft;
               tooltipY = this.chart.plotTop + this.chart.plotHeight - 2 * labelHeight - 10;
@@ -332,17 +331,17 @@ Template.site.onRendered(function() {
               y: tooltipY
             };
           },
-          formatter: function() {
-            var s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
+          formatter() {
+            let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
             s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
 
 
             return s;
           },
-          shared: false
+          shared: false,
         },
         credits: {
-          enabled: false
+          enabled: false,
         },
         rangeSelector: {
           inputEnabled: false,
@@ -354,9 +353,9 @@ Template.site.onRendered(function() {
             dataGrouping: {
               forced: true,
               units: [
-                ['hour', [60]]
-              ]
-            }
+                ['hour', [60]],
+              ],
+            },
           }, {
             type: 'day',
             count: 3,
@@ -364,9 +363,9 @@ Template.site.onRendered(function() {
             dataGrouping: {
               forced: true,
               units: [
-                ['day', [1]]
-              ]
-            }
+                ['day', [1]],
+              ],
+            },
           }, {
             type: 'day',
             count: 1,
@@ -374,72 +373,69 @@ Template.site.onRendered(function() {
             dataGrouping: {
               forced: true,
               units: [
-                ['day', [1]]
-              ]
-            }
+                ['day', [1]],
+              ],
+            },
           }],
           buttonTheme: {
-            width: 60
+            width: 60,
           },
-          selected: 2
+          selected: 2,
         },
         legend: {
           enabled: true,
           align: 'right',
           layout: 'vertical',
           verticalAlign: 'top',
-          y: 100
-        }
-      }); //end of chart
+          y: 100,
+        },
+      }); // end of chart
     }
-  }); //end autorun
-}); //end of onRendered
+  }); // end autorun
+}); // end of onRendered
 
-Template.editPoints.onRendered(function() {
-  //Need to call dropdown render
-  this.$('.ui.dropdown').dropdown({
-    //onChange: function (value, text, $selectedItem) {
-    onChange: function(value) {
-      selectedFlag.set(parseInt(value));
-    }
-  });
+Template.editPoints.events({
+  'click .dropdown-menu li a'(event) {
+    event.preventDefault();
+    selectedFlag.set(parseInt($(event.currentTarget).attr('data-value')));
+  },
 });
 
 Template.editPoints.helpers({
-  points: function() {
+  points() {
     return EditPoints.find({});
   },
-  availableFlags: function() {
+  availableFlags() {
     return _.where(flagsHash, {
-      selectable: true
+      selectable: true,
     });
   },
-  flagSelected: function() {
+  flagSelected() {
     return flagsHash[selectedFlag.get()];
   },
-  numFlagsWillChange: function() {
-    var newFlag = selectedFlag.get();
+  numFlagsWillChange() {
+    const newFlag = selectedFlag.get();
     if (newFlag === null || isNaN(newFlag)) {
       return 0;
     }
     return EditPoints.find({
       'flag.val': {
-        $not: newFlag
-      }
+        $not: newFlag,
+      },
     }).count();
   },
-  numPointsSelected: function() {
+  numPointsSelected() {
     return EditPoints.find().count();
   },
-  formatDataValue: function(val) {
+  formatDataValue(val) {
     return val.toFixed(3);
   },
-  isValid: function() {
+  isValid() {
     var validFlagSet = _.pluck(_.where(flagsHash, {
-      selectable: true
+      selectable: true,
     }), 'val');
     return _.contains(validFlagSet, selectedFlag.get());
-  }
+  },
 });
 
 Template.registerHelper('formatDate', function(epoch) {
@@ -447,27 +443,26 @@ Template.registerHelper('formatDate', function(epoch) {
 });
 
 Template.site.helpers({
-  sitename: function() {
-    var site = Sites.findOne({
-      AQSID: Router.current().params._id
+  sitename() {
+    const site = Sites.findOne({
+      AQSID: Router.current().params._id,
     });
-    return site["site name"];
+    return site['site name'];
   },
-
-  selectedDate: function() {
+  selectedDate() {
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
   },
-  charts: function() {
-    return Charts.find(); //This gives data to the html below
-  }
+  charts() {
+    return Charts.find(); // This gives data to the html below
+  },
 });
 
 Template.site.events({
-  'change #datepicker': function(event) {
+  'change #datepicker' (event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix()); //always to current?
+    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix()); // always to current?
   },
-  'click #createPush': function() {
+  'click #createPush' () {
     DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
-  }
+  },
 });

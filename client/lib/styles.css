@@ -90,3 +90,13 @@ body {
     background-color: #517a9d;
   }
 }
+/* Edit points modal */
+.modal-body {
+    max-height: calc(100vh - 210px);
+    overflow-y: auto;
+}
+
+/* Labels look like badges, used in Edit Points Modal */
+.label-as-badge {
+    border-radius: 1em;
+}
