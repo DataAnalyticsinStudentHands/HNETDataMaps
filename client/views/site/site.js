@@ -5,6 +5,8 @@ var selectedFlag = new ReactiveVar(null);
 
 Meteor.subscribe('sites');
 
+
+
 Highcharts.setOptions({
   global: {
     useUTC: false,
@@ -37,9 +39,9 @@ var Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   var selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function (series) {
+  Highcharts.each(this.series, function(series) {
     if (series.options.allowPointSelect === 'true') {
-      Highcharts.each(series.points, function (point) {
+      Highcharts.each(series.points, function(point) {
         // Uncomment to always select new points instead of adding points to selection
         // point.select(false)
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
@@ -63,8 +65,8 @@ function selectPointsByDrag(e) {
  * The handler for a custom event, fired from selection event
  */
 function selectedPoints(e) {
-  const points = [];
-  _.each(e.points, function (point) {
+  var points = [];
+  _.each(e.points, function(point) {
     if (point.series.type === 'scatter') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -86,18 +88,13 @@ function selectedPoints(e) {
     EditPoints.insert(points[i]);
   }
 
-  $('#editPointsModal').modal({
-		$('#btnSubmit').click(function(){
-        alert("button");
-    });
-	}).modal('show');
+  $('#editPointsModal').modal({}).modal('show');
 
-  $('#editPointsModal button .btnSubmit').click(function (event) {
-		console.log('hello from submit');
+  $('#btnSubmit').click(function(event) {
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function (point){
+    updatedPoints.forEach(function(point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
     });
     // Update local point color to reflect new flag
@@ -111,7 +108,7 @@ function selectedPoints(e) {
     e.points[0].series.chart.redraw();
   });
 
-  $('#editPointsModal table tr .fa').click(function (event) {
+  $('#editPointsModal table tr .fa').click(function(event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -140,7 +137,7 @@ function selectedPoints(e) {
 function unselectByClick() {
   const points = this.getSelectedPoints();
   if (points.length > 0) {
-    Highcharts.each(points, function (point) {
+    Highcharts.each(points, function(point) {
       point.select(false);
     });
   }
@@ -149,29 +146,135 @@ function unselectByClick() {
 // checking autorun
 let autoCounter = 1;
 
-Template.site.onRendered(function () {
+function createChart(chartName, subType, yAxis, seriesOptions) {
+	$('#' + chartName).highcharts('StockChart', {
+		exporting: {
+			enabled: true,
+		},
+		chart: {
+			events: {
+				selection: selectPointsByDrag,
+				selectedpoints: selectedPoints,
+				click: unselectByClick,
+			},
+			zoomType: 'xy',
+		},
+		title: {
+			text: subType,
+		},
+		xAxis: {
+			type: 'datetime',
+			title: {
+				text: 'Local Time',
+			},
+		},
+		yAxis: yAxis,
+		series: seriesOptions,
+		tooltip: {
+			enabled: true,
+			crosshairs: [true],
+			positioner(labelWidth, labelHeight, point) {
+				let tooltipX;
+				let tooltipY;
+				if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
+					tooltipX = this.chart.plotLeft;
+					tooltipY = this.chart.plotTop + this.chart.plotHeight - 2 * labelHeight - 10;
+				} else {
+					tooltipX = this.chart.plotLeft;
+					tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
+				}
+				return {
+					x: tooltipX,
+					y: tooltipY,
+				};
+			},
+			formatter() {
+				let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
+				s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
 
-  Tracker.autorun(function () {
-    //add notes to documents?
-    //need to figure out better management of Tracker.autorun - it runs too often
 
-    autoCounter += 1;
-    console.log('auto counter:', autoCounter);
-    console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
-    Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get());
+				return s;
+			},
+			shared: false,
+		},
+		credits: {
+			enabled: false,
+		},
+		rangeSelector: {
+			inputEnabled: false,
+			allButtonsEnabled: true,
+			buttons: [{
+				type: 'minute',
+				count: 60,
+				text: 'Hour',
+				dataGrouping: {
+					forced: true,
+					units: [
+						['hour', [60]],
+					],
+				},
+			}, {
+				type: 'day',
+				count: 3,
+				text: '3 Days',
+				dataGrouping: {
+					forced: true,
+					units: [
+						['day', [1]],
+					],
+				},
+			}, {
+				type: 'day',
+				count: 1,
+				text: '1 Day',
+				dataGrouping: {
+					forced: true,
+					units: [
+						['day', [1]],
+					],
+				},
+			}],
+			buttonTheme: {
+				width: 60,
+			},
+			selected: 2,
+		},
+		legend: {
+			enabled: true,
+			align: 'right',
+			layout: 'vertical',
+			verticalAlign: 'top',
+			y: 100,
+		},
+	}); // end of chart
+}
 
-    var seriesOptions = {};
-    Charts.remove({});
+Template.site.onRendered(function() {
 
-    var allSeries = DataSeries.find({}).fetch();
-    _.each(allSeries, function (data) {
-      // console.log('data: ', data);
+  // Subscribe
+  console.log('auto counter:', autoCounter);
+  console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
+  var subs = Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get());
+
+  // Do reactive stuff when subscribe is ready
+  this.autorun(function() {
+    if (!subs.ready()) {
+      return;
+    }
+
+		var cursor = Template.currentData(),
+			initializing = true, // add initializing variable, see:  http://docs.meteor.com/#/full/meteor_publish
+			liveChart,
+  		query = DataSeries.find();
+
+			var seriesOptions = {};
+
+    _.each(query, function(data) {
       // Create data series for plotting
       if (!seriesOptions[data.subType]) {
         seriesOptions[data.subType] = [];
       }
-      // console.log('data: ', data);
-      _.each(data.datapoints, function (datapoints, i) {
+      _.each(data.datapoints, function(datapoints, i) {
         if (data.chartType === 'line') {
           seriesOptions[data.subType].push({
             type: data.chartType,
@@ -196,9 +299,51 @@ Template.site.onRendered(function () {
         }
       });
     });
+  });
 
-    console.log('seriesOptions: ${seriesOptions}');
-    _.each(seriesOptions, function (series, id) {
+
+
+  // Create basic line-chart:
+  liveChart = Highcharts.chart(cursor.chart_id, {
+    title: {
+      text: 'Number of elements'
+    },
+    series: [{
+      type: 'column',
+      name: 'Tasks',
+      data: [query.count()]
+    }]
+  });
+
+  // Add watchers:
+  query.observeChanges({
+    added: function() {
+      if (!initializing) {
+        // We will use Highcharts API to add point with "value = previous_value + 1" to indicate number of tasks
+        var points = liveChart.series[0].points;
+        liveChart.series[0].addPoint(
+          points[points.length - 1].y + 1
+        );
+      }
+    },
+    removed: function() {
+      if (!initializing) {
+        // We will use Highcharts API to add point with "value = previous_value - 1" to indicate number of tasks
+        var points = liveChart.series[0].points;
+        liveChart.series[0].addPoint(
+          points[points.length - 1].y - 1
+        );
+      }
+    }
+  });
+  initializing = false;
+
+  Tracker.autorun(function() {
+
+
+    Charts.remove({});
+
+    _.each(seriesOptions, function(series, id) {
       Charts.insert({
         id: id
       });
@@ -286,116 +431,15 @@ Template.site.onRendered(function () {
           }
         }
       }
-      createCharts('container-chart-' + id, id, yAxis, series);
+      createChart('container-chart-' + id, id, yAxis, series);
     });
 
-    function createCharts(chartName, subType, yAxis, seriesOptions) {
-      $('#' + chartName).highcharts('StockChart', {
-        exporting: {
-          enabled: true,
-        },
-        chart: {
-          events: {
-            selection: selectPointsByDrag,
-            selectedpoints: selectedPoints,
-            click: unselectByClick,
-          },
-          zoomType: 'xy',
-        },
-        title: {
-          text: subType,
-        },
-        xAxis: {
-          type: 'datetime',
-          title: {
-            text: 'Local Time',
-          },
-        },
-        yAxis: yAxis,
-        series: seriesOptions,
-        tooltip: {
-          enabled: true,
-          crosshairs: [true],
-          positioner(labelWidth, labelHeight, point) {
-            let tooltipX;
-            let tooltipY;
-            if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
-              tooltipX = this.chart.plotLeft;
-              tooltipY = this.chart.plotTop + this.chart.plotHeight - 2 * labelHeight - 10;
-            } else {
-              tooltipX = this.chart.plotLeft;
-              tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
-            }
-            return {
-              x: tooltipX,
-              y: tooltipY,
-            };
-          },
-          formatter() {
-            let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
-            s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
 
-
-            return s;
-          },
-          shared: false,
-        },
-        credits: {
-          enabled: false,
-        },
-        rangeSelector: {
-          inputEnabled: false,
-          allButtonsEnabled: true,
-          buttons: [{
-            type: 'minute',
-            count: 60,
-            text: 'Hour',
-            dataGrouping: {
-              forced: true,
-              units: [
-                ['hour', [60]],
-              ],
-            },
-          }, {
-            type: 'day',
-            count: 3,
-            text: '3 Days',
-            dataGrouping: {
-              forced: true,
-              units: [
-                ['day', [1]],
-              ],
-            },
-          }, {
-            type: 'day',
-            count: 1,
-            text: '1 Day',
-            dataGrouping: {
-              forced: true,
-              units: [
-                ['day', [1]],
-              ],
-            },
-          }],
-          buttonTheme: {
-            width: 60,
-          },
-          selected: 2,
-        },
-        legend: {
-          enabled: true,
-          align: 'right',
-          layout: 'vertical',
-          verticalAlign: 'top',
-          y: 100,
-        },
-      }); // end of chart
-    }
   }); // end autorun
 }); // end of onRendered
 
 Template.editPoints.events({
-  'click .dropdown-menu li a'(event) {
+  'click .dropdown-menu li a' (event) {
     event.preventDefault();
     selectedFlag.set(parseInt($(event.currentTarget).attr('data-value'), 10));
   },
@@ -438,7 +482,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function (epoch) {
+Template.registerHelper('formatDate', function(epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -457,12 +501,25 @@ Template.site.helpers({
   },
 });
 
+Template.editPoints.destroyed = function() {
+  alert('window closed');
+};
+
 Template.site.events({
-  'change #datepicker'(event) {
+  'change #datepicker' (event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
     endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix()); // always to current?
   },
-  'click #createPush'() {
+  'click #createPush' () {
     DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
+  },
+  'click #updateAggr' () {
+    Meteor.call('new5minAggreg', Router.current().params._id, startEpoch.get(), endEpoch.get(), function(err, response) {
+      if (err) {
+        Session.set('serverDataResponse', 'Error:' + err.reason);
+        return;
+      }
+      Session.set('serverDataResponse', response);
+    });
   },
 });

@@ -5,29 +5,26 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
   var pollData = {},
     poll5Data = {};
 
-  var agg5Pipe = [
-    {
+  let agg5Pipe = [{
       $match: {
         $and: [{
           site: site
-        },
-          {
-            epoch: {
-              $gt: parseInt(startEpoch, 10),
-              $lt: parseInt(endEpoch, 10)
-            }
-          }]
+        }, {
+          epoch: {
+            $gt: parseInt(startEpoch, 10),
+            $lt: parseInt(endEpoch, 10)
+          }
+        }]
       }
     },
-//       {
-//            $limit: 5 //testingpubsub
-//        },
+    //       {
+    //            $limit: 5 //testingpubsub
+    //        },
     {
       $sort: {
         epoch: 1
       }
-    },
-    {
+    }, {
       $group: {
         _id: '$site',
 
@@ -39,19 +36,19 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
         }
       }
     }
-	      ];
+  ];
 
-  AggrData.aggregate(agg5Pipe, function (err, result) {
+  AggrData.aggregate(agg5Pipe, function(err, result) {
       // create new structure for data series to be used for charts
-    if (result.length > 0) {
-      var lines = result[0].series;
-      _.each(lines, function (line) {
-        var epoch = line.epoch;
-        _.each(line.subTypes, function (subKey, subType) { // subType is O3, etc.
+      if (result.length > 0) {
+        var lines = result[0].series;
+        _.each(lines, function(line) {
+          var epoch = line.epoch;
+          _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
             if (!poll5Data[subType]) {
               poll5Data[subType] = {};
             }
-            _.each(subKey, function (sub, key) { // sub is the array with metric/val pairs as subarrays
+            _.each(subKey, function(sub, key) { // sub is the array with metric/val pairs as subarrays
               if (!poll5Data[subType][key]) { // create placeholder if not exists
                 poll5Data[subType][key] = [];
               }
@@ -66,10 +63,10 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
               }
             });
           });
-      });
+        });
 
-      for (var pubKey in poll5Data) {
-        if (poll5Data.hasOwnProperty(pubKey)) {
+        for (var pubKey in poll5Data) {
+          if (poll5Data.hasOwnProperty(pubKey)) {
             subscription.added('dataSeries', pubKey + '_5m', {
               subType: pubKey,
               chartType: 'scatter',
@@ -79,56 +76,53 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
               zIndex: 2
             });
           }
-      }
+        }
 
-    }
-  },
-    function (error) {
+      }
+    },
+    function(error) {
       Meteor._debug('error during 5min publication aggregation: ' + error);
     }
   );
 
 
-  var aggPipe = [
-    {
+  var aggPipe = [{
       $match: {
         $and: [{
           site: site
-        },
-          {
-            epoch: {
-              $gt: parseInt(startEpoch, 10),
-              $lt: parseInt(endEpoch, 10)
-            }
-          }]
+        }, {
+          epoch: {
+            $gt: parseInt(startEpoch, 10),
+            $lt: parseInt(endEpoch, 10)
+          }
+        }]
       }
     },
-//        {
-//            $limit: 5 //testingpubsub
-//        },
+    //        {
+    //            $limit: 5 //testingpubsub
+    //        },
     {
       $sort: {
         epoch: 1
       }
-    },
-    {
+    }, {
       $project: {
         epoch: 1,
         subTypes: 1,
         _id: 0
       }
     }
-	      ];
+  ];
 
-  LiveData.aggregate(aggPipe, function (err, results) {
+  LiveData.aggregate(aggPipe, function(err, results) {
       // create new structure for data series to be used for charts
-    _.each(results, function (line) {
-      var epoch = line.epoch;
-      _.each(line.subTypes, function (subKey, subType) { // subType is O3, etc.
-        if (!pollData[subType]) {
+      _.each(results, function(line) {
+        var epoch = line.epoch;
+        _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
+          if (!pollData[subType]) {
             pollData[subType] = {};
           }
-        _.each(subKey, function (sub) { // sub is the array with metric/val pairs as subarrays
+          _.each(subKey, function(sub) { // sub is the array with metric/val pairs as subarrays
             // if(subType==subTypName){ //reduces amount going to browser
 
             if (sub.metric !== 'Flag') {
@@ -142,17 +136,17 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
               pollData[subType][sub.metric].push(xy);
             }
           });
+        });
       });
-    });
 
-    for (var pubKey in pollData) {
-      if (pollData.hasOwnProperty(pubKey)) {
-        var chartType = 'line';
+      for (var pubKey in pollData) {
+        if (pollData.hasOwnProperty(pubKey)) {
+          var chartType = 'line';
           // wind data should never be shown as line
-        if (pubKey.indexOf('RMY') >= 0) {
+          if (pubKey.indexOf('RMY') >= 0) {
             chartType = 'scatter';
           }
-        subscription.added('dataSeries', pubKey + '_10s', {
+          subscription.added('dataSeries', pubKey + '_10s', {
             subType: pubKey,
             chartType: chartType,
             lineWidth: 1,
@@ -160,69 +154,63 @@ Meteor.publish('dataSeries', function (site, startEpoch, endEpoch) {
             datapoints: pollData[pubKey],
             zIndex: 1
           });
+        }
       }
-    }
 
-  },
-    function (error) {
+    },
+    function(error) {
       Meteor._debug('error during livedata publication aggregation: ' + error);
     }
   );
 });
 
 // aggregation of composite aggregated data to be plotted with highstock
-Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
+Meteor.publish('compositeSeries', function(siteList, startEpoch, endEpoch) {
 
   var subscription = this;
   var poll5Data = {};
 
-  var agg5Pipe = [
-    {
-      $match: {
-        $and: [{
-          site: {
-            $in: siteList
-          }
-        },
-          {
-            epoch: {
-              $gt: parseInt(startEpoch, 10),
-              $lt: parseInt(endEpoch, 10)
-            }
-          }]
-      }
-    },
-    {
-      $limit: 5 // testingpubsub
-    },
-    {
-      $sort: {
-        epoch: 1
-      }
-    },
-    {
-      $group: {
-        _id: '$subTypes'
-          //                series: {
-          //                    $push: {
-          //                        'subTypes': '$subTypes',
-          //                        'epoch': '$epoch'
-          //                    }
-          //                }
-      }
+  var agg5Pipe = [{
+    $match: {
+      $and: [{
+        site: {
+          $in: siteList
+        }
+      }, {
+        epoch: {
+          $gt: parseInt(startEpoch, 10),
+          $lt: parseInt(endEpoch, 10)
+        }
+      }]
     }
-	      ];
+  }, {
+    $limit: 5 // testingpubsub
+  }, {
+    $sort: {
+      epoch: 1
+    }
+  }, {
+    $group: {
+      _id: '$subTypes'
+        //                series: {
+        //                    $push: {
+        //                        'subTypes': '$subTypes',
+        //                        'epoch': '$epoch'
+        //                    }
+        //                }
+    }
+  }];
 
-  AggrData.aggregate(agg5Pipe, function (err, result) {
+  AggrData.aggregate(agg5Pipe, function(err, result) {
       // create new structure for data series to be used for charts
-    if (result.length > 0) {
-      _.each(result, function (line) {
-        var epoch = line.epoch;
-        _.each(line.subTypes, function (subKey, subType) { // subType is O3, etc.
+      if (result.length > 0) {
+        _.each(result, function(line) {
+          var epoch = line.epoch;
+          _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
             if (!poll5Data[subType]) {
               poll5Data[subType] = {};
             }
-            _.each(subKey, function (sub, key) { // sub is the array with metric/val pairs as subarrays
+            _.each(subKey, function(sub, key) { // sub is the array with metric/val pairs as subarrays
               if (!poll5Data[subType][key]) { // create placeholder if not exists
                 poll5Data[subType][key] = [];
               }
@@ -237,10 +225,10 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
               }
             });
           });
-      });
+        });
 
-      for (var pubKey in poll5Data) {
-        if (poll5Data.hasOwnProperty(pubKey)) {
+        for (var pubKey in poll5Data) {
+          if (poll5Data.hasOwnProperty(pubKey)) {
             subscription.added('dataSeries', pubKey + '_5m', {
               subType: pubKey,
               chartType: 'scatter',
@@ -250,17 +238,17 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
               zIndex: 2
             });
           }
-      }
+        }
 
-    }
-  },
-    function (error) {
+      }
+    },
+    function(error) {
       Meteor._debug('error during 5min publication aggregation: ' + error);
     }
   );
 });
 
-Meteor.publish('sites', function () {
+Meteor.publish('sites', function() {
   return Sites.find({
     'incoming': {
       $exists: true
@@ -268,7 +256,7 @@ Meteor.publish('sites', function () {
   });
 });
 
-Meteor.publish('userData', function () {
+Meteor.publish('userData', function() {
   if (this.userId) {
     return Meteor.users.find({
       _id: this.userId

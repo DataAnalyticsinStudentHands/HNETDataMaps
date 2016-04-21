@@ -10,6 +10,9 @@
 			<button class="btn btn-primary" id="createPush">
 				Create Push File
 			</button>
+			<button class="btn btn-primary" id="updateAggr">
+				Update Aggregates for selected day
+			</button>
 		</div>
 	</div>
 
@@ -76,7 +79,8 @@
 				<div class="modal-footer">
 					Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.
 					<button type="button" class="btn btn-default" aria-label="Close" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
-					<button type="submit" class="btn btn-primary active {{#unless isValid}} disabled{{/unless}}" id="btnSubmit"><i class="fa fa-check"></i> Submit</button>
+
+					<button type="button" class="btn btn-primary active {{#unless isValid}} disabled{{/unless}}" data-dismiss="modal" id="btnSubmit"><i class="fa fa-check"></i> Submit</button>
 				</div>
 			</div>
 		</div>
