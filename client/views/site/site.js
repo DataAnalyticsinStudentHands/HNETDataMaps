@@ -5,8 +5,6 @@ var selectedFlag = new ReactiveVar(null);
 
 Meteor.subscribe('sites');
 
-
-
 Highcharts.setOptions({
   global: {
     useUTC: false,
@@ -15,7 +13,7 @@ Highcharts.setOptions({
 
 // pass null as collection name, it will create
 // local only collection
-var EditPoints = new Mongo.Collection(null);
+const EditPoints = new Mongo.Collection(null);
 
 const unitsHash = {
   O3: 'pbbv',
@@ -31,7 +29,7 @@ const unitsHash = {
 };
 
 // placeholder for dynamic chart containers
-var Charts = new Meteor.Collection(null);
+const Charts = new Meteor.Collection(null);
 
 /**
  * Custom selection handler that selects points and cancels the default zoom behaviour
@@ -143,299 +141,261 @@ function unselectByClick() {
   }
 }
 
-// checking autorun
-let autoCounter = 1;
-
-function createChart(chartName, subType, yAxis, seriesOptions) {
-	$('#' + chartName).highcharts('StockChart', {
-		exporting: {
-			enabled: true,
-		},
-		chart: {
-			events: {
-				selection: selectPointsByDrag,
-				selectedpoints: selectedPoints,
-				click: unselectByClick,
-			},
-			zoomType: 'xy',
-		},
-		title: {
-			text: subType,
-		},
-		xAxis: {
-			type: 'datetime',
-			title: {
-				text: 'Local Time',
-			},
-		},
-		yAxis: yAxis,
-		series: seriesOptions,
-		tooltip: {
-			enabled: true,
-			crosshairs: [true],
-			positioner(labelWidth, labelHeight, point) {
-				let tooltipX;
-				let tooltipY;
-				if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
-					tooltipX = this.chart.plotLeft;
-					tooltipY = this.chart.plotTop + this.chart.plotHeight - 2 * labelHeight - 10;
-				} else {
-					tooltipX = this.chart.plotLeft;
-					tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
-				}
-				return {
-					x: tooltipX,
-					y: tooltipY,
-				};
-			},
-			formatter() {
-				let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
-				s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
+function createChart(chartName, titleText, yAxis, seriesOptions) {
+	console.log('here I am');
+  $('#' + chartName).highcharts('StockChart', {
+    exporting: {
+      enabled: true,
+    },
+    chart: {
+      events: {
+        selection: selectPointsByDrag,
+        selectedpoints: selectedPoints,
+        click: unselectByClick,
+      },
+      zoomType: 'xy',
+    },
+    title: {
+      text: titleText,
+    },
+    xAxis: {
+      type: 'datetime',
+      title: {
+        text: 'Local Time',
+      },
+    },
+    yAxis: yAxis,
+    series: seriesOptions,
+    tooltip: {
+      enabled: true,
+      crosshairs: [true],
+      positioner(labelWidth, labelHeight, point) {
+        let tooltipX;
+        let tooltipY;
+        if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
+          tooltipX = this.chart.plotLeft;
+          tooltipY = this.chart.plotTop + this.chart.plotHeight - 2 * labelHeight - 10;
+        } else {
+          tooltipX = this.chart.plotLeft;
+          tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
+        }
+        return {
+          x: tooltipX,
+          y: tooltipY,
+        };
+      },
+      formatter() {
+        let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
+        s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
 
 
-				return s;
-			},
-			shared: false,
-		},
-		credits: {
-			enabled: false,
-		},
-		rangeSelector: {
-			inputEnabled: false,
-			allButtonsEnabled: true,
-			buttons: [{
-				type: 'minute',
-				count: 60,
-				text: 'Hour',
-				dataGrouping: {
-					forced: true,
-					units: [
-						['hour', [60]],
-					],
-				},
-			}, {
-				type: 'day',
-				count: 3,
-				text: '3 Days',
-				dataGrouping: {
-					forced: true,
-					units: [
-						['day', [1]],
-					],
-				},
-			}, {
-				type: 'day',
-				count: 1,
-				text: '1 Day',
-				dataGrouping: {
-					forced: true,
-					units: [
-						['day', [1]],
-					],
-				},
-			}],
-			buttonTheme: {
-				width: 60,
-			},
-			selected: 2,
-		},
-		legend: {
-			enabled: true,
-			align: 'right',
-			layout: 'vertical',
-			verticalAlign: 'top',
-			y: 100,
-		},
-	}); // end of chart
+        return s;
+      },
+      shared: false,
+    },
+    credits: {
+      enabled: false,
+    },
+    rangeSelector: {
+      inputEnabled: false,
+      allButtonsEnabled: true,
+      buttons: [{
+        type: 'minute',
+        count: 60,
+        text: 'Hour',
+        dataGrouping: {
+          forced: true,
+          units: [
+            ['hour', [60]],
+          ],
+        },
+      }, {
+        type: 'day',
+        count: 3,
+        text: '3 Days',
+        dataGrouping: {
+          forced: true,
+          units: [
+            ['day', [1]],
+          ],
+        },
+      }, {
+        type: 'day',
+        count: 1,
+        text: '1 Day',
+        dataGrouping: {
+          forced: true,
+          units: [
+            ['day', [1]],
+          ],
+        },
+      }],
+      buttonTheme: {
+        width: 60,
+      },
+      selected: 2,
+    },
+    legend: {
+      enabled: true,
+      align: 'right',
+      layout: 'vertical',
+      verticalAlign: 'top',
+      y: 100,
+    },
+  }); // end of chart
 }
 
 Template.site.onRendered(function() {
-
-  // Subscribe
-  console.log('auto counter:', autoCounter);
-  console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
-  var subs = Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get());
-
-  // Do reactive stuff when subscribe is ready
+  // Do reactive stuff when something is added or removed
   this.autorun(function() {
-    if (!subs.ready()) {
-      return;
-    }
-
-		var cursor = Template.currentData(),
-			initializing = true, // add initializing variable, see:  http://docs.meteor.com/#/full/meteor_publish
-			liveChart,
-  		query = DataSeries.find();
-
-			var seriesOptions = {};
-
-    _.each(query, function(data) {
-      // Create data series for plotting
-      if (!seriesOptions[data.subType]) {
-        seriesOptions[data.subType] = [];
-      }
-      _.each(data.datapoints, function(datapoints, i) {
-        if (data.chartType === 'line') {
-          seriesOptions[data.subType].push({
-            type: data.chartType,
-            name: i + ' ' + data._id.split(/[_]+/).pop(),
-            lineWidth: data.lineWidth,
-            allowPointSelect: data.allowPointSelect,
-            data: datapoints,
-            zIndex: data.zIndex
-          });
-        } else {
-          seriesOptions[data.subType].push({
-            type: data.chartType,
-            name: i + ' ' + data._id.split(/[_]+/).pop(),
-            marker: {
-              enabled: true,
-              radius: 2
-            },
-            allowPointSelect: data.allowPointSelect,
-            data: datapoints,
-            zIndex: data.zIndex
-          });
-        }
-      });
-    });
-  });
-
-
-
-  // Create basic line-chart:
-  liveChart = Highcharts.chart(cursor.chart_id, {
-    title: {
-      text: 'Number of elements'
-    },
-    series: [{
-      type: 'column',
-      name: 'Tasks',
-      data: [query.count()]
-    }]
-  });
-
-  // Add watchers:
-  query.observeChanges({
-    added: function() {
-      if (!initializing) {
-        // We will use Highcharts API to add point with "value = previous_value + 1" to indicate number of tasks
-        var points = liveChart.series[0].points;
-        liveChart.series[0].addPoint(
-          points[points.length - 1].y + 1
-        );
-      }
-    },
-    removed: function() {
-      if (!initializing) {
-        // We will use Highcharts API to add point with "value = previous_value - 1" to indicate number of tasks
-        var points = liveChart.series[0].points;
-        liveChart.series[0].addPoint(
-          points[points.length - 1].y - 1
-        );
-      }
-    }
-  });
-  initializing = false;
-
-  Tracker.autorun(function() {
-
-
+    console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
     Charts.remove({});
+    // Subscribe
+    Meteor.subscribe('dataSeries', Router.current().params._id,
+      startEpoch.get(), endEpoch.get());
+    var query = DataSeries.find();
+    var handle = query.observeChanges({
+      added: function(series, data) {
+				const subType = series.split(/[_]+/)[0];
+        // insert object into Charts if not yet exists
+        if (!Charts.findOne({id: subType})) {
+          Charts.insert({
+            id: subType,
+          });
+          let yAxis;
+          if (subType.indexOf('RMY') >= 0) { // special treatment for wind instruments
+            yAxis = { // Primary yAxis
+              labels: {
+                format: '{value} ' + unitsHash[data.name.split(/[_]+/)[0]],
+                style: {
+                  color: Highcharts.getOptions().colors[0],
+                },
+              },
+              title: {
+                text: data.name.split(/[_]+/)[0],
+                style: {
+                  color: Highcharts.getOptions().colors[0],
+                },
+              },
+              opposite: false,
+              floor: 0,
+              ceiling: 360,
+              tickInterval: 90,
+            };
+          } else {
+            yAxis = { // Primary yAxis
+              labels: {
+                format: '{value} ' + unitsHash[data.name.split(/[_]+/)[0]],
+                style: {
+                  color: Highcharts.getOptions().colors[0],
+                },
+              },
+              title: {
+                text: data.name.split(/[_]+/)[0],
+                style: {
+                  color: Highcharts.getOptions().colors[0],
+                },
+              },
+              opposite: false,
+              floor: 0,
+            };
+          }
 
-    _.each(seriesOptions, function(series, id) {
-      Charts.insert({
-        id: id
-      });
-      const yAxis = [];
-      if (id.indexOf('RMY') >= 0) { // special treatment for wind instruments
-        yAxis.push({ // Primary yAxis
-          labels: {
-            format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
-            style: {
-              color: Highcharts.getOptions().colors[0],
-            },
-          },
-          title: {
-            text: series[0].name.split(/[ ]+/)[0],
-            style: {
-              color: Highcharts.getOptions().colors[0],
-            },
-          },
-          opposite: false,
-          floor: 0,
-          ceiling: 360,
-          tickInterval: 90,
-        });
-        if (series.length > 2) {
-          yAxis.push({ // Secondary yAxis
-            title: {
-              text: series[1].name.split(/[ ]+/)[0],
-              style: {
-                color: Highcharts.getOptions().colors[1],
-              },
-            },
-            labels: {
-              format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
-              style: {
-                color: Highcharts.getOptions().colors[1],
-              },
-            },
-            floor: 0,
-            // NOTE: there are some misreads with the sensor, and so
-            // it occasionally reports wind speeds upwards of 250mph.
-            ceiling: 20,
-            tickInterval: 5,
-          });
-          for (let i = 0; i < series.length; i++) {
-            // put axis for each series
-            series[i].yAxis = !(i & 1) ? 0 : 1;
-          }
+          createChart(`container-chart-${subType}`, subType, yAxis, data);
         }
-      } else {
-        yAxis.push({ // Primary yAxis
-          labels: {
-            format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
-            style: {
-              color: Highcharts.getOptions().colors[0],
-            },
-          },
-          title: {
-            text: series[0].name.split(/[ ]+/)[0],
-            style: {
-              color: Highcharts.getOptions().colors[0],
-            },
-          },
-          opposite: false,
-          floor: 0,
-        });
-        if (series.length > 2) {
-          yAxis.push({ // Secondary yAxis
-            title: {
-              text: series[1].name.split(/[ ]+/)[0],
-              style: {
-                color: Highcharts.getOptions().colors[1],
-              },
-            },
-            labels: {
-              format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
-              style: {
-                color: Highcharts.getOptions().colors[1],
-              },
-            },
-            floor: 0,
-          });
-          for (let i = 0; i < series.length; i++) {
-            // put axis for each series
-            series[i].yAxis = !(i & 1) ? 0 : 1;
-          }
-        }
-      }
-      createChart('container-chart-' + id, id, yAxis, series);
+      },
     });
-
-
   }); // end autorun
+
+  // _.each(seriesOptions, function(series, id) {
+  //
+  //   const yAxis = [];
+  //   if (id.indexOf('RMY') >= 0) { // special treatment for wind instruments
+  //     yAxis.push({ // Primary yAxis
+  //       labels: {
+  //         format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
+  //         style: {
+  //           color: Highcharts.getOptions().colors[0],
+  //         },
+  //       },
+  //       title: {
+  //         text: series[0].name.split(/[ ]+/)[0],
+  //         style: {
+  //           color: Highcharts.getOptions().colors[0],
+  //         },
+  //       },
+  //       opposite: false,
+  //       floor: 0,
+  //       ceiling: 360,
+  //       tickInterval: 90,
+  //     });
+  //     if (series.length > 2) {
+  //       yAxis.push({ // Secondary yAxis
+  //         title: {
+  //           text: series[1].name.split(/[ ]+/)[0],
+  //           style: {
+  //             color: Highcharts.getOptions().colors[1],
+  //           },
+  //         },
+  //         labels: {
+  //           format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
+  //           style: {
+  //             color: Highcharts.getOptions().colors[1],
+  //           },
+  //         },
+  //         floor: 0,
+  //         // NOTE: there are some misreads with the sensor, and so
+  //         // it occasionally reports wind speeds upwards of 250mph.
+  //         ceiling: 20,
+  //         tickInterval: 5,
+  //       });
+  //       for (let i = 0; i < series.length; i++) {
+  //         // put axis for each series
+  //         series[i].yAxis = !(i & 1) ? 0 : 1;
+  //       }
+  //     }
+  //   } else {
+  //     yAxis.push({ // Primary yAxis
+  //       labels: {
+  //         format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
+  //         style: {
+  //           color: Highcharts.getOptions().colors[0],
+  //         },
+  //       },
+  //       title: {
+  //         text: series[0].name.split(/[ ]+/)[0],
+  //         style: {
+  //           color: Highcharts.getOptions().colors[0],
+  //         },
+  //       },
+  //       opposite: false,
+  //       floor: 0,
+  //     });
+  //     if (series.length > 2) {
+  //       yAxis.push({ // Secondary yAxis
+  //         title: {
+  //           text: series[1].name.split(/[ ]+/)[0],
+  //           style: {
+  //             color: Highcharts.getOptions().colors[1],
+  //           },
+  //         },
+  //         labels: {
+  //           format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
+  //           style: {
+  //             color: Highcharts.getOptions().colors[1],
+  //           },
+  //         },
+  //         floor: 0,
+  //       });
+  //       for (let i = 0; i < series.length; i++) {
+  //         // put axis for each series
+  //         series[i].yAxis = !(i & 1) ? 0 : 1;
+  //       }
+  //     }
+  //   }
+  //
+  // });
+
 }); // end of onRendered
 
 Template.editPoints.events({
