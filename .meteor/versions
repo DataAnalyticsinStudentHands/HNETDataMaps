@@ -59,7 +59,6 @@ iron:location@1.0.11
 iron:middleware-stack@1.0.11
 iron:router@1.0.12
 iron:url@1.0.11
-jhuenges:highstock@0.0.9
 jquery@1.11.7
 launch-screen@1.0.10
 less@2.5.7

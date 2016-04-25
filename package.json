@@ -4,7 +4,8 @@
   "description": "This is a development repository.",
   "main": "index.js",
   "dependencies": {
-    "ftps": "^0.4.6"
+    "ftps": "^0.4.6",
+    "highcharts": "^4.2.4"
   },
   "devDependencies": {
     "eslint": "^2.7.0",
@@ -19,8 +20,8 @@
   },
   "eslintConfig": {
     "env": {
-            "browser": true,
-            "meteor": true
+      "browser": true,
+      "meteor": true
     },
     "plugins": [
       "meteor"
@@ -37,8 +38,8 @@
       "Highcharts": true,
       "LiveData": true,
       "Sites": true,
-			"channelHash": true,
-			"flagsHash": true
+      "channelHash": true,
+      "flagsHash": true
     },
     "rules": {}
   },

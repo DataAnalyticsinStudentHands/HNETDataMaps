@@ -1,3 +1,5 @@
+import Highcharts from 'highcharts';
+
 // 24 hours ago - seconds
 var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
 var endEpoch = new ReactiveVar(moment().unix());
@@ -15,21 +17,8 @@ Highcharts.setOptions({
 // local only collection
 const EditPoints = new Mongo.Collection(null);
 
-const unitsHash = {
-  O3: 'pbbv',
-  NO: 'pbbv',
-  NO2: 'pbbv',
-  NOx: 'pbbv',
-  WS: 'miles/hour',
-  WD: 'degree',
-  Temp: 'degree C',
-  RH: 'percent',
-  MassConc: 'ugm3',
-  AmbTemp: 'C',
-};
-
 // placeholder for dynamic chart containers
-const Charts = new Meteor.Collection(null);
+var Charts = new Meteor.Collection(null);
 
 /**
  * Custom selection handler that selects points and cancels the default zoom behaviour
@@ -37,9 +26,9 @@ const Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   var selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function(series) {
+  Highcharts.each(this.series, function (series) {
     if (series.options.allowPointSelect === 'true') {
-      Highcharts.each(series.points, function(point) {
+      Highcharts.each(series.points, function (point) {
         // Uncomment to always select new points instead of adding points to selection
         // point.select(false)
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
@@ -64,7 +53,7 @@ function selectPointsByDrag(e) {
  */
 function selectedPoints(e) {
   var points = [];
-  _.each(e.points, function(point) {
+  _.each(e.points, function (point) {
     if (point.series.type === 'scatter') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -88,11 +77,11 @@ function selectedPoints(e) {
 
   $('#editPointsModal').modal({}).modal('show');
 
-  $('#btnSubmit').click(function(event) {
+  $('#btnSubmit').click(function (event) {
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function(point) {
+    updatedPoints.forEach(function (point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
     });
     // Update local point color to reflect new flag
@@ -106,7 +95,7 @@ function selectedPoints(e) {
     e.points[0].series.chart.redraw();
   });
 
-  $('#editPointsModal table tr .fa').click(function(event) {
+  $('#editPointsModal table tr .fa').click(function (event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -135,13 +124,16 @@ function selectedPoints(e) {
 function unselectByClick() {
   const points = this.getSelectedPoints();
   if (points.length > 0) {
-    Highcharts.each(points, function(point) {
+    Highcharts.each(points, function (point) {
       point.select(false);
     });
   }
 }
 
-function createChart(chartName, titleText, seriesOptions) {
+/**
+ * Create highstock based chart.
+ */
+function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   $('#' + chartName).highcharts('StockChart', {
     exporting: {
       enabled: true,
@@ -163,7 +155,7 @@ function createChart(chartName, titleText, seriesOptions) {
         text: 'Local Time',
       },
     },
-    //  yAxis: yAxis,
+    yAxis: yAxisOptions,
     series: seriesOptions,
     tooltip: {
       enabled: true,
@@ -242,170 +234,58 @@ function createChart(chartName, titleText, seriesOptions) {
   }); // end of chart
 }
 
-Template.site.onRendered(function() {
-
-
-
+Template.site.onRendered(function () {
   // Do reactive stuff when something is added or removed
-  this.autorun(function() {
+  this.autorun(function () {
     console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
 
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
-Charts.remove({});
+    Charts.remove({});
     var query = DataSeries.find();
     var handle = query.observeChanges({
-       added: function(series, seriesData) {
-         const subType = series.split(/[_]+/)[0];
-         // insert object into Charts if not yet exists
-         if (!Charts.findOne({
-             id: subType
-           })) {
-						 console.log("hallo form inside");
-         Charts.insert({
-             id: subType,
-         });
-    //
-    //       let yAxis = [];
-    //       if (subType.indexOf('RMY') >= 0) { // special treatment for wind instruments
-    //         yAxis = { // Primary yAxis
-    //           labels: {
-    //             format: '{value} ' + unitsHash[seriesData.name.split(/[_]+/)[0]],
-    //             style: {
-    //               color: Highcharts.getOptions().colors[0],
-    //             },
-    //           },
-    //           title: {
-    //             text: seriesData.name.split(/[_]+/)[0],
-    //             style: {
-    //               color: Highcharts.getOptions().colors[0],
-    //             },
-    //           },
-    //           opposite: false,
-    //           floor: 0,
-    //           ceiling: 360,
-    //           tickInterval: 90,
-    //         };
-    //       } else {
-    //         yAxis = { // Primary yAxis
-    //           labels: {
-    //             format: '{value} ' + unitsHash[seriesData.name.split(/[_]+/)[0]],
-    //             style: {
-    //               color: Highcharts.getOptions().colors[0],
-    //             },
-    //           },
-    //           title: {
-    //             text: seriesData.name.split(/[_]+/)[0],
-    //             style: {
-    //               color: Highcharts.getOptions().colors[0],
-    //             },
-    //           },
-    //           opposite: false,
-    //           floor: 0,
-    //         };
-    //       }
-    //
-           const seriesOptions = [];
-    //       seriesOptions.push(seriesData);
-           createChart(`container-chart-${subType}`, subType, seriesOptions);
-         } else {
-        //   const chart = $(`#container-chart-${subType}`).highcharts();
-          // chart.addSeries(seriesData);
-         }
-       },
+      added: function (series, seriesData) {
+        const subType = series.split(/[_]+/)[0];
+        // store yAxis options in separate variable
+        const yAxisOptions = seriesData.yAxis;
+        delete seriesData['yAxis'];
+
+        // insert object into Charts if not yet exists and create new chart
+        if (!Charts.findOne({
+            id: subType
+          }, {
+            reactive: false
+          })) {
+          Charts.insert({
+            id: subType,
+          });
+
+          const seriesOptions = [];
+          seriesOptions.push(seriesData);
+          createChart(`container-chart-${subType}`, subType, seriesOptions, yAxisOptions);
+        } else {
+          // put axis for each series
+          const chart = $(`#container-chart-${subType}`).highcharts();
+
+          yAxisOptions.opposite = true;
+					console.log(`in else ${yAxisOptions}`);
+          if (chart.yAxis.length === 1) {
+						chart.addAxis({ // Secondary yAxis
+            id: 'rainfall-axis',
+            title: {
+                text: 'Rainfall'
+            },
+            lineWidth: 2,
+            lineColor: '#08F',
+            opposite: true
+        });
+          }
+          chart.addSeries(seriesData);
+        }
+      },
     });
   }); // end autorun
-
-  // _.each(seriesOptions, function(series, id) {
-  //
-  //   const yAxis = [];
-  //   if (id.indexOf('RMY') >= 0) { // special treatment for wind instruments
-  //     yAxis.push({ // Primary yAxis
-  //       labels: {
-  //         format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
-  //         style: {
-  //           color: Highcharts.getOptions().colors[0],
-  //         },
-  //       },
-  //       title: {
-  //         text: series[0].name.split(/[ ]+/)[0],
-  //         style: {
-  //           color: Highcharts.getOptions().colors[0],
-  //         },
-  //       },
-  //       opposite: false,
-  //       floor: 0,
-  //       ceiling: 360,
-  //       tickInterval: 90,
-  //     });
-  //     if (series.length > 2) {
-  //       yAxis.push({ // Secondary yAxis
-  //         title: {
-  //           text: series[1].name.split(/[ ]+/)[0],
-  //           style: {
-  //             color: Highcharts.getOptions().colors[1],
-  //           },
-  //         },
-  //         labels: {
-  //           format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
-  //           style: {
-  //             color: Highcharts.getOptions().colors[1],
-  //           },
-  //         },
-  //         floor: 0,
-  //         // NOTE: there are some misreads with the sensor, and so
-  //         // it occasionally reports wind speeds upwards of 250mph.
-  //         ceiling: 20,
-  //         tickInterval: 5,
-  //       });
-  //       for (let i = 0; i < series.length; i++) {
-  //         // put axis for each series
-  //         series[i].yAxis = !(i & 1) ? 0 : 1;
-  //       }
-  //     }
-  //   } else {
-  //     yAxis.push({ // Primary yAxis
-  //       labels: {
-  //         format: '{value} ' + unitsHash[series[0].name.split(/[ ]+/)[0]],
-  //         style: {
-  //           color: Highcharts.getOptions().colors[0],
-  //         },
-  //       },
-  //       title: {
-  //         text: series[0].name.split(/[ ]+/)[0],
-  //         style: {
-  //           color: Highcharts.getOptions().colors[0],
-  //         },
-  //       },
-  //       opposite: false,
-  //       floor: 0,
-  //     });
-  //     if (series.length > 2) {
-  //       yAxis.push({ // Secondary yAxis
-  //         title: {
-  //           text: series[1].name.split(/[ ]+/)[0],
-  //           style: {
-  //             color: Highcharts.getOptions().colors[1],
-  //           },
-  //         },
-  //         labels: {
-  //           format: '{value} ' + unitsHash[series[1].name.split(/[ ]+/)[0]],
-  //           style: {
-  //             color: Highcharts.getOptions().colors[1],
-  //           },
-  //         },
-  //         floor: 0,
-  //       });
-  //       for (let i = 0; i < series.length; i++) {
-  //         // put axis for each series
-  //         series[i].yAxis = !(i & 1) ? 0 : 1;
-  //       }
-  //     }
-  //   }
-  //
-  // });
-
 }); // end of onRendered
 
 Template.editPoints.events({
@@ -452,7 +332,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function(epoch) {
+Template.registerHelper('formatDate', function (epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -471,13 +351,8 @@ Template.site.helpers({
   },
 });
 
-Template.editPoints.destroyed = function() {
-  alert('window closed');
-};
-
 Template.site.events({
   'change #datepicker' (event) {
-    console.log('something called me');
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
     endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
   },
@@ -485,12 +360,14 @@ Template.site.events({
     DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
   },
   'click #updateAggr' () {
-    Meteor.call('new5minAggreg', Router.current().params._id, startEpoch.get(), endEpoch.get(), function(err, response) {
-      if (err) {
-        Session.set('serverDataResponse', 'Error:' + err.reason);
-        return;
-      }
-      Session.set('serverDataResponse', response);
-    });
+    Meteor.call('new5minAggreg', Router.current().params._id,
+      startEpoch.get(), endEpoch.get(),
+      function (err, response) {
+        if (err) {
+          Session.set('serverDataResponse', `Error: ${err.reason}`);
+          return;
+        }
+        Session.set('serverDataResponse', response);
+      });
   },
 });
