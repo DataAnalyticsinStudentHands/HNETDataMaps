@@ -141,8 +141,7 @@ function unselectByClick() {
   }
 }
 
-function createChart(chartName, titleText, yAxis, seriesOptions) {
-	console.log('here I am');
+function createChart(chartName, titleText, seriesOptions) {
   $('#' + chartName).highcharts('StockChart', {
     exporting: {
       enabled: true,
@@ -164,7 +163,7 @@ function createChart(chartName, titleText, yAxis, seriesOptions) {
         text: 'Local Time',
       },
     },
-    yAxis: yAxis,
+    //  yAxis: yAxis,
     series: seriesOptions,
     tooltip: {
       enabled: true,
@@ -187,8 +186,6 @@ function createChart(chartName, titleText, yAxis, seriesOptions) {
       formatter() {
         let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
         s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
-
-
         return s;
       },
       shared: false,
@@ -246,64 +243,77 @@ function createChart(chartName, titleText, yAxis, seriesOptions) {
 }
 
 Template.site.onRendered(function() {
+
+
+
   // Do reactive stuff when something is added or removed
   this.autorun(function() {
     console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
-    Charts.remove({});
+
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
+Charts.remove({});
     var query = DataSeries.find();
     var handle = query.observeChanges({
-      added: function(series, data) {
-				const subType = series.split(/[_]+/)[0];
-        // insert object into Charts if not yet exists
-        if (!Charts.findOne({id: subType})) {
-          Charts.insert({
-            id: subType,
-          });
-          let yAxis;
-          if (subType.indexOf('RMY') >= 0) { // special treatment for wind instruments
-            yAxis = { // Primary yAxis
-              labels: {
-                format: '{value} ' + unitsHash[data.name.split(/[_]+/)[0]],
-                style: {
-                  color: Highcharts.getOptions().colors[0],
-                },
-              },
-              title: {
-                text: data.name.split(/[_]+/)[0],
-                style: {
-                  color: Highcharts.getOptions().colors[0],
-                },
-              },
-              opposite: false,
-              floor: 0,
-              ceiling: 360,
-              tickInterval: 90,
-            };
-          } else {
-            yAxis = { // Primary yAxis
-              labels: {
-                format: '{value} ' + unitsHash[data.name.split(/[_]+/)[0]],
-                style: {
-                  color: Highcharts.getOptions().colors[0],
-                },
-              },
-              title: {
-                text: data.name.split(/[_]+/)[0],
-                style: {
-                  color: Highcharts.getOptions().colors[0],
-                },
-              },
-              opposite: false,
-              floor: 0,
-            };
-          }
-
-          createChart(`container-chart-${subType}`, subType, yAxis, data);
-        }
-      },
+       added: function(series, seriesData) {
+         const subType = series.split(/[_]+/)[0];
+         // insert object into Charts if not yet exists
+         if (!Charts.findOne({
+             id: subType
+           })) {
+						 console.log("hallo form inside");
+         Charts.insert({
+             id: subType,
+         });
+    //
+    //       let yAxis = [];
+    //       if (subType.indexOf('RMY') >= 0) { // special treatment for wind instruments
+    //         yAxis = { // Primary yAxis
+    //           labels: {
+    //             format: '{value} ' + unitsHash[seriesData.name.split(/[_]+/)[0]],
+    //             style: {
+    //               color: Highcharts.getOptions().colors[0],
+    //             },
+    //           },
+    //           title: {
+    //             text: seriesData.name.split(/[_]+/)[0],
+    //             style: {
+    //               color: Highcharts.getOptions().colors[0],
+    //             },
+    //           },
+    //           opposite: false,
+    //           floor: 0,
+    //           ceiling: 360,
+    //           tickInterval: 90,
+    //         };
+    //       } else {
+    //         yAxis = { // Primary yAxis
+    //           labels: {
+    //             format: '{value} ' + unitsHash[seriesData.name.split(/[_]+/)[0]],
+    //             style: {
+    //               color: Highcharts.getOptions().colors[0],
+    //             },
+    //           },
+    //           title: {
+    //             text: seriesData.name.split(/[_]+/)[0],
+    //             style: {
+    //               color: Highcharts.getOptions().colors[0],
+    //             },
+    //           },
+    //           opposite: false,
+    //           floor: 0,
+    //         };
+    //       }
+    //
+           const seriesOptions = [];
+    //       seriesOptions.push(seriesData);
+           createChart(`container-chart-${subType}`, subType, seriesOptions);
+         } else {
+        //   const chart = $(`#container-chart-${subType}`).highcharts();
+          // chart.addSeries(seriesData);
+         }
+       },
     });
   }); // end autorun
 
@@ -467,8 +477,9 @@ Template.editPoints.destroyed = function() {
 
 Template.site.events({
   'change #datepicker' (event) {
+    console.log('something called me');
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix()); // always to current?
+    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
   },
   'click #createPush' () {
     DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
