@@ -1,3 +1,5 @@
+import Highcharts from 'highcharts';
+
 var startEpoch = new ReactiveVar(moment().subtract(1, 'days').unix()); // 24 hours ago - seconds
 var endEpoch = new ReactiveVar(moment().unix());
 
