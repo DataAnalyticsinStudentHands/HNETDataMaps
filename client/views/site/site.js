@@ -1,4 +1,4 @@
-import Highcharts from 'highcharts';
+import Highcharts from 'highcharts/highstock';
 
 // 24 hours ago - seconds
 var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
@@ -40,7 +40,7 @@ function selectPointsByDrag(e) {
   });
 
   // Fire a custom event
-  HighchartsAdapter.fireEvent(this, 'selectedpoints', {
+  Highcharts.fireEvent(this, 'selectedpoints', {
     // points: this.getSelectedPoints()
     points: selection
   });
@@ -134,7 +134,7 @@ function unselectByClick() {
  * Create highstock based chart.
  */
 function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
-  $('#' + chartName).highcharts('StockChart', {
+  const mychart = new Highcharts.StockChart({
     exporting: {
       enabled: true,
     },
@@ -145,6 +145,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
         click: unselectByClick,
       },
       zoomType: 'xy',
+      renderTo: chartName,
     },
     title: {
       text: titleText,
@@ -156,6 +157,9 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       },
     },
     yAxis: yAxisOptions,
+    plotOptions: {
+      series: {}
+    },
     series: seriesOptions,
     tooltip: {
       enabled: true,
@@ -231,7 +235,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       verticalAlign: 'top',
       y: 100,
     },
-  }); // end of chart
+  });
 }
 
 Template.site.onRendered(function () {
@@ -248,7 +252,7 @@ Template.site.onRendered(function () {
       added: function (series, seriesData) {
         const subType = series.split(/[_]+/)[0];
         // store yAxis options in separate variable
-        const yAxisOptions = seriesData.yAxis;
+        let yAxisOptions = seriesData.yAxis;
         delete seriesData['yAxis'];
 
         // insert object into Charts if not yet exists and create new chart
@@ -268,19 +272,14 @@ Template.site.onRendered(function () {
           // put axis for each series
           const chart = $(`#container-chart-${subType}`).highcharts();
 
-          yAxisOptions.opposite = true;
-					console.log(`in else ${yAxisOptions}`);
-          if (chart.yAxis.length === 1) {
-						chart.addAxis({ // Secondary yAxis
-            id: 'rainfall-axis',
-            title: {
-                text: 'Rainfall'
-            },
-            lineWidth: 2,
-            lineColor: '#08F',
-            opposite: true
-        });
+          if (chart.series.length === 2) { // Secondary yAxis
+            yAxisOptions.opposite = true;
+            chart.addAxis(
+              yAxisOptions
+            );
           }
+
+					seriesData.yAxis = 2;
           chart.addSeries(seriesData);
         }
       },
