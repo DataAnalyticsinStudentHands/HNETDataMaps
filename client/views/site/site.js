@@ -24,14 +24,12 @@ var Charts = new Meteor.Collection(null);
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
-  var selection = [];
+	var selection = [];
   // Select points only for series where allowPointSelect
   Highcharts.each(this.series, function (series) {
-    if (series.options.allowPointSelect === 'true') {
+    if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
       Highcharts.each(series.points, function (point) {
-        // Uncomment to always select new points instead of adding points to selection
-        // point.select(false)
-        if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
+				if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           // point.select(true, true);
           selection.push(point);
         }
@@ -41,8 +39,8 @@ function selectPointsByDrag(e) {
 
   // Fire a custom event
   Highcharts.fireEvent(this, 'selectedpoints', {
-    // points: this.getSelectedPoints()
-    points: selection
+    // points: this.getSelectedPoints
+		points: selection
   });
 
   return false; // Don't zoom
@@ -52,9 +50,9 @@ function selectPointsByDrag(e) {
  * The handler for a custom event, fired from selection event
  */
 function selectedPoints(e) {
-  var points = [];
+	var points = [];
   _.each(e.points, function (point) {
-    if (point.series.type === 'scatter') {
+    if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
       selectedPoint.y = point.y;
@@ -75,9 +73,10 @@ function selectedPoints(e) {
     EditPoints.insert(points[i]);
   }
 
-  $('#editPointsModal').modal({}).modal('show');
+  // Show the Edit Points modal
+	$('#editPointsModal').modal({}).modal('show');
 
-  $('#btnSubmit').click(function (event) {
+	$('#btnSubmit').click(function (event) {
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
@@ -122,7 +121,7 @@ function selectedPoints(e) {
  * On click, unselect all points
  */
 function unselectByClick() {
-  const points = this.getSelectedPoints();
+  var points = this.getSelectedPoints();
   if (points.length > 0) {
     Highcharts.each(points, function (point) {
       point.select(false);
@@ -142,7 +141,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       events: {
         selection: selectPointsByDrag,
         selectedpoints: selectedPoints,
-        click: unselectByClick,
+        click: unselectByClick
       },
       zoomType: 'xy',
       renderTo: chartName,
@@ -279,7 +278,7 @@ Template.site.onRendered(function () {
             );
           }
 
-					seriesData.yAxis = 2;
+          seriesData.yAxis = 2;
           chart.addSeries(seriesData);
         }
       },
