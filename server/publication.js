@@ -1,5 +1,5 @@
 // aggregation of live and aggregated data to be plotted with highstock
-Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
+Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
 
   var subscription = this;
   var pollData = {},
@@ -33,17 +33,17 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
     },
   }, ];
 
-  AggrData.aggregate(agg5Pipe, function (err, result) {
+  AggrData.aggregate(agg5Pipe, function(err, result) {
       // create new structure for data series to be used for charts
       if (result.length > 0) {
         var lines = result[0].series;
-        _.each(lines, function (line) {
+        _.each(lines, function(line) {
           var epoch = line.epoch;
-          _.each(line.subTypes, function (subKey, subType) { // subType is O3, etc.
+          _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
             if (!poll5Data[subType]) {
               poll5Data[subType] = {};
             }
-            _.each(subKey, function (sub, key) { // sub is the array with metric/val pairs as subarrays
+            _.each(subKey, function(sub, key) { // sub is the array with metric/val pairs as subarrays
               if (!poll5Data[subType][key]) { // create placeholder if not exists
                 poll5Data[subType][key] = [];
               }
@@ -69,9 +69,10 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
               // create yAxis object
               let yAxis = {};
               if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
-                yAxis = { // Primary yAxis
+                yAxis = {
+                  allowDecimals: false,
                   labels: {
-                    format: '{value} ' + unitsHash[key],
+                    format: '{value:.0f} ' + unitsHash[key],
                   },
                   title: {
                     text: key,
@@ -82,9 +83,10 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                   tickInterval: 90,
                 };
               } else {
-                yAxis = { // Primary yAxis
+                yAxis = {
+                  allowDecimals: false,
                   labels: {
-                    format: '{value} ' + unitsHash[key],
+                    format: '{value:.0f} ' + unitsHash[key],
                   },
                   title: {
                     text: key,
@@ -112,7 +114,7 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
         }
       }
     },
-    function (error) {
+    function(error) {
       Meteor._debug('error during 5min publication aggregation: ' + error);
     }
   );
@@ -140,15 +142,15 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
     }
   }];
 
-  LiveData.aggregate(aggPipe, function (err, results) {
+  LiveData.aggregate(aggPipe, function(err, results) {
       // create new structure for data series to be used for charts
-      _.each(results, function (line) {
+      _.each(results, function(line) {
         var epoch = line.epoch;
-        _.each(line.subTypes, function (subKey, subType) { // subType is O3, etc.
+        _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
           if (!pollData[subType]) {
             pollData[subType] = {};
           }
-          _.each(subKey, function (sub) { // sub is the array with metric/val pairs as subarrays
+          _.each(subKey, function(sub) { // sub is the array with metric/val pairs as subarrays
             if (sub.metric !== 'Flag') {
               if (!pollData[subType][sub.metric]) {
                 pollData[subType][sub.metric] = [];
@@ -180,8 +182,9 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
             let yAxis = {};
             if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
               yAxis = { // Primary yAxis
+                allowDecimals: false,
                 labels: {
-                  format: '{value} ' + unitsHash[key],
+                  format: '{value:.0f} ' + unitsHash[key],
                 },
                 title: {
                   text: key,
@@ -193,8 +196,9 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
               };
             } else {
               yAxis = { // Primary yAxis
+                allowDecimals: false,
                 labels: {
-                  format: '{value} ' + unitsHash[key],
+                  format: '{value:.0f} ' + unitsHash[key],
                 },
                 title: {
                   text: key,
@@ -221,14 +225,14 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
         }
       }
     },
-    function (error) {
+    function(error) {
       Meteor._debug('error during livedata publication aggregation: ' + error);
     }
   );
 });
 
 // aggregation of composite aggregated data to be plotted with highstock
-Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
+Meteor.publish('compositeSeries', function(siteList, startEpoch, endEpoch) {
 
   var subscription = this;
   var poll5Data = {};
@@ -264,16 +268,16 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
     }
   }];
 
-  AggrData.aggregate(agg5Pipe, function (err, result) {
+  AggrData.aggregate(agg5Pipe, function(err, result) {
       // create new structure for data series to be used for charts
       if (result.length > 0) {
-        _.each(result, function (line) {
+        _.each(result, function(line) {
           var epoch = line.epoch;
-          _.each(line.subTypes, function (subKey, subType) { // subType is O3, etc.
+          _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
             if (!poll5Data[subType]) {
               poll5Data[subType] = {};
             }
-            _.each(subKey, function (sub, key) { // sub is the array with metric/val pairs as subarrays
+            _.each(subKey, function(sub, key) { // sub is the array with metric/val pairs as subarrays
               if (!poll5Data[subType][key]) { // create placeholder if not exists
                 poll5Data[subType][key] = [];
               }
@@ -305,13 +309,13 @@ Meteor.publish('compositeSeries', function (siteList, startEpoch, endEpoch) {
 
       }
     },
-    function (error) {
+    function(error) {
       Meteor._debug('error during 5min publication aggregation: ' + error);
     }
   );
 });
 
-Meteor.publish('sites', function () {
+Meteor.publish('sites', function() {
   return Sites.find({
     'incoming': {
       $exists: true
@@ -319,7 +323,7 @@ Meteor.publish('sites', function () {
   });
 });
 
-Meteor.publish('userData', function () {
+Meteor.publish('userData', function() {
   if (this.userId) {
     return Meteor.users.find({
       _id: this.userId
