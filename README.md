@@ -19,9 +19,11 @@ On Mac OS or Linux:
 * Data Folder: It expects a certain data folder structure. `/hnet/incoming/2016` + `/hnet/outgoing/2016` should exist.
 
 
-## Get stared
+## Getting started
 
-* Run `npm install`
+You may have to run the follwoing:
+* `meteor npm install --save highcharts`
+* `meteor npm install --save ftps`
 
 ## Testing in local development environment
 
