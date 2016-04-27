@@ -154,7 +154,6 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
 
               // dealing with flags
               if ((obj.numValid / obj.totalCounter) >= 0.75) {
-                logger.info(`found total: ${obj.totalCounter} and numvalid: ${obj.numValid}`);
                 obj.Flag = 1; // valid
               } else {
                 // found out which flag was majority
