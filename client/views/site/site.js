@@ -26,9 +26,9 @@ var Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   var selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function(series) {
+  Highcharts.each(this.series, function (series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
-      Highcharts.each(series.points, function(point) {
+      Highcharts.each(series.points, function (point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           // point.select(true, true);
           selection.push(point);
@@ -51,7 +51,7 @@ function selectPointsByDrag(e) {
  */
 function selectedPoints(e) {
   var points = [];
-  _.each(e.points, function(point) {
+  _.each(e.points, function (point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -76,11 +76,11 @@ function selectedPoints(e) {
   // Show the Edit Points modal
   $('#editPointsModal').modal({}).modal('show');
 
-  $('#btnSubmit').click(function(event) {
+  $('#btnSubmit').click(function (event) {
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function(point) {
+    updatedPoints.forEach(function (point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
     });
     // Update local point color to reflect new flag
@@ -94,7 +94,7 @@ function selectedPoints(e) {
     e.points[0].series.chart.redraw();
   });
 
-  $('#editPointsModal table tr .fa').click(function(event) {
+  $('#editPointsModal table tr .fa').click(function (event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -123,7 +123,7 @@ function selectedPoints(e) {
 function unselectByClick() {
   var points = this.getSelectedPoints();
   if (points.length > 0) {
-    Highcharts.each(points, function(point) {
+    Highcharts.each(points, function (point) {
       point.select(false);
     });
   }
@@ -143,7 +143,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
         selectedpoints: selectedPoints,
         click: unselectByClick
       },
-      zoomType: 'xy',
+      zoomType: 'x',
       renderTo: chartName,
     },
     title: {
@@ -154,7 +154,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       title: {
         text: 'Local Time',
       },
-			minRange: 3600 * 1000 +10,
+			minRange: 3600,
     },
     yAxis: yAxisOptions,
     series: seriesOptions,
@@ -197,47 +197,32 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       inputEnabled: false,
       allButtonsEnabled: true,
       buttons: [{
+        type: 'day',
+        count: 1,
+        text: '1 Day',
+      }, {
         type: 'minute',
         count: 60,
         text: 'Hour',
-        dataGrouping: {
-          forced: true,
-          units: [
-            ['hour', [60]],
-          ],
-        },
-      }, {
-        type: 'all',
-        count: 1,
-        text: '1 Day',
-        dataGrouping: {
-          forced: true,
-          units: [
-            ['day', [1]],
-          ],
-        },
       }],
       buttonTheme: {
-        width: 60,
+        width: 60
       },
-      selected: 1,
-    }
+      selected: 0
+    },
   });
 }
 
-Template.site.onRendered(function() {
+Template.site.onRendered(function () {
   // Do reactive stuff when something is added or removed
-  this.autorun(function() {
-    console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
-
+  this.autorun(function () {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
     Charts.remove({});
     var query = DataSeries.find();
     var handle = query.observeChanges({
-      added: function(series, seriesData) {
-        console.log(`series add: ${series}`);
+      added: function (series, seriesData) {
         const subType = series.split(/[_]+/)[0];
 
         // store yAxis options in separate variable
@@ -256,6 +241,7 @@ Template.site.onRendered(function() {
 
           const seriesOptions = [];
           seriesOptions.push(seriesData);
+          yAxisOptions.id = subType;
           createChart(`container-chart-${subType}`, subType, seriesOptions, yAxisOptions);
         } else {
 
@@ -270,7 +256,9 @@ Template.site.onRendered(function() {
             );
           }
 
-          if (seriesData.chartType !== 'line' && chart.series.length !== 2) {
+          if (chart.series.length === 2 && seriesData.chartType === 'line') {
+            console.log(`hello: ${series}`);
+          } else {
             seriesData.yAxis = subType;
           }
 
@@ -325,7 +313,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function(epoch) {
+Template.registerHelper('formatDate', function (epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -355,7 +343,7 @@ Template.site.events({
   'click #updateAggr' () {
     Meteor.call('new5minAggreg', Router.current().params._id,
       startEpoch.get(), endEpoch.get(),
-      function(err, response) {
+      function (err, response) {
         if (err) {
           Session.set('serverDataResponse', `Error: ${err.reason}`);
           return;
