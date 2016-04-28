@@ -24,12 +24,12 @@ var Charts = new Meteor.Collection(null);
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
-	var selection = [];
+  var selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function (series) {
+  Highcharts.each(this.series, function(series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
-      Highcharts.each(series.points, function (point) {
-				if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
+      Highcharts.each(series.points, function(point) {
+        if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           // point.select(true, true);
           selection.push(point);
         }
@@ -40,7 +40,7 @@ function selectPointsByDrag(e) {
   // Fire a custom event
   Highcharts.fireEvent(this, 'selectedpoints', {
     // points: this.getSelectedPoints
-		points: selection
+    points: selection
   });
 
   return false; // Don't zoom
@@ -50,8 +50,8 @@ function selectPointsByDrag(e) {
  * The handler for a custom event, fired from selection event
  */
 function selectedPoints(e) {
-	var points = [];
-  _.each(e.points, function (point) {
+  var points = [];
+  _.each(e.points, function(point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -74,13 +74,13 @@ function selectedPoints(e) {
   }
 
   // Show the Edit Points modal
-	$('#editPointsModal').modal({}).modal('show');
+  $('#editPointsModal').modal({}).modal('show');
 
-	$('#btnSubmit').click(function (event) {
+  $('#btnSubmit').click(function(event) {
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function (point) {
+    updatedPoints.forEach(function(point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
     });
     // Update local point color to reflect new flag
@@ -94,7 +94,7 @@ function selectedPoints(e) {
     e.points[0].series.chart.redraw();
   });
 
-  $('#editPointsModal table tr .fa').click(function (event) {
+  $('#editPointsModal table tr .fa').click(function(event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -123,7 +123,7 @@ function selectedPoints(e) {
 function unselectByClick() {
   var points = this.getSelectedPoints();
   if (points.length > 0) {
-    Highcharts.each(points, function (point) {
+    Highcharts.each(points, function(point) {
       point.select(false);
     });
   }
@@ -154,11 +154,9 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       title: {
         text: 'Local Time',
       },
+			minRange: 3600 * 1000 +10,
     },
     yAxis: yAxisOptions,
-    plotOptions: {
-      series: {}
-    },
     series: seriesOptions,
     tooltip: {
       enabled: true,
@@ -188,6 +186,13 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
     credits: {
       enabled: false,
     },
+    legend: {
+      enabled: true,
+      align: 'right',
+      layout: 'vertical',
+      verticalAlign: 'top',
+      y: 100,
+    },
     rangeSelector: {
       inputEnabled: false,
       allButtonsEnabled: true,
@@ -202,17 +207,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
           ],
         },
       }, {
-        type: 'day',
-        count: 3,
-        text: '3 Days',
-        dataGrouping: {
-          forced: true,
-          units: [
-            ['day', [1]],
-          ],
-        },
-      }, {
-        type: 'day',
+        type: 'all',
         count: 1,
         text: '1 Day',
         dataGrouping: {
@@ -225,21 +220,14 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       buttonTheme: {
         width: 60,
       },
-      selected: 2,
-    },
-    legend: {
-      enabled: true,
-      align: 'right',
-      layout: 'vertical',
-      verticalAlign: 'top',
-      y: 100,
-    },
+      selected: 1,
+    }
   });
 }
 
-Template.site.onRendered(function () {
+Template.site.onRendered(function() {
   // Do reactive stuff when something is added or removed
-  this.autorun(function () {
+  this.autorun(function() {
     console.log('site: ', Router.current().params._id, 'start: ', startEpoch.get(), 'end: ', endEpoch.get());
 
     // Subscribe
@@ -248,8 +236,10 @@ Template.site.onRendered(function () {
     Charts.remove({});
     var query = DataSeries.find();
     var handle = query.observeChanges({
-      added: function (series, seriesData) {
+      added: function(series, seriesData) {
+        console.log(`series add: ${series}`);
         const subType = series.split(/[_]+/)[0];
+
         // store yAxis options in separate variable
         let yAxisOptions = seriesData.yAxis;
         delete seriesData['yAxis'];
@@ -268,17 +258,22 @@ Template.site.onRendered(function () {
           seriesOptions.push(seriesData);
           createChart(`container-chart-${subType}`, subType, seriesOptions, yAxisOptions);
         } else {
+
           // put axis for each series
           const chart = $(`#container-chart-${subType}`).highcharts();
 
-          if (chart.series.length === 2) { // Secondary yAxis
+          if (chart.series.length === 2 && seriesData.chartType === 'scatter') { // Secondary yAxis
             yAxisOptions.opposite = true;
+            yAxisOptions.id = subType;
             chart.addAxis(
               yAxisOptions
             );
           }
 
-          seriesData.yAxis = 2;
+          if (seriesData.chartType !== 'line' && chart.series.length !== 2) {
+            seriesData.yAxis = subType;
+          }
+
           chart.addSeries(seriesData);
         }
       },
@@ -330,7 +325,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function (epoch) {
+Template.registerHelper('formatDate', function(epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -360,7 +355,7 @@ Template.site.events({
   'click #updateAggr' () {
     Meteor.call('new5minAggreg', Router.current().params._id,
       startEpoch.get(), endEpoch.get(),
-      function (err, response) {
+      function(err, response) {
         if (err) {
           Session.set('serverDataResponse', `Error: ${err.reason}`);
           return;

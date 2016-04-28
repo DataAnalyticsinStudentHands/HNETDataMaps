@@ -80,7 +80,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                   opposite: false,
                   floor: 0,
                   ceiling: 360,
-                  tickInterval: 90,
+                  tickInterval: 90
                 };
               } else {
                 yAxis = {
@@ -102,6 +102,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                 marker: {
                   enabled: true,
                   radius: 2,
+									symbol: 'circle',
                 },
                 lineWidth: 0,
                 allowPointSelect: 'true',
@@ -174,40 +175,10 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             chartType = 'scatter';
           }
 
-          for (var key in poll5Data[pubKey]) {
+          for (var key in pollData[pubKey]) {
             // skip loop if the property is from prototype
             if (!poll5Data[pubKey].hasOwnProperty(key)) continue;
-
-            // create yAxis object
-            let yAxis = {};
-            if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
-              yAxis = { // Primary yAxis
-                allowDecimals: false,
-                labels: {
-                  format: '{value:.0f} ' + unitsHash[key],
-                },
-                title: {
-                  text: key,
-                },
-                opposite: false,
-                floor: 0,
-                ceiling: 360,
-                tickInterval: 90,
-              };
-            } else {
-              yAxis = { // Primary yAxis
-                allowDecimals: false,
-                labels: {
-                  format: '{value:.0f} ' + unitsHash[key],
-                },
-                title: {
-                  text: key,
-                },
-                opposite: false,
-                floor: 0,
-              };
-            }
-
+            // add to subscription
             subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
               name: key + '_10s',
               chartType: chartType,
@@ -219,7 +190,6 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               allowPointSelect: 'false',
               data: poll5Data[pubKey][key],
               zIndex: 1,
-              yAxis: yAxis,
             });
           }
         }
