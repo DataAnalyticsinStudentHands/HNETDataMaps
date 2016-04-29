@@ -10,7 +10,9 @@ Meteor.subscribe('sites');
 Highcharts.setOptions({
   global: {
     useUTC: false,
+
   },
+	colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
 });
 
 // pass null as collection name, it will create
@@ -224,6 +226,7 @@ Template.site.onRendered(function () {
     var handle = query.observeChanges({
       added: function (series, seriesData) {
         const subType = series.split(/[_]+/)[0];
+				const metric = series.split(/[_]+/)[1];
 
         // store yAxis options in separate variable
         let yAxisOptions = seriesData.yAxis;
@@ -241,7 +244,7 @@ Template.site.onRendered(function () {
 
           const seriesOptions = [];
           seriesOptions.push(seriesData);
-          yAxisOptions.id = subType;
+          yAxisOptions.id = metric;
           createChart(`container-chart-${subType}`, subType, seriesOptions, yAxisOptions);
         } else {
 
@@ -250,16 +253,16 @@ Template.site.onRendered(function () {
 
           if (chart.series.length === 2 && seriesData.chartType === 'scatter') { // Secondary yAxis
             yAxisOptions.opposite = true;
-            yAxisOptions.id = subType;
+            yAxisOptions.id = metric;
             chart.addAxis(
               yAxisOptions
             );
           }
 
-          if (chart.series.length === 2 && seriesData.chartType === 'line') {
-            console.log(`hello: ${series}`);
-          } else {
-            seriesData.yAxis = subType;
+          if (!(chart.series.length === 2 && seriesData.chartType === 'line')) {
+
+          
+            seriesData.yAxis = metric;
           }
 
           chart.addSeries(seriesData);
