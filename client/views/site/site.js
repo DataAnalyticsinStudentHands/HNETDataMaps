@@ -12,7 +12,7 @@ Highcharts.setOptions({
     useUTC: false,
 
   },
-	colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
+  colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
 });
 
 // pass null as collection name, it will create
@@ -61,7 +61,7 @@ function selectedPoints(e) {
       selectedPoint.flag = flagsHash[point.name];
       selectedPoint.site = Router.current().params._id;
       selectedPoint.instrument = point.series.chart.title.textStr;
-      selectedPoint.measurement = point.series.name;
+      selectedPoint.measurement = point.series.name.split(/[_]+/)[0];
       selectedPoint.id = point.series.chart.title.textStr + '_' + point.series.name + '_' + point.x;
       point.id = selectedPoint.id;
       points.push(selectedPoint);
@@ -92,7 +92,6 @@ function selectedPoints(e) {
       }, false);
     });
     // Redraw chart
-
     e.points[0].series.chart.redraw();
   });
 
@@ -156,7 +155,14 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       title: {
         text: 'Local Time',
       },
-			minRange: 3600,
+      minRange: 3600,
+    },
+    navigator: {
+      xAxis: {
+        dateTimeLabelFormats: {
+          hour: '%e. %b',
+        },
+      },
     },
     yAxis: yAxisOptions,
     series: seriesOptions,
@@ -221,12 +227,14 @@ Template.site.onRendered(function () {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
+			console.log(`helo from auto: ${startEpoch.get()}, ${endEpoch.get()}`);
     Charts.remove({});
     var query = DataSeries.find();
     var handle = query.observeChanges({
       added: function (series, seriesData) {
+				console.log(`helo from added: ${series}`);
         const subType = series.split(/[_]+/)[0];
-				const metric = series.split(/[_]+/)[1];
+        const metric = series.split(/[_]+/)[1];
 
         // store yAxis options in separate variable
         let yAxisOptions = seriesData.yAxis;
@@ -261,7 +269,7 @@ Template.site.onRendered(function () {
 
           if (!(chart.series.length === 2 && seriesData.chartType === 'line')) {
 
-          
+
             seriesData.yAxis = metric;
           }
 
