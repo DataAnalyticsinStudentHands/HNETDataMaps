@@ -41,7 +41,9 @@
       "channelHash": true,
       "flagsHash": true
     },
-    "rules": {}
+    "rules": {
+			"max-len": [2, 120, 2, {"ignoreUrls": true, "ignoreComments": false}]
+		}
   },
   "repository": {
     "type": "git",
