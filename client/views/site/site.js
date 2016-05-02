@@ -78,11 +78,11 @@ function selectedPoints(e) {
   // Show the Edit Points modal
   $('#editPointsModal').modal({}).modal('show');
 
-  $('#btnSubmit').click(function(event) {
+  $('#btnSubmit').click(function (event) {
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function(point) {
+    updatedPoints.forEach(function (point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
     });
     // Update local point color to reflect new flag
@@ -92,11 +92,10 @@ function selectedPoints(e) {
       }, false);
     });
     // Redraw chart
-
     e.points[0].series.chart.redraw();
   });
 
-  $('#editPointsModal table tr .fa').click(function(event) {
+  $('#editPointsModal table tr .fa').click(function (event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -158,6 +157,13 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       },
       minRange: 3600,
     },
+    navigator: {
+      xAxis: {
+        dateTimeLabelFormats: {
+          hour: '%e. %b',
+        },
+      },
+    },
     yAxis: yAxisOptions,
     series: seriesOptions,
     tooltip: {
@@ -217,7 +223,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
 
 Template.site.onRendered(function () {
   // Do reactive stuff when something is added or removed
-  this.autorun(function() {
+  this.autorun(function () {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
@@ -315,7 +321,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function(epoch) {
+Template.registerHelper('formatDate', function (epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -345,7 +351,7 @@ Template.site.events({
   'click #updateAggr' () {
     Meteor.call('new5minAggreg', Router.current().params._id,
       startEpoch.get(), endEpoch.get(),
-      function(err, response) {
+      function (err, response) {
         if (err) {
           Session.set('serverDataResponse', `Error: ${err.reason}`);
           return;
