@@ -15,12 +15,11 @@ Highcharts.setOptions({
   colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
 });
 
-// pass null as collection name, it will create
-// local only collection
+// placeholder for EditPoints in modal
 const EditPoints = new Mongo.Collection(null);
 
 // placeholder for dynamic chart containers
-var Charts = new Meteor.Collection(null);
+const Charts = new Meteor.Collection(null);
 
 /**
  * Custom selection handler that selects points and cancels the default zoom behaviour
@@ -28,9 +27,9 @@ var Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   var selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function (series) {
+  Highcharts.each(this.series, function(series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
-      Highcharts.each(series.points, function (point) {
+      Highcharts.each(series.points, function(point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           // point.select(true, true);
           selection.push(point);
@@ -53,7 +52,7 @@ function selectPointsByDrag(e) {
  */
 function selectedPoints(e) {
   var points = [];
-  _.each(e.points, function (point) {
+  _.each(e.points, function(point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -61,7 +60,7 @@ function selectedPoints(e) {
       selectedPoint.flag = flagsHash[point.name];
       selectedPoint.site = Router.current().params._id;
       selectedPoint.instrument = point.series.chart.title.textStr;
-      selectedPoint.measurement = point.series.name;
+      selectedPoint.measurement = point.series.name.split(/[_]+/)[0];
       selectedPoint.id = `${point.series.chart.title.textStr}_${point.series.name}_${point.x}`;
       point.id = selectedPoint.id;
       points.push(selectedPoint);
@@ -78,11 +77,11 @@ function selectedPoints(e) {
   // Show the Edit Points modal
   $('#editPointsModal').modal({}).modal('show');
 
-  $('#btnSubmit').click(function (event) {
+  $('#btnSubmit').click(function(event) {
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function (point) {
+    updatedPoints.forEach(function(point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
     });
     // Update local point color to reflect new flag
@@ -95,7 +94,7 @@ function selectedPoints(e) {
     e.points[0].series.chart.redraw();
   });
 
-  $('#editPointsModal table tr .fa').click(function (event) {
+  $('#editPointsModal table tr .fa').click(function(event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -221,59 +220,60 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   });
 }
 
-Template.site.onRendered(function () {
+Template.site.onRendered(function() {
   // Do reactive stuff when something is added or removed
-  this.autorun(function () {
+  this.autorun(function() {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
     Charts.remove({});
+
+    let initializing = true;
     DataSeries.find().observeChanges({
       added: function(series, seriesData) {
-        const subType = series.split(/[_]+/)[0];
-        const metric = series.split(/[_]+/)[1];
+        if (!initializing) { // true only when we first start
+          const subType = series.split(/[_]+/)[0];
+          const metric = series.split(/[_]+/)[1];
 
-        // store yAxis options in separate variable
-        let yAxisOptions = seriesData.yAxis;
-        delete seriesData['yAxis'];
+          // store yAxis options in separate variable
+          const yAxisOptions = seriesData.yAxis;
+          delete seriesData.yAxis;
 
-        // insert object into Charts if not yet exists and create new chart
-        if (!Charts.findOne({
-            id: subType
-          }, {
-            reactive: false
-          })) {
-          Charts.insert({
-            id: subType,
-          });
+          // insert object into Charts if not yet exists and create new chart
+          if (!Charts.findOne({
+              id: subType
+            }, {
+              reactive: false
+            })) {
+            Charts.insert({
+              id: subType,
+            });
 
-          const seriesOptions = [];
-          seriesOptions.push(seriesData);
-          yAxisOptions.id = metric;
-          createChart(`container-chart-${subType}`, subType, seriesOptions, yAxisOptions);
-        } else {
-
-          // put axis for each series
-          const chart = $(`#container-chart-${subType}`).highcharts();
-
-          if (chart.series.length === 2 && seriesData.chartType === 'scatter') { // Secondary yAxis
-            yAxisOptions.opposite = true;
+            const seriesOptions = [];
+            seriesOptions.push(seriesData);
             yAxisOptions.id = metric;
-            chart.addAxis(
-              yAxisOptions
-            );
+            createChart(`container-chart-${subType}`, subType, seriesOptions, yAxisOptions);
+          } else {
+            // put axis for each series
+            const chart = $(`#container-chart-${subType}`).highcharts();
+
+            if (chart.series.length === 2 && seriesData.chartType === 'scatter') { // Secondary yAxis
+              yAxisOptions.opposite = true;
+              yAxisOptions.id = metric;
+              chart.addAxis(
+                yAxisOptions
+              );
+            }
+
+            if (!(chart.series.length === 2 && seriesData.chartType === 'line')) {
+              seriesData.yAxis = metric;
+            }
+            chart.addSeries(seriesData);
           }
-
-          if (!(chart.series.length === 2 && seriesData.chartType === 'line')) {
-
-
-            seriesData.yAxis = metric;
-          }
-
-          chart.addSeries(seriesData);
         }
       },
     });
+    initializing = false;
   }); // end autorun
 }); // end of onRendered
 
@@ -321,7 +321,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function (epoch) {
+Template.registerHelper('formatDate', function(epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -330,7 +330,7 @@ Template.site.helpers({
     const site = Sites.findOne({
       AQSID: Router.current().params._id,
     });
-    return site['site name'];
+    return site && site['site name'];
   },
   selectedDate() {
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
@@ -351,7 +351,7 @@ Template.site.events({
   'click #updateAggr' () {
     Meteor.call('new5minAggreg', Router.current().params._id,
       startEpoch.get(), endEpoch.get(),
-      function (err, response) {
+      function(err, response) {
         if (err) {
           Session.set('serverDataResponse', `Error: ${err.reason}`);
           return;
