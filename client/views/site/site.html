@@ -10,9 +10,11 @@
 			<button class="btn btn-primary" id="createPush">
 				Create Push File
 			</button>
+			{{#if isInRole 'admin'}}
 			<button class="btn btn-primary" id="updateAggr">
 				Update Aggregates for selected day
 			</button>
+				{{/if}}
 		</div>
 	</div>
 
