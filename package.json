@@ -36,8 +36,10 @@
       "moment": true,
       "logger": true,
       "Highcharts": true,
+			"Papa": true,
       "LiveData": true,
       "Sites": true,
+			"DataExporter": true,
       "channelHash": true,
       "flagsHash": true
     },
