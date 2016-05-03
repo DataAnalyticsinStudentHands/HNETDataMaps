@@ -6,31 +6,31 @@ DataExporter = {
     Meteor.call('exportData', siteId, startEpoch, endEpoch, function (error, data) {
 
       if (error) {
-          alert(error);
-          return false;
-        }
+        alert(error);
+        return false;
+      }
 
       var dir = Sites.findOne({
-          AQSID: siteId
-        });
+        AQSID: siteId
+      });
 
       if (dir !== undefined) {
-          var csv = Papa.unparse(data);
-          var siteName = dir.incoming.match(/[^_]*/);
-          self._downloadCSV(csv, siteName + moment.unix(startEpoch).format('YYMMDDHHmmss') + '.txt');
-        }
+        const csv = Papa.unparse(data);
+        const siteName = dir.incoming.match(new RegExp('UH' + '(.*)' + '_')); // create site name from incoming folder
+        self._downloadCSV(csv, `${siteName[1].toLowerCase()}${moment.unix(startEpoch).format('YYMMDDHHmmss')}.txt`);
+      }
     });
   },
 
   _downloadCSV: function (csv, fileName) {
-    var blob = new Blob([csv]);
-    var a = window.document.createElement('a');
+    const blob = new Blob([csv]);
+    const a = window.document.createElement('a');
     a.href = window.URL.createObjectURL(blob, {
-      type: 'text/plain'
+      type: 'text/csv',
     });
     a.download = fileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }
+  },
 };

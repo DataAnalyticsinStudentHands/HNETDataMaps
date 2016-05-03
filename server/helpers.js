@@ -8,8 +8,8 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
 
   if (dir !== undefined) {
     // output folder
-    const siteName = dir.incoming.match(/[^_]*/);
-    const outputFile = `/hnet/outgoing/2016/${dir.incoming}/${siteName}` + moment.unix(startEpoch).format('YYMMDDHHmmss') + '.uh';
+    const siteName = dir.incoming.match(new RegExp('UH' + '(.*)' + '_')); // create site name from incoming folder
+    const outputFile = `/hnet/outgoing/2016/${dir.incoming}/${siteName[1].toLowerCase()}` + moment.unix(startEpoch).format('YYMMDDHHmmss') + '.uh';
 
     var aggregatData = AggrData.find({
       $and: [{
@@ -20,7 +20,11 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
       }, {
         site: aqsid
       }]
-    }, {sort: {epoch: 1}}).fetch();
+    }, {
+      sort: {
+        epoch: 1
+      }
+    }).fetch();
 
     var dataObject = [];
     _.each(aggregatData, function (e) {
