@@ -61,7 +61,7 @@ function selectedPoints(e) {
       selectedPoint.site = Router.current().params._id;
       selectedPoint.instrument = point.series.chart.title.textStr;
       selectedPoint.measurement = point.series.name.split(/[_]+/)[0];
-      selectedPoint.id = `${point.series.chart.title.textStr}_${point.series.name}_${point.x}`;
+      selectedPoint.id = `${point.series.chart.title.textStr}_${point.series.name.split(/[_]+/)[0]}_${point.x}`;
       point.id = selectedPoint.id;
       points.push(selectedPoint);
     }
@@ -69,7 +69,10 @@ function selectedPoints(e) {
 
   if (points.length === 0) return;
 
-  EditPoints.remove({});
+	// reset variables
+	EditPoints.remove({});
+	selectedFlag.set(null);
+
   for (let i = 0; i < points.length; i++) {
     EditPoints.insert(points[i]);
   }
@@ -286,7 +289,7 @@ Template.editPoints.events({
 
 Template.editPoints.helpers({
   points() {
-    return EditPoints.find({});
+    return EditPoints.find();
   },
   availableFlags() {
     return _.where(flagsHash, {
