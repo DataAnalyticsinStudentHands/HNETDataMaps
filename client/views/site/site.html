@@ -1,89 +1,103 @@
 <template name="site">
 
-    <div class="ui message">
-        <div class="header">
-            Site: {{sitename}}
-        </div>
-        <div class="inline field">
-            <label>Select Date: </label>
-            <input type="date" value="{{selectedDate}}" id="datepicker">
-            <button class="ui button" id="createPush">
-                Create Push File
-            </button>
-        
-        </div>
-    </div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title">Site: {{sitename}}</h3>
+		</div>
+		<div class="panel-body">
+			<h5>Select Date: </h5>
+			<input type="date" value="{{selectedDate}}" id="datepicker">
+			<button class="btn btn-primary" id="createPush">
+				Create Push File
+			</button>
+			<button class="btn btn-primary" id="updateAggr">
+				Update Aggregates for selected day
+			</button>
+		</div>
+	</div>
 
-    <!-- container for charts -->
-    {{#each charts}}
-    <div id="container-chart-{{id}}" style="width: 100%"></div>
-    <!-- placeholder for editPoints modal -->
-    {{/each}} {{> editPoints}}
+	<!-- container for charts -->
+
+
+	{{#each charts}}
+	<div id="container-chart-{{id}}" style="width: 100%"></div>
+	<!-- placeholder for editPoints modal -->
+	{{else}}
+    <p >Found no data for the selected date.</p>
+	{{/each}} {{> editPoints}}
+
+
 </template>
 
 <!-- Modal for editing points -->
 <template name="editPoints">
-    <div class="ui modal" id="editPointsModal">
-        <div class="header">
-            <i class="flag icon"></i>
-            <span>Edit Flags</span>
-            <span style="float: right; font-size: 0.8em; font-weight: normal;">
-                <span style="margin-right: 1em;">New flag:</span>
-                <div class="ui selection dropdown" id="drop" style="padding: 0.4em 2em 0.4em 1em; min-height: 1.8em;">
-                    <input type="hidden" name="flag">
-                    <div class="default text">Select one...</div>
-                    <i class="dropdown icon"></i>
-                    <div class="menu">
-                        {{#each availableFlags}}
-                        <div class="item" data-value="{{val}}">
-                            {{> flagLabel}}
-                        </div>
-                        {{/each}}
-                    </div>
-                </div>
-            </span>
-        </div>
-        <div class="content" style="overflow-y: auto; max-height: 500px;">
-            <table class="ui very basic compact selectable table">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Timestamp</th>
-                        <th>Value</th>
-                        <th>Instrument</th>
-                        <th>Measurement</th>
-                        <th>Current Flag</th>
-                        <th>New Flag</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {{#each points}}
-                    <tr>
-                        <td><i class="close icon" data-id="{{id}}"></i></td>
-                        <td>{{formatDate x}}</td>
-                        <td>{{formatDataValue y}}</td>
-                        <td>{{instrument}}</td>
-                        <td>{{measurement}}</td>
-                        <td>{{> flagLabel flag}}</td>
-                        <td>{{> flagLabel flagSelected}}</td>
-                    </tr>
-                {{/each}}
-                </tbody>
-            </table>
-        </div>
-        <div class="actions">
-            <span>Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.</span>
-            <div class="ui deny labeled icon button">
-                <i class="remove icon"></i> Cancel
-            </div>
-            <div class="ui primary approve labeled icon button{{#unless isValid}} disabled{{/unless}}">
-                <i class="checkmark icon"></i> Submit
-            </div>
-        </div>
-    </div>
+	<div class="modal fade" id="editPointsModal">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+
+					<div class="pull-left">
+						<h4><i class="fa fa-flag" aria-hidden="true"></i> Edit Flags</h4>
+					</div>
+					<div class="pull-right">
+						<div class="dropdown">New Flag:
+							<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+								Select one ..
+								<span class="caret"></span>
+							</button>
+							<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+								{{#each availableFlags}}
+									<li>{{> flagLabel}}</li>
+								{{/each}}
+							</ul>
+						</div>
+
+					</div>
+				</div>
+				<div class="modal-body">
+					<table class="table">
+						<thead>
+							<tr>
+								<th></th>
+								<th>Timestamp</th>
+								<th>Value</th>
+								<th>Instrument</th>
+								<th>Measurement</th>
+								<th>Current Flag</th>
+								<th>New Flag</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each points}}
+							<tr>
+								<td><i class="fa fa-times js-remove-point" data-id="{{id}}"></i></td>
+								<td>{{formatDate x}}</td>
+								<td>{{formatDataValue y}}</td>
+								<td>{{instrument}}</td>
+								<td>{{measurement}}</td>
+								<td>{{> flaginTable flag}}</td>
+								<td>{{> flaginTable flagSelected}}</td>
+							</tr>
+							{{/each}}
+						</tbody>
+					</table>
+				</div>
+				<div class="modal-footer">
+					Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.
+					<button type="button" class="btn btn-default" aria-label="Close" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
+					<button type="button" class="btn btn-primary active {{#unless isValid}} disabled{{/unless}}" data-dismiss="modal" id="btnSubmit"><i class="fa fa-check"></i> Submit</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 <template name="flagLabel">
-    <span class="ui mini {{color}} circular label" title="{{description}}">{{label}}</span>
-    {{description}}
+	<a href="#" data-value="{{val}}">
+		<div>
+		<span class="label {{labelcolor}} label-as-badge" title="{{description}}">{{label}}</span> {{description}}</div></a>
+</template>
+
+<template name="flaginTable">
+		<span class="label {{labelcolor}} label-as-badge" title="{{description}}">{{label}}</span> {{description}}
 </template>

@@ -1,40 +1,63 @@
-<template name="nav">
-    <div class="ui inverted blue top attached menu">
-        <a class="item" href="{{pathFor 'home'}}">Home</a> {{#if currentUser}}
-        <a class="ui dropdown item">Sites
-            <i class="dropdown icon"></i>
-            <div class="menu">
-                <div class="item">
-                    <a href="{{ pathFor 'site' _id='482010570'}}" style='color: black'>Clear Brook Highschool</a></div>
-    <div class="item">
-        <a href="{{ pathFor 'site' _id='481670571'}}" style='color: black'>Clear Creek Highschool</a></div>
-    <div class="item">
-        <a href="{{ pathFor 'site' _id='482010572'}}" style='color: black'>Clear Lake Highschool</a></div>
-    <div class="item">
-        <a href="{{ pathFor 'site' _id='481670697'}}" style='color: black'>Coastal Center</a></div>
-    <div class="item">
-        <a href="{{ pathFor 'site' _id='482010695'}}" style='color: black'>Moody Towers</a></div>
-    <div class="item">
-        <a href="{{ pathFor 'site' _id='480710013'}}" style='color: black'>Smith Point</a></div>
-    <div class="item">
-        <a href="{{ pathFor 'site' _id='482910699'}}" style='color: black'>West Liberty</a></div>
-    </div>
-    </a>
-    {{/if}}
-
-    <a class="item" href="{{pathFor 'composite'}}">Composites</a> 
-        {{#if isInRole 'admin'}}
-    <a class="item" href="{{pathFor 'testing'}}">Data Management</a> 
-        {{/if}} 
-        {{#if isInRole 'admin'}}
-    <a class="item" href="admin">Admin</a> 
-        {{/if}}
-
-    <!-- Place for side menu - sign in etc.       -->
-    <div class="right menu">
-        {{> atNavButton}}
-    </div>
+<template name='nav'>
+	<div class="navbar navbar-default navbar-fixed-top">
+		<div class="container">
 
 
-    </div>
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#">
+        <img alt="DASH logo" src="/img/DASH-logo-small.png">
+      </a>
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+					{{> navItems}}
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+					{{> loginButtons}}
+					<!-- here -->
+				</ul>
+			</div>
+
+		</div>
+	</div>
+</template>
+
+<template name='navItems'>
+	<li class="{{ activeIfTemplateIs 'home' }}">
+		<a href="{{ pathFor 'home'}}">Home</a>
+	</li>
+	{{#if currentUser}}
+	<li class="dropdown">
+		<a href="#" data-toggle="dropdown" class="dropdown-toggle">Sites <b class="caret"></b></a>
+		<ul class="dropdown-menu">
+			<li><a href="{{ pathFor 'site' _id='482010570'}}">Clear Brook Highschool</a></li>
+			<li><a href="{{ pathFor 'site' _id='481670571'}}">Clear Creek Highschool</a></li>
+			<li><a href="{{ pathFor 'site' _id='482010572'}}">Clear Lake Highschool</a></li>
+			<li><a href="{{ pathFor 'site' _id='481670697'}}">Coastal Center</a></li>
+			<li><a href="{{ pathFor 'site' _id='482010695'}}">Moody Towers</a></li>
+			<li><a href="{{ pathFor 'site' _id='480710013'}}">Smith Point</a></li>
+			<li><a href="{{ pathFor 'site' _id='482910699'}}">West Liberty</a></li>
+			<li class="divider"></li>
+			<li><a href="#">Launch Trailer</a></li>
+		</ul>
+	</li>
+	<li class="{{ activeIfTemplateIs 'composite' }}">
+		<a class="item" href="{{pathFor 'composite'}}">Composites</a>
+	</li>
+	{{/if}} {{#if isInRole 'admin'}}
+	<li class="{{ activeIfTemplateIs 'testing' }}">
+		<a class="item" href="{{pathFor 'testing'}}">Data Management</a>
+	</li>
+	{{/if}} {{#if isInRole 'admin'}}
+	<li class="{{ activeIfTemplateIs 'testing' }}">
+
+		<a class="item" href="admin">Admin</a>
+	</li>
+	{{/if}}
 </template>

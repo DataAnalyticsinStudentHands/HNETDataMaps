@@ -4,46 +4,69 @@
 # 'meteor add' and 'meteor remove' will edit this file for you,
 # but you can also edit it by hand.
 
-mdg:geolocation
-iron:router
-accounts-password               # Password based authentication
-meteorhacks:npm                 # Handling of npm packages
-npm-container                   # Handling of npm packages
-momentjs:moment                 # Time calculations
-udondan:bulk-collection-update  # Collection bulk update
-useraccounts:iron-routing
-useraccounts:semantic-ui
-alanning:roles                  # Managing roles for users
-fortawesome:fontawesome         # fontawesome packaged for Meteor
+# meteor libraries
 meteor-base                     # Packages every Meteor app needs to have
-mobile-experience
-mongo                           # The database Meteor supports right now
+ecmascript
+es5-shim
+check
+tracker
+
+# standard libraries
+jquery
+underscore
+
+# ui
 blaze-html-templates
 session
-jquery
-tracker
-logging
-reload
-random
-ejson
 spacebars
-check
-meteorhacks:aggregate           # MongoDB Aggregation
 reactive-var
 reactive-dict
-bevanhunt:leaflet               # Mapping
-meteorhacks:kadira              # Remote performance watch
+fortawesome:fontawesome         # fontawesome packaged for Meteor
 makalu:better-dateinput-polyfill # Date picker
-semantic:ui                     # Semantic UI
-flemay:less-autoprefixer
-epaminond:nodemailer
-jhuenges:highstock              # Charts
-harrison:papa-parse             # csv parsing used for push file generation
-infinitedg:winston              # Winston logger
-velocity:chokidar               # chokidar - A neat wrapper around node.js fs.watch / fs.watchFile / fsevents
-yogiben:admin                   # Admin Management UI
+twbs:bootstrap                  # UI package
+
+# data
+mongo                           # The database Meteor supports right now
+aldeed:collection2              # Automatic validation of insert and update operations on the client and server.
+udondan:bulk-collection-update  # Collection bulk update
+meteorhacks:aggregate           # MongoDB Aggregation
+dburles:collection-helpers      # helpers for collections stuff
+
+# routing
+iron:router
+
+# accounts
+accounts-password               # Password based authentication
+useraccounts:iron-routing
+alanning:roles                  # Managing roles for users
+yogiben:admin                   # Admin Interface for user/collection management
+ian:accounts-ui-bootstrap-3     # accounts UI
 standard-minifier-css
 standard-minifier-js
-dburles:collection-helpers      # helpers for collections stuff
-aldeed:collection2              # Automatic validation of insert and update operations on the client and server.
-twbs:bootstrap                  # Bootstrap UI
+
+# logging
+infinitedg:winston              # Winston logger
+
+# mapping
+mdg:geolocation
+bevanhunt:leaflet               # Mapping
+
+# tools
+momentjs:moment                 # Time calculations
+harrison:papa-parse             # csv parsing used for push file generation
+velocity:chokidar               # chokidar - A neat wrapper around node.js fs.watch / fs.watchFile / fsevents
+epaminond:nodemailer
+
+# mobile
+mobile-experience
+
+# production
+meteorhacks:kadira              # Remote performance watch
+
+
+#reload
+#random
+#ejson
+peppelg:bootstrap-3-modal
+
+

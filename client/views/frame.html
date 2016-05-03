@@ -1,15 +1,8 @@
-<template name="Frame">
+<template name="layout">
+  <div class="container" >
     <header>
-    <div>
-      {{> yield region='nav'}}
-    </div>
+      {{> nav }}
     </header>
-    <div>
-      {{> yield}}
-    </div>
-	<!--haven't decided whether to do left and right side with content in a fun way...-->
-
-    <div>
-      {{> yield "rightside"}}
-    </div>
+    {{> yield}}
+  </div>
 </template>

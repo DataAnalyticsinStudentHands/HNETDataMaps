@@ -1,4 +1,7 @@
-Template.nav.onRendered(function () {
-   //Need to call dropdown render    
-    this.$('.ui.dropdown').dropdown(); 
+Template.navItems.helpers({
+  activeIfTemplateIs(template) {
+    const currentRoute = Router.current();
+    return currentRoute &&
+      template === currentRoute.lookupTemplate() ? 'active' : '';
+  },
 });
