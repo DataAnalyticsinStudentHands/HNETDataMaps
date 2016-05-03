@@ -17,7 +17,7 @@ DataExporter = {
       if (dir !== undefined) {
           var csv = Papa.unparse(data);
           var siteName = dir.incoming.match(/[^_]*/);
-          self._downloadCSV(csv, siteName + startEpoch + endEpoch + '.txt');
+          self._downloadCSV(csv, siteName + moment.unix(startEpoch).format('YYMMDDHHmmss') + '.txt');
         }
     });
   },
