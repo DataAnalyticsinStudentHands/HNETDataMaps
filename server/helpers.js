@@ -20,7 +20,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
       }, {
         site: aqsid
       }]
-    }).fetch();
+    }, {sort: {epoch: 1}}).fetch();
 
     var dataObject = [];
     _.each(aggregatData, function (e) {
