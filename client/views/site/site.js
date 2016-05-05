@@ -26,9 +26,9 @@ const Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   var selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function(series) {
+  Highcharts.each(this.series, function (series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
-      Highcharts.each(series.points, function(point) {
+      Highcharts.each(series.points, function (point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           // point.select(true, true);
           selection.push(point);
@@ -51,7 +51,7 @@ function selectPointsByDrag(e) {
  */
 function selectedPoints(e) {
   var points = [];
-  _.each(e.points, function(point) {
+  _.each(e.points, function (point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -68,9 +68,9 @@ function selectedPoints(e) {
 
   if (points.length === 0) return;
 
-	// reset variables
-	EditPoints.remove({});
-	selectedFlag.set(null);
+  // reset variables
+  EditPoints.remove({});
+  selectedFlag.set(null);
 
   for (let i = 0; i < points.length; i++) {
     EditPoints.insert(points[i]);
@@ -79,11 +79,11 @@ function selectedPoints(e) {
   // Show the Edit Points modal
   $('#editPointsModal').modal({}).modal('show');
 
-  $('#btnSubmit').click(function(event) {
+  $('#btnSubmit').click(function (event) {
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function(point) {
+    updatedPoints.forEach(function (point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
     });
     // Update local point color to reflect new flag
@@ -96,7 +96,7 @@ function selectedPoints(e) {
     e.points[0].series.chart.redraw();
   });
 
-  $('#editPointsModal table tr .fa').click(function(event) {
+  $('#editPointsModal table tr .fa').click(function (event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -125,7 +125,7 @@ function selectedPoints(e) {
 function unselectByClick() {
   var points = this.getSelectedPoints();
   if (points.length > 0) {
-    Highcharts.each(points, function(point) {
+    Highcharts.each(points, function (point) {
       point.select(false);
     });
   }
@@ -222,9 +222,11 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   });
 }
 
-Template.site.onRendered(function() {
+let yAxisMetric = '';
+
+Template.site.onRendered(function () {
   // Do reactive stuff when something is added or removed
-  this.autorun(function() {
+  this.autorun(function () {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
@@ -232,7 +234,7 @@ Template.site.onRendered(function() {
 
     let initializing = true;
     DataSeries.find().observeChanges({
-      added: function(series, seriesData) {
+      added: function (series, seriesData) {
         if (!initializing) { // true only when we first start
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
@@ -265,10 +267,11 @@ Template.site.onRendered(function() {
               chart.addAxis(
                 yAxisOptions
               );
+              yAxisMetric = metric;
             }
 
             if (!(chart.series.length === 2 && seriesData.chartType === 'line')) {
-              seriesData.yAxis = metric;
+              seriesData.yAxis = yAxisMetric;
             }
             chart.addSeries(seriesData);
           }
@@ -323,7 +326,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function(epoch) {
+Template.registerHelper('formatDate', function (epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -353,7 +356,7 @@ Template.site.events({
   'click #updateAggr' () {
     Meteor.call('new5minAggreg', Router.current().params._id,
       startEpoch.get(), endEpoch.get(),
-      function(err, response) {
+      function (err, response) {
         if (err) {
           Session.set('serverDataResponse', `Error: ${err.reason}`);
           return;
