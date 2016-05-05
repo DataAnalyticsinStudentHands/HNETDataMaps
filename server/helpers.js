@@ -30,7 +30,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
     _.each(aggregatData, function (e) {
       var obj = {};
       obj.siteID = e.site.substring(e.site.length - 3, e.site.length);
-      obj.dateGMT = moment.unix(e.epoch).format('YY/MM/DD');
+      obj.dateGMT = moment.utc(moment.unix(e.epoch)).format('YY/MM/DD');
       obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
       obj.status = 1;
 
