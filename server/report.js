@@ -22,7 +22,7 @@ function sendEmail(reportType, reportString) {
 }
 
 Meteor.setInterval(() => {
-  const watchedPath = '/hnet/incoming/2016/';
+  const watchedPath = '/hnet/incoming/current/';
   let emergencyReportString = '';
   let periodicReportString = '';
   let timeDiff;

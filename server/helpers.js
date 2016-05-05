@@ -9,7 +9,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
   if (dir !== undefined) {
     // output folder
     const siteName = dir.incoming.match(new RegExp('UH' + '(.*)' + '_')); // create site name from incoming folder
-    const outputFile = `/hnet/outgoing/2016/${dir.incoming}/${siteName[1].toLowerCase()}` + moment.unix(startEpoch).format('YYMMDDHHmmss') + '.uh';
+    const outputFile = `/hnet/outgoing/current/${dir.incoming}/${siteName[1].toLowerCase()}` + moment.unix(startEpoch).format('YYMMDDHHmmss') + '.uh';
 
     var aggregatData = AggrData.find({
       $and: [{

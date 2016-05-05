@@ -363,7 +363,7 @@ Meteor.methods({
   },
 });
 
-const liveWatcher = chokidar.watch('/hnet/incoming/2016', {
+const liveWatcher = chokidar.watch('/hnet/incoming/current', {
   ignored: /[\/\\]\./,
   ignoreInitial: true,
   usePolling: true,
@@ -386,5 +386,5 @@ liveWatcher
     logger.error('Error happened', error);
   })
   .on('ready', () => {
-    logger.info('Ready for changes in /hnet/incoming/2016/.');
+    logger.info('Ready for changes in /hnet/incoming/current/.');
   });
