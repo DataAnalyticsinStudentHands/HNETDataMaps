@@ -222,8 +222,6 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   });
 }
 
-let yAxisMetric = '';
-
 Template.site.onRendered(function () {
   // Do reactive stuff when something is added or removed
   this.autorun(function () {
@@ -233,6 +231,8 @@ Template.site.onRendered(function () {
     Charts.remove({});
 
     let initializing = true;
+		let yAxisMetric = '';
+		
     DataSeries.find().observeChanges({
       added: function (series, seriesData) {
         if (!initializing) { // true only when we first start
