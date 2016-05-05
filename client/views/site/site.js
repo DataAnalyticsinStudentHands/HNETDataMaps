@@ -231,8 +231,7 @@ Template.site.onRendered(function () {
     Charts.remove({});
 
     let initializing = true;
-		let yAxisMetric = '';
-		
+
     DataSeries.find().observeChanges({
       added: function (series, seriesData) {
         if (!initializing) { // true only when we first start
@@ -245,12 +244,13 @@ Template.site.onRendered(function () {
 
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
-              id: subType
+              _id: subType
             }, {
               reactive: false
             })) {
             Charts.insert({
-              id: subType,
+              _id: subType,
+							yAxis_1: metric,
             });
 
             const seriesOptions = [];
@@ -267,12 +267,19 @@ Template.site.onRendered(function () {
               chart.addAxis(
                 yAxisOptions
               );
-              yAxisMetric = metric;
+              Charts.update(subType, {
+                $set: {
+                  yAxis_2: metric,
+                },
+              });
             }
 
             if (!(chart.series.length === 2 && seriesData.chartType === 'line')) {
-              seriesData.yAxis = yAxisMetric;
+              seriesData.yAxis = Charts.findOne({_id: subType}).yAxis_2;
+            } else {
+              seriesData.yAxis = Charts.findOne({_id: subType}).yAxis_1;
             }
+
             chart.addSeries(seriesData);
           }
         }
