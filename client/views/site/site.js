@@ -26,9 +26,9 @@ const Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   var selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function(series) {
+  Highcharts.each(this.series, function (series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
-      Highcharts.each(series.points, function(point) {
+      Highcharts.each(series.points, function (point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           // point.select(true, true);
           selection.push(point);
@@ -51,7 +51,7 @@ function selectPointsByDrag(e) {
  */
 function selectedPoints(e) {
   var points = [];
-  _.each(e.points, function(point) {
+  _.each(e.points, function (point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -79,16 +79,14 @@ function selectedPoints(e) {
   // Show the Edit Points modal
   $('#editPointsModal').modal({}).modal('show');
 
-  $('#btnSubmit').click(function(event) {
+  $('#btnSubmit').click(function (event) {
+    event.preventDefault();
     // update the edited points with the selected flag on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function(point) {
-      if (newFlagVal === 2) { // special treatment for spans (Q Flag)
-        Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal, 'test with span', true);
-      } else {
-        Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal, 'test', false);
-      }
+
+    updatedPoints.forEach(function (point) {
+        Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal, 'test with span');
     });
     // Update local point color to reflect new flag
     e.points.forEach((point) => {
@@ -100,7 +98,7 @@ function selectedPoints(e) {
     e.points[0].series.chart.redraw();
   });
 
-  $('#editPointsModal table tr .fa').click(function(event) {
+  $('#editPointsModal table tr .fa').click(function (event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -129,7 +127,7 @@ function selectedPoints(e) {
 function unselectByClick() {
   var points = this.getSelectedPoints();
   if (points.length > 0) {
-    Highcharts.each(points, function(point) {
+    Highcharts.each(points, function (point) {
       point.select(false);
     });
   }
@@ -226,9 +224,9 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   });
 }
 
-Template.site.onRendered(function() {
+Template.site.onRendered(function () {
   // Do reactive stuff when something is added or removed
-  this.autorun(function() {
+  this.autorun(function () {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
@@ -237,7 +235,7 @@ Template.site.onRendered(function() {
     let initializing = true;
 
     DataSeries.find().observeChanges({
-      added: function(series, seriesData) {
+      added: function (series, seriesData) {
         if (!initializing) { // true only when we first start
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
@@ -272,7 +270,7 @@ Template.site.onRendered(function() {
 
             Charts.findOne({
               _id: subType
-            }).yAxis.forEach(function(axis) {
+            }).yAxis.forEach(function (axis) {
               if (axis.metric === metric) {
                 axis_exist = true;
               }
@@ -297,7 +295,7 @@ Template.site.onRendered(function() {
             let axis_index = 0;
             Charts.findOne({
               _id: subType
-            }).yAxis.forEach(function(axis, i) {
+            }).yAxis.forEach(function (axis, i) {
               if (axis.metric === metric) {
                 if (i === 0) { // navigator axis will be at index 1
                   axis_index = 0;
@@ -362,7 +360,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function(epoch) {
+Template.registerHelper('formatDate', function (epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -392,7 +390,7 @@ Template.site.events({
   'click #updateAggr' () {
     Meteor.call('new5minAggreg', Router.current().params._id,
       startEpoch.get(), endEpoch.get(),
-      function(err, response) {
+      function (err, response) {
         if (err) {
           Session.set('serverDataResponse', `Error: ${err.reason}`);
           return;

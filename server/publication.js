@@ -188,7 +188,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             lineWidth = 0;
             marker = {
               enabled: true,
-              radius: 2,
+              radius: 1,
               symbol: 'circle',
             };
           }
