@@ -19,16 +19,12 @@
 	</div>
 
 	<!-- container for charts -->
-
-
 	{{#each charts}}
 	<div id="container-chart-{{_id}}" style="width: 100%"></div>
 	<!-- placeholder for editPoints modal -->
 	{{else}}
     <p >Found no data for the selected date.</p>
 	{{/each}} {{> editPoints}}
-
-
 </template>
 
 <!-- Modal for editing points -->
@@ -37,7 +33,6 @@
 		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
 				<div class="modal-header">
-
 					<div class="pull-left">
 						<h4><i class="fa fa-flag" aria-hidden="true"></i> Edit Flags</h4>
 					</div>

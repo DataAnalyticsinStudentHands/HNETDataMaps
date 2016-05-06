@@ -64,8 +64,6 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
         for (var pubKey in poll5Data) { // pubKey equals instrument
           if (poll5Data.hasOwnProperty(pubKey)) {
             for (var key in poll5Data[pubKey]) { //key equals measurement
-
-
               // skip loop if the property is from prototype
               if (!poll5Data[pubKey].hasOwnProperty(key)) continue;
 
@@ -108,7 +106,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
 
               subscription.added('dataSeries', `${pubKey}_${key}_5m_${poll5Data[pubKey][key][0].x}`, {
                 name: key + '_5m',
-                chartType: 'scatter',
+                type: 'scatter',
                 marker: {
                   enabled: true,
                   radius: 2,
@@ -179,10 +177,20 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
       for (var pubKey in pollData) {
         // skip loop if the property is from prototype
         if (pollData.hasOwnProperty(pubKey)) {
-          var chartType = 'line';
+          let chartType = 'line';
+          let lineWidth = 1;
+          let marker = {
+            enabled: false,
+          };
           // wind data should never be shown as line
           if (pubKey.indexOf('RMY') >= 0) {
             chartType = 'scatter';
+            lineWidth = 0;
+            marker = {
+              enabled: true,
+              radius: 2,
+              symbol: 'circle',
+            };
           }
 
           for (var key in pollData[pubKey]) {
@@ -192,11 +200,9 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             // add to subscription
             subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
               name: key + '_10s',
-              chartType: chartType,
-              marker: {
-                enabled: false,
-              },
-              lineWidth: 1,
+              type: chartType,
+              marker: marker,
+              lineWidth: lineWidth,
               allowPointSelect: 'false',
               data: pollData[pubKey][key],
               zIndex: 1,

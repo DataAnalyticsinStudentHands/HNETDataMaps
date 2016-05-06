@@ -1,7 +1,7 @@
 // required packages
 const fs = Npm.require('fs');
 
-var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpoch) {
+var exportDataAsCSV = Meteor.bindEnvironment(function(aqsid, startEpoch, endEpoch) {
   var dir = Sites.find({
     AQSID: aqsid,
   }).fetch()[0];
@@ -27,7 +27,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
     }).fetch();
 
     var dataObject = [];
-    _.each(aggregatData, function (e) {
+    _.each(aggregatData, function(e) {
       var obj = {};
       obj.siteID = e.site.substring(e.site.length - 3, e.site.length);
       obj.dateGMT = moment.utc(moment.unix(e.epoch)).format('YY/MM/DD');
@@ -62,7 +62,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
 
     var csv = Papa.unparse(dataObject);
 
-    fs.writeFile(outputFile, csv, function (err) {
+    fs.writeFile(outputFile, csv, function(err) {
       if (err) {
         throw err;
       }
@@ -75,11 +75,11 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
 });
 
 Meteor.methods({
-  exportData: function (site, startEpoch, endEpoch) {
+  exportData: function(site, startEpoch, endEpoch) {
     logger.info('Helper called export for site: ', site, ' and start: ', startEpoch, ' and end: ', endEpoch);
     return exportDataAsCSV(site, startEpoch, endEpoch);
   },
-  insertUpdateFlag: function (siteId, epoch, instrument, measurement, flag) {
+  insertUpdateFlag: function(siteId, epoch, instrument, measurement, flag, note, span) {
     // id that will receive the update
     var id = siteId + '_' + epoch / 1000; // seconds
     // new field
@@ -91,9 +91,17 @@ Meteor.methods({
     qry.$push[insertField].val = flag;
     qry.$push[insertField].metric = 'Overwrite Flag';
     qry.$push[insertField].user = Meteor.user().emails[0].address; // user is doing the edit
-    qry.$push[insertField].note = 'test';
-    AggrData.update({
-      _id: id
-    }, qry);
+    qry.$push[insertField].note = note;
+
+		AggrData.update({
+			_id: id
+		}, qry);
+
+    if (span) {
+			console.log('here');
+			AggrData.update({
+				_id: id, insertField: 1
+			}, { $set: { "insertField.$" : 0 } });
+    }
   }
 });
