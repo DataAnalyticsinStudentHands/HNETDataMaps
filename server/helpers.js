@@ -100,8 +100,8 @@ Meteor.methods({
     if (span) {
 			console.log('here');
 			AggrData.update({
-				_id: id, insertField: 1
-			}, { $set: { "insertField.$" : 0 } });
+				_id: id, 'insertField.metric': 'avg'
+			}, { $set: { 'insertField.$.newVal' : 0 } });
     }
   }
 });
