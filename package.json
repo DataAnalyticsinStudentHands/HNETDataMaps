@@ -5,7 +5,8 @@
   "main": "index.js",
   "dependencies": {
     "ftps": "^0.4.6",
-    "highcharts": "^4.2.4"
+    "highcharts": "^4.2.4",
+    "junk": "^1.0.2"
   },
   "devDependencies": {
     "eslint": "^2.7.0",
@@ -36,16 +37,25 @@
       "moment": true,
       "logger": true,
       "Highcharts": true,
-			"Papa": true,
+      "Papa": true,
       "LiveData": true,
+      "AggrData": true,
       "Sites": true,
-			"DataExporter": true,
+      "DataExporter": true,
       "channelHash": true,
       "flagsHash": true
     },
     "rules": {
-			"max-len": [2, 120, 2, {"ignoreUrls": true, "ignoreComments": false}]
-		}
+      "max-len": [
+        2,
+        120,
+        2,
+        {
+          "ignoreUrls": true,
+          "ignoreComments": false
+        }
+      ]
+    }
   },
   "repository": {
     "type": "git",
