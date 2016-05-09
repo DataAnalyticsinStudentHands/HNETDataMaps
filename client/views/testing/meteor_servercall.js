@@ -1,5 +1,5 @@
-var startEpoch = new ReactiveVar(moment().subtract(1, 'days').unix()); // 24 hours ago - seconds
-var endEpoch = new ReactiveVar(moment().unix());
+const startEpoch = new ReactiveVar(moment().subtract(1, 'days').unix()); // 24 hours ago - seconds
+const endEpoch = new ReactiveVar(moment().unix());
 
 // simple template to test server functions
 Template.passData.helpers({
@@ -31,10 +31,10 @@ Template.passData.events = {
   'click #passDataResult': function () {
     Meteor.call('new5minAggreg', $('input[type=text]').val(), $('#start').val(), $('#end').val(), function (err, response) {
       if (err) {
-          Session.set('serverDataResponse', 'Error:' + err.reason);
-          return;
-        }
+        Session.set('serverDataResponse', 'Error:' + err.reason);
+        return;
+      }
       Session.set('serverDataResponse', response);
     });
-  }
+  },
 };
