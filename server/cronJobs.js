@@ -37,13 +37,13 @@ Meteor.setInterval(() => {
     folders.filter(junk.not).forEach(function (afolder) {
       const stats = fs.statSync(watchedPath + afolder);
 
-      statusObject[afolder] = 'Operational';
+      statusObject[afolder] = `\n${afolder}: Operational`;
 
       const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments
       timeDiff = moment() - currentSiteMoment;
 
       if (timeDiff > 15 * 60 * 1000) {
-        statusObject[afolder] = `Folder: ${afolder} has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
+        statusObject[afolder] = `\n${afolder}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
       }
     });
 
