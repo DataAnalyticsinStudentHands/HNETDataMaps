@@ -43,7 +43,8 @@
       "Sites": true,
       "DataExporter": true,
       "channelHash": true,
-      "flagsHash": true
+      "flagsHash": true,
+			"unitsHash": true
     },
     "rules": {
       "max-len": [

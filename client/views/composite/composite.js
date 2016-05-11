@@ -109,79 +109,71 @@ Template.composite.onRendered(function () {
 
     let initializing = true;
 
-    DataSeries.find().observeChanges({
+    CompositeDataSeries.find().observeChanges({
       added: function (series, seriesData) {
         if (!initializing) { // true only when we first start
-          const subType = series.split(/[_]+/)[0];
-          const metric = series.split(/[_]+/)[1];
-
-          // store yAxis options in separate variable
-          const yAxisOptions = seriesData.yAxis;
-          delete seriesData.yAxis;
+          const measurement = series.split(/[_]+/)[0];
+          const site = series.split(/[_]+/)[1];
 
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
-              _id: subType
+              _id: measurement
             }, {
               reactive: false
             })) {
             Charts.insert({
-              _id: subType,
-              yAxis: [{
-                metric
-              }],
+              _id: measurement,
             });
 
             const seriesOptions = [];
             seriesOptions.push(seriesData);
-            yAxisOptions.id = metric;
-          //  createChart(`container-chart-${subType}`, subType, seriesOptions, yAxisOptions);
+            createChart(`container-chart-${measurement}`, measurement, seriesOptions, seriesData.yAxis);
           } else {
             // put axis for each series
-            const chart = $(`#container-chart-${subType}`).highcharts();
+            const chart = $(`#container-chart-${measurement}`).highcharts();
 
             // Add another axis if not yet existent
-            let axis_exist = false;
-
-            Charts.findOne({
-              _id: subType
-            }).yAxis.forEach(function (axis) {
-              if (axis.metric === metric) {
-                axis_exist = true;
-              }
-            })
-
-            if (!axis_exist) {
-              yAxisOptions.opposite = true;
-              yAxisOptions.id = metric;
-              chart.addAxis(
-                yAxisOptions
-              );
-              Charts.update(subType, {
-                $push: {
-                  yAxis: {
-                    metric
-                  },
-                },
-              });
-            }
+            // let axis_exist = false;
+						//
+            // Charts.findOne({
+            //   _id: subType
+            // }).yAxis.forEach(function (axis) {
+            //   if (axis.metric === metric) {
+            //     axis_exist = true;
+            //   }
+            // })
+						//
+            // if (!axis_exist) {
+            //   yAxisOptions.opposite = true;
+            //   yAxisOptions.id = metric;
+            //   chart.addAxis(
+            //     yAxisOptions
+            //   );
+            //   Charts.update(subType, {
+            //     $push: {
+            //       yAxis: {
+            //         metric
+            //       },
+            //     },
+            //   });
+            // }
 
             // Now just find the right axis index and assign it to the seriesData
-            let axis_index = 0;
-            Charts.findOne({
-              _id: subType
-            }).yAxis.forEach(function (axis, i) {
-              if (axis.metric === metric) {
-                if (i === 0) { // navigator axis will be at index 1
-                  axis_index = 0;
-                } else {
-                  axis_index = i + 1;
-                }
-              }
-            });
-            seriesData.yAxis = axis_index;
+            // let axis_index = 0;
+            // Charts.findOne({
+            //   _id: subType
+            // }).yAxis.forEach(function (axis, i) {
+            //   if (axis.metric === metric) {
+            //     if (i === 0) { // navigator axis will be at index 1
+            //       axis_index = 0;
+            //     } else {
+            //       axis_index = i + 1;
+            //     }
+            //   }
+            // });
+            // seriesData.yAxis = axis_index;
 
-          //  chart.addSeries(seriesData);
+            chart.addSeries(seriesData);
           }
         }
       },

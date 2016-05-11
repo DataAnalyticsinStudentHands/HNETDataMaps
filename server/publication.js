@@ -223,8 +223,6 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
   var subscription = this;
   var pollCompData = {};
 
-  logger.info(`start: ${startEpoch}, end: ${endEpoch}`);
-
   var aggCompPipe = [{
     $match: {
       $and: [{
@@ -246,7 +244,7 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
     },
   }, {
     $sort: {
-      epoch: 1,
+      epoch: -1,
     },
   }, {
     $group: {
@@ -261,25 +259,26 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
   }, ];
 
   AggrData.aggregate(aggCompPipe, function (err, results) {
+
       // create new structure for composite data series to be used for charts
       if (results.length > 0) {
         results.forEach(function (line) {
           const epoch = line.data[0].epoch;
           const site = line.data[0].site;
-          _.each(line._id, function (measurement, instrument) { // subType is Instrument, HPM60 etc.
-            _.each(measurement, function (sub, key) { // sub is the array with metric/val pairs as subarrays, key is the measurement
+          _.each(line._id, function (data, instrument) { // Instrument, HPM60 etc.
+            _.each(data, function (points, measurement) { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
               if (!pollCompData[measurement]) { // create placeholder for measurement
                 pollCompData[measurement] = {};
               }
               if (!pollCompData[measurement][site]) { // create placeholder for series if not exists
                 pollCompData[measurement][site] = [];
               }
-              if (_.last(sub).metric.indexOf('Flag') >= 0) { // get all measurements
+
+              pollCompData[measurement]
+              if (_.last(points).metric.indexOf('Flag') >= 0) { // get all measurements
                 var datapoint = {
                   x: epoch * 1000,
-                  y: sub[1].val, // average
-                  color: flagsHash[_.last(sub).val].color, // the last element contains the latest flag
-                  name: _.last(sub).val // will use the name of the point to hold the flag value
+                  y: points[1].val, // average
                 }; // milliseconds
                 pollCompData[measurement][site].push(datapoint);
               }
@@ -288,24 +287,12 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
         });
       }
 
-
-
       for (var measurement in pollCompData) {
-				logger.info(`measurement: ${JSON.stringify(pollCompData[measurement])}`);
         if (pollCompData.hasOwnProperty(measurement)) {
           for (var site in pollCompData[measurement]) { //key equals measurement
             // skip loop if the property is from prototype
             if (!pollCompData[measurement].hasOwnProperty(site)) continue;
-
-            const yAxis = {
-              allowDecimals: false,
-              title: {
-                text: 'hello',
-              },
-              floor: 0,
-            };
-
-            subscription.added('dataCompSeries', `${measurement}_${site}_comp_${pollCompData[measurement][site][0].x}`, {
+            subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
               name: site,
               type: 'scatter',
               marker: {
@@ -314,17 +301,21 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
                 symbol: 'circle',
               },
               lineWidth: 0,
-              allowPointSelect: 'false',
               data: pollCompData[measurement][site],
-              zIndex: 1,
-              yAxis: yAxis,
+              yAxis: {
+                allowDecimals: false,
+                title: {
+                  text: unitsHash[measurement],
+                },
+                floor: 0,
+              },
             });
           }
         }
       }
     },
     function (error) {
-      Meteor._debug('error during 5min publication aggregation: ' + error);
+      Meteor._debug('error during composite publication aggregation: ' + error);
     }
   );
 });
