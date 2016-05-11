@@ -44,7 +44,7 @@
       "DataExporter": true,
       "channelHash": true,
       "flagsHash": true,
-			"unitsHash": true
+      "unitsHash": true
     },
     "rules": {
       "max-len": [

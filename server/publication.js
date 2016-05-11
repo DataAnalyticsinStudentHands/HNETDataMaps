@@ -287,11 +287,19 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
         });
       }
 
+
+
       for (var measurement in pollCompData) {
         if (pollCompData.hasOwnProperty(measurement)) {
           for (var site in pollCompData[measurement]) { //key equals measurement
             // skip loop if the property is from prototype
             if (!pollCompData[measurement].hasOwnProperty(site)) continue;
+
+						var dataSorted = pollCompData[measurement][site].sort(function(obj1, obj2) {
+				// Ascending: first age less than the previous
+				return obj1.x - obj2.x;
+			});
+
             subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
               name: site,
               type: 'scatter',
@@ -301,13 +309,14 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
                 symbol: 'circle',
               },
               lineWidth: 0,
-              data: pollCompData[measurement][site],
+              data: dataSorted,
               yAxis: {
                 allowDecimals: false,
                 title: {
                   text: unitsHash[measurement],
                 },
                 floor: 0,
+                opposite: false,
               },
             });
           }

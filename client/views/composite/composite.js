@@ -113,7 +113,10 @@ Template.composite.onRendered(function () {
       added: function (series, seriesData) {
         if (!initializing) { // true only when we first start
           const measurement = series.split(/[_]+/)[0];
-          const site = series.split(/[_]+/)[1];
+
+					// store yAxis options in separate variable
+          const yAxisOptions = seriesData.yAxis;
+          delete seriesData.yAxis;
 
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
@@ -127,52 +130,10 @@ Template.composite.onRendered(function () {
 
             const seriesOptions = [];
             seriesOptions.push(seriesData);
-            createChart(`container-chart-${measurement}`, measurement, seriesOptions, seriesData.yAxis);
+            createChart(`container-chart-${measurement}`, measurement, seriesOptions, yAxisOptions);
           } else {
-            // put axis for each series
+            // add series to existing chart
             const chart = $(`#container-chart-${measurement}`).highcharts();
-
-            // Add another axis if not yet existent
-            // let axis_exist = false;
-						//
-            // Charts.findOne({
-            //   _id: subType
-            // }).yAxis.forEach(function (axis) {
-            //   if (axis.metric === metric) {
-            //     axis_exist = true;
-            //   }
-            // })
-						//
-            // if (!axis_exist) {
-            //   yAxisOptions.opposite = true;
-            //   yAxisOptions.id = metric;
-            //   chart.addAxis(
-            //     yAxisOptions
-            //   );
-            //   Charts.update(subType, {
-            //     $push: {
-            //       yAxis: {
-            //         metric
-            //       },
-            //     },
-            //   });
-            // }
-
-            // Now just find the right axis index and assign it to the seriesData
-            // let axis_index = 0;
-            // Charts.findOne({
-            //   _id: subType
-            // }).yAxis.forEach(function (axis, i) {
-            //   if (axis.metric === metric) {
-            //     if (i === 0) { // navigator axis will be at index 1
-            //       axis_index = 0;
-            //     } else {
-            //       axis_index = i + 1;
-            //     }
-            //   }
-            // });
-            // seriesData.yAxis = axis_index;
-
             chart.addSeries(seriesData);
           }
         }

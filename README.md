@@ -18,12 +18,15 @@ On Mac OS or Linux:
 
 * Data Folder: It expects a certain data folder structure. `/hnet/incoming/current` + `/hnet/outgoing/current` should exist.
 
+For pushing data out the server is using [lftp](https://lftp.yar.ru/) which must be installed.
+
 
 ## Getting started
 
-You may have to run the follwoing:
+You may have to run the following:
 * `meteor npm install --save highcharts`
 * `meteor npm install --save ftps`
+* `meteor npm install --save junk`
 
 ## Testing in local development environment
 
