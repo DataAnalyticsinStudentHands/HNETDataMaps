@@ -332,33 +332,17 @@ Meteor.publish('editedPoints', function () {
 
   const subscription = this;
 
-  const aggregatePipe = [{
-    $match: {
-      epoch: {
-        $gt: parseInt(moment().subtract(20160, 'minutes').unix(), 10),
-      },
-    },
-  }, {
-    $sort: {
-      epoch: -1,
-    },
-  }, {
-    $group: {
-      _id: '$subTypes',
-      data: {
-        $push: {
-          site: '$site',
-          epoch: '$epoch',
-        },
-      },
-    },
-  }];
+	AggrData.find({
+		epoch: {
+			$gt: parseInt(moment().subtract(20160, 'minutes').unix(), 10),
+		},
+	}).forEach(function(datapoint) {
+	 	logger.info(`lets have a look: ${JSON.stringify(datapoint)}`)
+	 });
 
-	const data = AggrData.aggregate(aggregatePipe);
-
-	_(data).each(function(datapoint) {
-		logger.info(`lets have a look: ${JSON.stringify(datapoint)}`)
-	});
+	// _(data).each(function(datapoint) {
+	// 	logger.info(`lets have a look: ${JSON.stringify(datapoint)}`)
+	// });
 });
 
 Meteor.publish('sites', function () {
