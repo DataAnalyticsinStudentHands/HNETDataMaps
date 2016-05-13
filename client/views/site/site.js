@@ -1,7 +1,7 @@
 import Highcharts from 'highcharts/highstock';
 
-// 24 hours ago - seconds
-var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
+// 3 days
+var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
 var endEpoch = new ReactiveVar(moment().unix());
 var selectedFlag = new ReactiveVar(null);
 
@@ -212,6 +212,10 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
         count: 1,
         text: '1 Day',
       }, {
+        type: 'day',
+        count: 3,
+        text: '3 Days',
+      }, {
         type: 'minute',
         count: 60,
         text: 'Hour',
@@ -382,7 +386,7 @@ Template.site.helpers({
 Template.site.events({
   'change #datepicker' (event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
+    endEpoch.set(moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
   },
   'click #createPush' () {
     DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());

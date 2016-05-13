@@ -7,6 +7,11 @@ var endEpoch = new ReactiveVar(moment().unix());
 Highcharts.setOptions({
   global: {
     useUTC: false,
+    getTimezoneOffset: function (timestamp) {
+      const timezoneOffset = 0;
+
+      return timezoneOffset;
+    },
   },
   colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
 });
@@ -114,7 +119,7 @@ Template.composite.onRendered(function () {
         if (!initializing) { // true only when we first start
           const measurement = series.split(/[_]+/)[0];
 
-					// store yAxis options in separate variable
+          // store yAxis options in separate variable
           const yAxisOptions = seriesData.yAxis;
           delete seriesData.yAxis;
 
