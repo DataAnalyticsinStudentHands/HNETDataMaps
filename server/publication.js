@@ -287,18 +287,16 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
         });
       }
 
-
-
       for (var measurement in pollCompData) {
         if (pollCompData.hasOwnProperty(measurement)) {
           for (var site in pollCompData[measurement]) { //key equals measurement
             // skip loop if the property is from prototype
             if (!pollCompData[measurement].hasOwnProperty(site)) continue;
 
-						var dataSorted = pollCompData[measurement][site].sort(function(obj1, obj2) {
-				// Ascending: first age less than the previous
-				return obj1.x - obj2.x;
-			});
+            var dataSorted = pollCompData[measurement][site].sort(function (obj1, obj2) {
+              // Ascending: first age less than the previous
+              return obj1.x - obj2.x;
+            });
 
             subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
               name: site,
@@ -327,6 +325,40 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
       Meteor._debug('error during composite publication aggregation: ' + error);
     }
   );
+});
+
+// aggregation of aggregated data to be plotted with highstock for composites
+Meteor.publish('editedPoints', function () {
+
+  const subscription = this;
+
+  const aggregatePipe = [{
+    $match: {
+      epoch: {
+        $gt: parseInt(moment().subtract(20160, 'minutes').unix(), 10),
+      },
+    },
+  }, {
+    $sort: {
+      epoch: -1,
+    },
+  }, {
+    $group: {
+      _id: '$subTypes',
+      data: {
+        $push: {
+          site: '$site',
+          epoch: '$epoch',
+        },
+      },
+    },
+  }];
+
+	const data = AggrData.aggregate(aggregatePipe);
+
+	_(data).each(function(datapoint) {
+		logger.info(`lets have a look: ${JSON.stringify(datapoint)}`)
+	});
 });
 
 Meteor.publish('sites', function () {

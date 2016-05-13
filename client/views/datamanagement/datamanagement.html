@@ -1,0 +1,30 @@
+
+<template name="datamanagement">
+	<!-- table for edited points -->
+					<table class="table">
+						<thead>
+							<tr>
+								<th></th>
+								<th>Timestamp</th>
+								<th>Value</th>
+								<th>Instrument</th>
+								<th>Measurement</th>
+								<th>Current Flag</th>
+								<th>New Flag</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each points}}
+							<tr>
+								<td><i class="fa fa-times js-remove-point" data-id="{{id}}"></i></td>
+								<td>{{formatDate x}}</td>
+								<td>{{formatDataValue y}}</td>
+								<td>{{instrument}}</td>
+								<td>{{measurement}}</td>
+								<td>{{> flaginTable flag}}</td>
+								<td>{{> flaginTable flagSelected}}</td>
+							</tr>
+							{{/each}}
+						</tbody>
+					</table>
+</template>

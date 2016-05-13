@@ -50,9 +50,13 @@
 	<li class="{{ activeIfTemplateIs 'composite' }}">
 		<a class="item" href="{{pathFor 'composite'}}">Composites</a>
 	</li>
+	{{/if}} {{#if isInRole 'admin,editor' }}
+	<li class="{{ activeIfTemplateIs 'datamanagement' }}">
+		<a class="item" href="{{pathFor 'datamanagement'}}">Data Management</a>
+	</li>
 	{{/if}} {{#if isInRole 'admin'}}
 	<li class="{{ activeIfTemplateIs 'testing' }}">
-		<a class="item" href="{{pathFor 'testing'}}">Data Management</a>
+		<a class="item" href="{{pathFor 'testing'}}">Testing</a>
 	</li>
 	{{/if}} {{#if isInRole 'admin'}}
 	<li class="{{ activeIfTemplateIs 'testing' }}">
