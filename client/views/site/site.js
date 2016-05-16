@@ -51,6 +51,14 @@ function selectPointsByDrag(e) {
  */
 function selectedPoints(e) {
   var points = [];
+  const series = [];
+
+  _.each(e.target.series, function (serie) {
+    if (serie.name.endsWith('5m')) {
+      series.push(serie);
+    }
+  });
+
   _.each(e.points, function (point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
@@ -79,23 +87,40 @@ function selectedPoints(e) {
   // Show the Edit Points modal
   $('#editPointsModal').modal({}).modal('show');
 
-  $('#btnSubmit').click(function (event) {
+  // Handle the button "Push" event
+  $('#btnPush').click(function (event) {
     event.preventDefault();
-    // update the edited points with the selected flag on the server
+    alert(`Push functionality not activated!`);
+  });
+
+  // Handle the button "Change Flag" event
+  $('#btnChange').click(function (event) {
+    event.preventDefault();
+    // update the edited points with the selected flag and note on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
+    const note = $('#editNote').val();
 
     updatedPoints.forEach(function (point) {
-        Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal, 'test with span');
+      Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal, note);
     });
+
+    // Clear note field
+    $('#editNote').val('');
+
     // Update local point color to reflect new flag
     e.points.forEach((point) => {
       point.update({
         color: flagsHash[selectedFlag.get()].color,
-      }, false);
+      }, true);
+      if (newFlagVal === 2) {
+        series[0].addPoint({
+          x: point.x,
+          y: 0,
+          color: flagsHash[selectedFlag.get()].color,
+        });
+      }
     });
-    // Redraw chart
-    e.points[0].series.chart.redraw();
   });
 
   $('#editPointsModal table tr .fa').click(function (event) {
@@ -309,8 +334,6 @@ Template.site.onRendered(function () {
               }
             });
             seriesData.yAxis = axis_index;
-
-
             chart.addSeries(seriesData);
           }
         }
@@ -329,7 +352,11 @@ Template.editPoints.events({
 
 Template.editPoints.helpers({
   points() {
-    return EditPoints.find();
+    return EditPoints.find({}, {
+      sort: {
+        'x': -1,
+      },
+    });
   },
   availableFlags() {
     return _.where(flagsHash, {

@@ -60,7 +60,12 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
                   label = `${subType}_${instrument}_flag`;
                   obj[label] = flagsHash[_.last(data).val].label; // Flag
                   label = `${subType}_${instrument}_value`;
-                  obj[label] = data[1].val.toFixed(3); // avg
+                  // taking care of flag Q (span)
+                  if (flagsHash[_.last(data).val].label === 'Q') {
+                    obj[label] = 0; // set value to 0
+                  } else {
+                    obj[label] = data[1].val.toFixed(3); // avg
+                  }
                 }
               }
             }
@@ -77,7 +82,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
     }
 
     const csv = Papa.unparse(dataObject.data);
-
+ 	logger.info(`${csv}`);
     fs.writeFile(outputFile, csv, function (err) {
       if (err) {
         throw err;
@@ -137,45 +142,12 @@ Meteor.methods({
     qry.$push[insertField] = {};
     qry.$push[insertField].val = flag;
     qry.$push[insertField].metric = 'Overwrite Flag';
-    qry.$push[insertField].user = Meteor.user().emails[0].address; // user is doing the edit
+    qry.$push[insertField].user = Meteor.user().emails[0].address; // user doing the edit
     qry.$push[insertField].note = note;
     qry.$push[insertField].epoch = moment().unix();
 
     AggrData.update({
       _id: id,
     }, qry);
-
-    // check whether it had been set to Q
-
-    // special treatment for Q flags (values will be set to zero)
-    if (flag === 2) {
-      //save the original value
-      var object = AggrData.findOne({
-        _id: id
-      }).subTypes;
-      let oldVal;
-
-      for (var property in object) {
-        if (object.hasOwnProperty(property)) {
-          if (property === instrument) {
-            const meas = measurement.split(/[ ]+/)[0];
-            oldVal = object[property][meas][1].val;
-            break;
-          }
-        }
-      }
-
-      // update avg with 0 for spans and keep the original value
-      if (oldVal !== 0) {
-        const updateQry = {};
-        updateQry[`${insertField}.1.val`] = 0;
-        updateQry[`${insertField}.1.origVal`] = oldVal;
-        AggrData.update({
-          _id: id,
-        }, {
-          $set: updateQry,
-        });
-      }
-    }
-  }
+  },
 });
