@@ -113,13 +113,6 @@ function selectedPoints(e) {
       point.update({
         color: flagsHash[selectedFlag.get()].color,
       }, true);
-      if (newFlagVal === 2) {
-        series[0].addPoint({
-          x: point.x,
-          y: 0,
-          color: flagsHash[selectedFlag.get()].color,
-        });
-      }
     });
   });
 
@@ -403,7 +396,7 @@ Template.site.helpers({
     return site && site['site name'];
   },
   selectedDate() {
-    return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
+    return moment.unix(startEpoch.get()).add(2160, 'minutes').format('YYYY-MM-DD');
   },
   charts() {
     return Charts.find(); // This gives data to the html below

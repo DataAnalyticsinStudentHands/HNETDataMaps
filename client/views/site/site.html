@@ -5,10 +5,10 @@
 			<h3 class="panel-title">Site: {{sitename}}</h3>
 		</div>
 		<div class="panel-body">
-			<h5>Select Date: </h5>
+			<h5>Select Date:</h5>
 			<input type="date" value="{{selectedDate}}" id="datepicker">
 			<button class="btn btn-primary" id="createPush">
-				Create Push File
+				Push/Download Current File
 			</button>
 			{{#if isInRole 'admin'}}
 			<button class="btn btn-primary" id="updateAggr">

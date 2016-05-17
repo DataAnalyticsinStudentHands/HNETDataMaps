@@ -16,8 +16,9 @@ DataExporter = {
 
       if (dir !== undefined) {
         const csv = Papa.unparse(data);
-        const siteName = dir.incoming.match(new RegExp('UH' + '(.*)' + '_')); // create site name from incoming folder
-        self._downloadCSV(csv, `${siteName[1].toLowerCase()}${moment.unix(startEpoch).format('YYMMDDHHmmss')}.txt`);
+				console.log(`${JSON.stringify(csv)}`)
+        const siteName = (dir.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2); // create site name from incoming folder
+        self._downloadCSV(csv, `${siteName.toLowerCase()}${moment.unix(startEpoch).format('YYMMDDHHmmss')}.txt`);
       }
     });
   },

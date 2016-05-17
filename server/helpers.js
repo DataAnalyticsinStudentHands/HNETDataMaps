@@ -8,7 +8,7 @@ const hnetsftp = process.env.hnetsftp;
 /*
  * Export csv data file in defined format, default: TCEQ format
  */
-var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpoch, format) {
+var exportDataAsCSV = Meteor.bindEnvironment(function(aqsid, startEpoch, endEpoch, format) {
   const dir = Sites.find({
     AQSID: aqsid,
   }).fetch()[0];
@@ -17,8 +17,8 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
 
     const dataObject = {};
     // create site name from incoming folder
-    const siteName = dir.incoming.match(new RegExp('UH' + '(.*)' + '_'));
-    const outputFile = `/hnet/outgoing/current/${dir.incoming}/${siteName[1].toLowerCase()}${moment.unix(startEpoch).format('YYMMDDHHmmss')}.uh`;
+    const siteName = (dir.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2);
+    const outputFile = `/hnet/outgoing/current/${dir.incoming}/${siteName.toLowerCase()}${moment.unix(startEpoch).format('YYMMDDHHmmss')}.uh`;
 
     const aggregatData = AggrData.find({
       $and: [{
@@ -42,12 +42,12 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
         logger.info('raw export format not yet implemented.');
         break;
       default:
-        _.each(aggregatData, function (e) {
+        _.each(aggregatData, function(e) {
           const obj = {};
           obj.siteID = e.site.substring(e.site.length - 3, e.site.length);
           obj.dateGMT = moment.utc(moment.unix(e.epoch)).format('YY/MM/DD');
           obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
-          obj.status = 1;
+          obj.status = 0;
 
           for (const subType in e.subTypes) {
             if (e.subTypes.hasOwnProperty(subType)) {
@@ -57,6 +57,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
                   let label = `${subType}_${instrument}_channel`;
                   obj[label] = channelHash[subType + '_' + instrument]; // channel
                   const data = instruments[instrument];
+
                   label = `${subType}_${instrument}_flag`;
                   obj[label] = flagsHash[_.last(data).val].label; // Flag
                   label = `${subType}_${instrument}_value`;
@@ -64,7 +65,14 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
                   if (flagsHash[_.last(data).val].label === 'Q') {
                     obj[label] = 0; // set value to 0
                   } else {
-                    obj[label] = data[1].val.toFixed(3); // avg
+                    let outputValue = data[1].val; // avg
+                    // Unit conversion for Temp from C to F
+                    if (instrument === 'Temp') {
+                      outputValue = outputValue * 9 / 5 + 32;
+                    } else if (instrument === 'WS') {
+                      outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
+                    }
+                    obj[label] = outputValue.toFixed(3);
                   }
                 }
               }
@@ -82,8 +90,8 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
     }
 
     const csv = Papa.unparse(dataObject.data);
- 	logger.info(`${csv}`);
-    fs.writeFile(outputFile, csv, function (err) {
+
+    fs.writeFile(outputFile, csv, function(err) {
       if (err) {
         throw err;
       }
@@ -99,7 +107,7 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
 
 function pushTCEQData(file) {
   logger.info(`Helper called for testPush: ${file}`);
-  if (typeof (hnetsftp) === 'undefined') {
+  if (typeof(hnetsftp) === 'undefined') {
     // hnetsftp environment variable doesn't exists
     logger.error('No password found for hnet sftp.');
   } else {
@@ -113,7 +121,7 @@ function pushTCEQData(file) {
       // port is added to the end of the host, ex: sftp://domain.com:22 in this case
     });
 
-    ftps.cd('UH/tmp').addFile(file).exec(function (err, res) {
+    ftps.cd('UH/tmp').addFile(file).exec(function(err, res) {
       if (err || res.error) {
         return logger.error('Error during push file:', (err || res.error));
       }
@@ -123,7 +131,7 @@ function pushTCEQData(file) {
 }
 
 Meteor.methods({
-  exportData: function (site, startEpoch, endEpoch) {
+  exportData: function(site, startEpoch, endEpoch) {
     logger.info('Helper called export/push for site: ', site, ' and start: ', startEpoch, ' and end: ', endEpoch);
     const data = exportDataAsCSV(site, startEpoch, endEpoch);
     if (data !== undefined) {
@@ -131,7 +139,7 @@ Meteor.methods({
     }
     return data;
   },
-  insertUpdateFlag: function (siteId, epoch, instrument, measurement, flag, note) {
+  insertUpdateFlag: function(siteId, epoch, instrument, measurement, flag, note) {
     // id that will receive the update
     const id = `${siteId}_${epoch / 1000}`; // seconds
     // new field
