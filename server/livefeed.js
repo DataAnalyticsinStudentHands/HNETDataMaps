@@ -1,7 +1,7 @@
 // required packages
 const fs = Npm.require('fs');
 
-var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
+var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
   // gather all data, group by 5min epoch
   const pipeline = [{
       $match: {
@@ -40,8 +40,8 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
 
   LiveData.aggregate(pipeline,
     Meteor.bindEnvironment(
-      function(err, result) {
-        _.each(result, function(e) {
+      function (err, result) {
+        _.each(result, function (e) {
           const subObj = {};
           subObj._id = `${e.site}_${e._id}`;
           subObj.site = e.site;
@@ -79,9 +79,18 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
                       windSpd = data[j].val;
                     }
                   }
+
                   // Convert wind speed and wind direction waves into wind north and east component vectors
                   var windNord = Math.cos(windDir / 180 * Math.PI) * windSpd;
                   var windEast = Math.sin(windDir / 180 * Math.PI) * windSpd;
+
+                  let flag = [data[0].val];
+
+                  // taking care of high wind speed values/flag with 9 (N)
+                  if (windSpd >= 60) {
+                    numValid = 0;
+                    flag = 9;
+                  }
 
                   // Aggregate data points
                   newkey = subType + '_' + 'RMY';
@@ -93,7 +102,7 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
                       'avgWindEast': windEast,
                       'numValid': numValid,
                       'totalCounter': 1, // initial total counter
-                      'flagstore': [data[0].val] // store all incoming flags in case we need to evaluate
+                      'flagstore': flag // store all incoming flags in case we need to evaluate
                     };
                   } else {
                     if (numValid !== 0) { // taking care of empty data values
@@ -104,7 +113,7 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
                       aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
                     }
                     aggrSubTypes[newkey].totalCounter += 1; // increase counter
-                    aggrSubTypes[newkey].flagstore.push(data[0].val); // store incoming flag
+                    aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
                   }
                 } else { // normal aggreagation for all other subTypes
                   for (let j = 1; j < data.length; j++) {
@@ -113,13 +122,30 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
                     if (data[j].val === '') { // taking care of empty data values
                       numValid = 0;
                     }
+
+                    let flag = [data[0].val];
+
+                    if (data[j].metric === 'NOx') {
+                      if (data[j].value < -1) { // taking care of NOX values to be flagged with 9(N)
+                        flag = 9;
+                        numValid = 0;
+                      }
+                    }
+
+										if (data[j].metric === 'O3') {
+                      if (data[j].value > 250) { // taking care of 03 values to be flagged with 9(N)
+                        flag = 9;
+                        numValid = 0;
+                      }
+                    }
+
                     if (!aggrSubTypes[newkey]) {
                       aggrSubTypes[newkey] = {
                         'sum': Number(data[j].val),
                         'avg': Number(data[j].val),
                         'numValid': numValid,
                         'totalCounter': 1, // initial total counter
-                        'flagstore': [data[0].val] // store all incoming flags in case we need to evaluate
+                        'flagstore': flag, // store all incoming flags in case we need to evaluate
                       };
                     } else {
                       if (data[j].val !== '') { // taking care of empty data values
@@ -130,7 +156,7 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
                         }
                       }
                       aggrSubTypes[newkey].totalCounter += 1; // increase counter
-                      aggrSubTypes[newkey].flagstore.push(data[0].val); // /store incoming flag
+                      aggrSubTypes[newkey].flagstore.push(flag); // /store incoming flag
                     }
                     numValid = 1; // reset numvalid
                   }
@@ -156,12 +182,12 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
               if ((obj.numValid / obj.totalCounter) >= 0.75) {
                 obj.Flag = 1; // valid
               } else {
-                // found out which flag was majority
+                // find out which flag was majority
                 const counts = {};
                 for (let k = 0; k < obj.flagstore.length; k++) {
                   counts[obj.flagstore[k]] = 1 + (counts[obj.flagstore[k]] || 0);
                 }
-                const maxObj = _.max(counts, function(obj) {
+                const maxObj = _.max(counts, function (obj) {
                   return obj;
                 });
                 const majorityFlag = (_.invert(counts))[maxObj];
@@ -179,10 +205,10 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
                 let windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
 
                 // set average to 0 for spans
-                if (obj.Flag === 2 || obj.Flag === 3 || obj.Flag === 4 || obj.Flag === 5) {
-                  windDirAvg = 0;
-                  windSpdAvg = 0;
-                }
+                //if (obj.Flag === 2 || obj.Flag === 3 || obj.Flag === 4 || obj.Flag === 5) {
+                //  windDirAvg = 0;
+                //  windSpdAvg = 0;
+                //}
 
                 newaggr[instrument].WD.push({
                   metric: 'sum',
@@ -219,9 +245,9 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
                 });
               } else { // all other measurements
                 // set average to 0 for spans
-                if (obj.Flag === '2' || obj.Flag === '3' || obj.Flag === '4' || obj.Flag === '5') {
-                  obj.avg = 0;
-                }
+                //  if (obj.Flag === '2' || obj.Flag === '3' || obj.Flag === '4' || obj.Flag === '5') {
+                //    obj.avg = 0;
+                //''   }
 
                 if (!newaggr[instrument][measurement]) {
                   newaggr[instrument][measurement] = [];
@@ -255,14 +281,14 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
             });
         });
       },
-      function(error) {
+      function (error) {
         Meteor._debug(`error during aggregation: ${error}`);
       }
     )
   );
 };
 
-var makeObj = function(keys) {
+var makeObj = function (keys) {
   const obj = {};
   obj.subTypes = {};
   let metron = [];
@@ -303,7 +329,7 @@ var makeObj = function(keys) {
   return obj;
 };
 
-var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
+var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
   // find the site information using the location of the file that is being read
   const pathArray = path.split('/');
   const parentDir = pathArray[pathArray.length - 2];
@@ -328,7 +354,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
 
     // using bulCollectionUpdate
     bulkCollectionUpdate(LiveData, allObjects, {
-      callback: function() {
+      callback: function () {
 
         const nowEpoch = moment().unix();
         const agoEpoch = moment.unix(nowEpoch).subtract(24, 'hours').unix();
@@ -342,7 +368,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
 });
 
 
-const readFile = Meteor.bindEnvironment(function(path) {
+const readFile = Meteor.bindEnvironment(function (path) {
 
   fs.readFile(path, 'utf-8', (err, output) => {
     Papa.parse(output, {
