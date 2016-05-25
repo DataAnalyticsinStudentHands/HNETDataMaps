@@ -87,7 +87,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                   let flag = [data[0].val];
 
                   // taking care of high wind speed values/flag with 9 (N)
-                  if (windSpd >= 60) {
+                  if (windSpd >= 35) {
                     numValid = 0;
                     flag = 9;
                   }
@@ -126,7 +126,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                     let flag = [data[0].val];
 
                     if (data[j].metric === 'NOx') {
-                      if (data[j].value < -1) { // taking care of NOX values to be flagged with 9(N)
+                      if (data[j].value < -1) { // taking care of NOx values to be flagged with 9(N)
                         flag = 9;
                         numValid = 0;
                       }
@@ -148,7 +148,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                         'flagstore': flag, // store all incoming flags in case we need to evaluate
                       };
                     } else {
-                      if (data[j].val !== '') { // taking care of empty data values
+                      if (numValid !== 0) { // keep aggregating only if numValid
                         aggrSubTypes[newkey].numValid += numValid;
                         aggrSubTypes[newkey].sum += Number(data[j].val); // holds sum until end
                         if (aggrSubTypes[newkey].numValid !== 0) {
