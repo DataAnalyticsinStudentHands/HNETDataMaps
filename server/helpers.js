@@ -56,28 +56,30 @@ var exportDataAsCSV = Meteor.bindEnvironment(function (aqsid, startEpoch, endEpo
 
           for (const subType in e.subTypes) {
             if (e.subTypes.hasOwnProperty(subType)) {
-              const instruments = e.subTypes[subType];
-              for (const instrument in instruments) {
-                if (instruments.hasOwnProperty(instrument)) {
-                  let label = `${subType}_${instrument}_channel`;
-                  obj[label] = channelHash[subType + '_' + instrument]; // channel
-                  const data = instruments[instrument];
+              if (subType !== '42i') {
+                const instruments = e.subTypes[subType];
+                for (const instrument in instruments) {
+                  if (instruments.hasOwnProperty(instrument)) {
+                    let label = `${subType}_${instrument}_channel`;
+                    obj[label] = channelHash[subType + '_' + instrument]; // channel
+                    const data = instruments[instrument];
 
-                  label = `${subType}_${instrument}_flag`;
-                  obj[label] = flagsHash[_.last(data).val].label; // Flag
-                  label = `${subType}_${instrument}_value`;
-                  // taking care of flag Q (span)
-                  if (flagsHash[_.last(data).val].label === 'Q') {
-                    obj[label] = 0; // set value to 0
-                  } else {
-                    let outputValue = data[1].val; // avg
-                    // Unit conversion for Temp from C to F
-                    if (instrument === 'Temp') {
-                      outputValue = outputValue * 9 / 5 + 32;
-                    } else if (instrument === 'WS') {
-                      outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
+                    label = `${subType}_${instrument}_flag`;
+                    obj[label] = flagsHash[_.last(data).val].label; // Flag
+                    label = `${subType}_${instrument}_value`;
+                    // taking care of flag Q (span)
+                    if (flagsHash[_.last(data).val].label === 'Q') {
+                      obj[label] = 0; // set value to 0
+                    } else {
+                      let outputValue = data[1].val; // avg
+                      // Unit conversion for Temp from C to F
+                      if (instrument === 'Temp') {
+                        outputValue = outputValue * 9 / 5 + 32;
+                      } else if (instrument === 'WS') {
+                        outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
+                      }
+                      obj[label] = outputValue.toFixed(3);
                     }
-                    obj[label] = outputValue.toFixed(3);
                   }
                 }
               }
