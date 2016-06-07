@@ -84,7 +84,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                   var windNord = Math.cos(windDir / 180 * Math.PI) * windSpd;
                   var windEast = Math.sin(windDir / 180 * Math.PI) * windSpd;
 
-                  let flag = [data[0].val];
+                  let flag = data[0].val;
 
                   // taking care of high wind speed values/flag with 9 (N)
                   if (windSpd >= 35) {
@@ -102,7 +102,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                       'avgWindEast': windEast,
                       'numValid': numValid,
                       'totalCounter': 1, // initial total counter
-                      'flagstore': flag // store all incoming flags in case we need to evaluate
+                      'flagstore': [flag] // store all incoming flags in case we need to evaluate
                     };
                   } else {
                     if (numValid !== 0) { // taking care of empty data values
@@ -113,6 +113,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                       aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
                     }
                     aggrSubTypes[newkey].totalCounter += 1; // increase counter
+										logger.info(`aggrSubTypes: ${JSON.stringify(aggrSubTypes)}`);
                     aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
                   }
                 } else { // normal aggreagation for all other subTypes
@@ -123,7 +124,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                       numValid = 0;
                     }
 
-                    let flag = [data[0].val];
+                    let flag = data[0].val;
 
                     if (data[j].metric === 'NOx') {
                       if (data[j].value < -1) { // taking care of NOx values to be flagged with 9(N)
@@ -145,7 +146,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                         'avg': Number(data[j].val),
                         'numValid': numValid,
                         'totalCounter': 1, // initial total counter
-                        'flagstore': flag, // store all incoming flags in case we need to evaluate
+                        'flagstore': [flag], // store all incoming flags in case we need to evaluate
                       };
                     } else {
                       if (numValid !== 0) { // keep aggregating only if numValid
@@ -282,7 +283,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
         });
       },
       function (error) {
-        Meteor._debug(`error during aggregation: ${error}`);
+        Meteor._debug(`error during aggregation: ${JSON.stringify(error)}`);
       }
     )
   );
