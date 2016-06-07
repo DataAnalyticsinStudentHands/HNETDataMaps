@@ -1,31 +1,43 @@
-Meteor.subscribe('editedPoints');
+const startEpoch = new ReactiveVar(moment().subtract(1, 'days').unix()); // 24 hours ago - seconds
+const endEpoch = new ReactiveVar(moment().unix());
+
+Meteor.subscribe('sites');
 
 Template.datamanagement.helpers({
-  points() {
-    return EditedPoints.find();
+  result() {
+    return Session.get('serverDataResponse') || '';
   },
-  formatDataValue(val) {
-    return val.toFixed(3);
+  selectedStartDate() {
+    return moment.unix(startEpoch.get()).format('YYYY-MM-DD');
   },
-  isValid() {
-    var validFlagSet = _.pluck(_.where(flagsHash, {
-      selectable: true,
-    }), 'val');
-    return _.contains(validFlagSet, selectedFlag.get());
+  selectedEndDate() {
+    return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
+  },
+  startEpoch() {
+    return startEpoch.get();
+  },
+  endEpoch() {
+    return endEpoch.get();
+  },
+  availableSites() {
+    return Sites.find();
   },
 });
 
-Template.registerHelper('formatDate', function (epoch) {
-  return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
-});
-
-Template.datamanagement.helpers({
-
-});
-
-Template.datamanagement.events({
-  'change #datepicker' (event) {
+Template.datamanagement.events = {
+  'change #startdatepicker': function (event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
   },
-});
+  'change #enddatepicker': function (event) {
+    endEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
+  },
+  'click #createAggregates': function () {
+    Meteor.call('new5minAggreg', $('input[type=text]').val(), $('#start').val(), $('#end').val(), function (err, response) {
+      if (err) {
+        Session.set('serverDataResponse', 'Error:' + err.reason);
+        return;
+      }
+      Session.set('serverDataResponse', response);
+    });
+  },
+};
