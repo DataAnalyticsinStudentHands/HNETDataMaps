@@ -32,6 +32,8 @@ You may have to run the following:
 
 `MONGO_URL=mongodb://localhost:27017/DataMaps meteor`
 
+For debugging with node inspector run `MONGO_URL=mongodb://localhost:27017/DataMaps meteor debug` and open the app in Chrome with the port listed once the app has started.
+
 ## Deployment with PM2
 
 * change into the working directory and run `meteor build .` - this will generate a *.tar .gz file
