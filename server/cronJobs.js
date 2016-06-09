@@ -71,8 +71,8 @@ Meteor.setInterval(() => {
 
     for (const site in statusObject) {
       if (statusObject.hasOwnProperty(site)) {
-        if (site.sendUpdateReport) {
-          sendEmail(`${site} ${site.current}`, reportString);
+        if (statusObject[site].sendUpdateReport) {
+          sendEmail(`${site} ${statusObject[site].current}`, reportString);
         }
       }
     }
