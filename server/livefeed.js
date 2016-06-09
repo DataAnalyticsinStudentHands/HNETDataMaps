@@ -113,7 +113,6 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                       aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
                     }
                     aggrSubTypes[newkey].totalCounter += 1; // increase counter
-										logger.info(`aggrSubTypes: ${JSON.stringify(aggrSubTypes)}`);
                     aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
                   }
                 } else { // normal aggreagation for all other subTypes

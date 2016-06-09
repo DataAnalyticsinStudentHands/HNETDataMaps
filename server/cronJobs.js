@@ -2,7 +2,7 @@
 import fs from 'fs';
 import junk from 'junk';
 
-let lastEmergencyReportTime = 0;
+let lastReportTime = 0;
 
 function sendEmail(reportType, reportString) {
   const transporter = Nodemailer.createTransport();
@@ -17,54 +17,71 @@ function sendEmail(reportType, reportString) {
     if (error) {
       logger.info('Can not send email. Error: ', error);
     } else {
-      lastEmergencyReportTime = moment.unix();
       logger.info('Message sent: ', info);
     }
   });
 }
 
 Meteor.setInterval(() => {
-  lastEmergencyReportTime = 0;
+  lastReportTime = 0;
 }, 24 * 3600 * 1000); // daily reset
 
 Meteor.setInterval(() => {
   const watchedPath = '/hnet/incoming/current/';
 
-  let timeDiff;
+  // structure to hold current/before status information
   const statusObject = {};
+  // report
+  let reportString = `H-NET Site Status as of ${moment().format('YYYY/MM/DD, HH:mm:ss')} \n`;
 
   fs.readdir(watchedPath, function (err, folders) {
     folders.filter(junk.not).forEach(function (afolder) {
       const stats = fs.statSync(watchedPath + afolder);
 
-      statusObject[afolder] = `\n${afolder}: Operational`;
-
       const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments
-      timeDiff = moment() - currentSiteMoment;
+      const timeDiff = moment() - currentSiteMoment;
+
+      if (!statusObject[afolder]) {
+        statusObject[afolder] = {};
+      }
 
       if (timeDiff > 15 * 60 * 1000) {
-        statusObject[afolder] = `\n${afolder}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
+        statusObject[afolder].current = `\n${afolder}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
+      } else {
+        statusObject[afolder].current = `\n${afolder}: Operational`;
       }
+
+      // initialize before status in first run
+      if (!statusObject[afolder].before) {
+        statusObject[afolder].before = statusObject[afolder].current;
+      }
+
+      // initialize sendUpdateReport
+      statusObject[afolder].sendUpdateReport = false;
+
+      // Adding info for each site to the report
+      reportString = `${reportString}${statusObject[afolder].current}\n`;
+
+      if (statusObject[afolder].current !== statusObject[afolder].before) {
+        statusObject[afolder].sendUpdateReport = true;
+      }
+
+      statusObject[afolder].before = statusObject[afolder].current;
     });
 
-    let sendEmergencyReport = false;
-    let reportString = `H-NET Site Status as of ${moment().format('YYYY/MM/DD, HH:mm:ss')} \n`;
-    logger.info(`${JSON.stringify(statusObject)}`);
-    for (const property in statusObject) {
-      if (statusObject.hasOwnProperty(property)) {
-        if (property !== 'Operational') {
-          sendEmergencyReport = true;
-          reportString = `${reportString}${statusObject[property]}\n`;
-        } else {
-          reportString = `${reportString}`;
+    for (const site in statusObject) {
+      if (statusObject.hasOwnProperty(site)) {
+        if (site.sendUpdateReport) {
+          sendEmail(`${site} ${site.current}`, reportString);
         }
       }
     }
 
-    if (sendEmergencyReport && lastEmergencyReportTime === 0) {
-      sendEmail('Emergency Report', reportString);
-    } else {
-      logger.info(`${reportString}`);
+    if (lastReportTime === 0) {
+      // Daily report
+      // sendEmail('Daily Report', reportString);
+      logger.info(`Daily Report for ${require('os').hostname()}: ${reportString}`);
+      lastReportTime = moment.unix();
     }
   });
-}, 5 * 60 * 1000); // run every 5 min, to report a site is down immidiately
+}, 1 * 60 * 1000); // run every 5 min, to report a site is down immidiately
