@@ -132,7 +132,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                       }
                     }
 
-										if (data[j].metric === 'O3') {
+                    if (data[j].metric === 'O3') {
                       if (data[j].value > 250) { // taking care of 03 values to be flagged with 9(N)
                         flag = 9;
                         numValid = 0;
@@ -333,9 +333,9 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
   // find the site information using the location of the file that is being read
   const pathArray = path.split('/');
   const parentDir = pathArray[pathArray.length - 2];
-  const site = Sites.find({
+  const site = Sites.findOne({
     incoming: parentDir,
-  }).fetch()[0];
+  });
 
   if (site.AQSID) {
     const allObjects = [];
@@ -359,9 +359,18 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
         const nowEpoch = moment().unix();
         const agoEpoch = moment.unix(nowEpoch).subtract(24, 'hours').unix();
 
-        logger.info(`LiveData updated for : ${site.AQSID}`);
+        logger.info(`LiveData updated for : ${site.siteName}`);
         logger.info(`Calling aggr for epochs of the last 24 hours: ${agoEpoch} - ${nowEpoch}`);
         perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
+        const lastEpoch = AggrData.find({
+          site: site.AQSID,
+        }, {
+          limit: 3,
+          sort: {
+            epoch: -1,
+          },
+        }).fetch();
+        Meteor.call('exportData', site.AQSID, lastEpoch[2].epoch, nowEpoch);
       },
     });
   }
@@ -371,12 +380,18 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
 const readFile = Meteor.bindEnvironment(function (path) {
 
   fs.readFile(path, 'utf-8', (err, output) => {
+    let secondIteration = false;
     Papa.parse(output, {
       header: true,
       dynamicTyping: true,
       skipEmptyLines: true,
       complete(results) {
-        batchLiveDataUpsert(results.data, path);
+        if (!secondIteration) {
+          batchLiveDataUpsert(results.data, path);
+          secondIteration = true;
+        } else {
+          return;
+        }
       },
     });
   });

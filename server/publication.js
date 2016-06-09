@@ -381,7 +381,7 @@ Meteor.publish('sites', function () {
     'incoming': {
       $exists: true
     }
-  });
+  }, {sort: {'siteName': -1}});
 });
 
 Meteor.publish('userData', function () {

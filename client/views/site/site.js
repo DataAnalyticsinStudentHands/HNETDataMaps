@@ -393,7 +393,7 @@ Template.site.helpers({
     const site = Sites.findOne({
       AQSID: Router.current().params._id,
     });
-    return site && site['site name'];
+    return site && site.siteName;
   },
   selectedDate() {
     return moment.unix(startEpoch.get()).add(2160, 'minutes').format('YYYY-MM-DD');
