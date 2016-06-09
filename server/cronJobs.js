@@ -3,12 +3,16 @@ import fs from 'fs';
 import junk from 'junk';
 
 let lastReportTime = 0;
+// structure to hold current/before status information
+const statusObject = {};
+// list of receipients
+let mailList = '';
 
 function sendEmail(reportType, reportString) {
   const transporter = Nodemailer.createTransport();
-  const mailOptions = {
-    from: 'Hnet Watcher <admin@hnet>',
-    to: 'plindner@uh.edu',
+  let mailOptions = {
+    from: 'HNET Site Watcher <dashadmin@uh.edu>',
+    to: mailList,
     subject: reportType,
     text: reportString,
   };
@@ -22,15 +26,26 @@ function sendEmail(reportType, reportString) {
   });
 }
 
+// daily
 Meteor.setInterval(() => {
-  lastReportTime = 0;
-}, 24 * 3600 * 1000); // daily reset
+  lastReportTime = 0; // reset to trigger daily report
+  // Find all users that have subscribed to receive status emails and update the mailList
+  const listSubscribers = Meteor.users.find({
+    receiveSiteStatusEmail: true,
+  });
+
+  mailList = '';
+
+  listSubscribers.forEach(function (user) {
+    if (user.receiveSiteStatusEmail) {
+      mailList = `${user.emails[0].address},${mailList}`;
+    }
+  });
+}, 24 * 3600 * 1000);
 
 Meteor.setInterval(() => {
   const watchedPath = '/hnet/incoming/current/';
 
-  // structure to hold current/before status information
-  const statusObject = {};
   // report
   let reportString = `H-NET Site Status as of ${moment().format('YYYY/MM/DD, HH:mm:ss')} \n`;
 
@@ -84,4 +99,4 @@ Meteor.setInterval(() => {
       lastReportTime = moment.unix();
     }
   });
-}, 1 * 60 * 1000); // run every 5 min, to report a site is down immidiately
+}, 5 * 60 * 1000); // run every 5 min, to report a site is down immidiately

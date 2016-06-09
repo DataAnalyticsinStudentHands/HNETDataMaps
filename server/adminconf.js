@@ -1,4 +1,5 @@
 Accounts.config({
   sendVerificationEmail: true,
-    // forbidClientAccountCreation: false //interfered with yogiben:admin
 });
+
+Accounts._options.forbidClientAccountCreation = false;
