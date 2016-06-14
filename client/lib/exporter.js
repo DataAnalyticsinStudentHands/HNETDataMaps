@@ -1,23 +1,24 @@
-// Exporting data in certain formats and download client side
+// Call for exporting data in certain formats and download client side
 DataExporter = {
-  exportForTCEQ: function (siteId, startEpoch, endEpoch) {
+  exportForTCEQ: function (aqsid, startEpoch, endEpoch) {
     var self = this;
     Meteor.subscribe('sites');
-    Meteor.call('exportData', siteId, startEpoch, endEpoch, function (error, data) {
+
+    Meteor.call('exportData', aqsid, startEpoch, endEpoch, true, function (error, data) {
 
       if (error) {
         alert(error);
         return false;
       }
 
-      var dir = Sites.findOne({
-        AQSID: siteId
+      const site = Sites.findOne({
+        AQSID: aqsid,
       });
 
-      if (dir !== undefined) {
+      if (site !== undefined) {
         const csv = Papa.unparse(data);
-        const siteName = (dir.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2); // create site name from incoming folder
-        self._downloadCSV(csv, `${siteName.toLowerCase()}${moment.unix(startEpoch).format('YYMMDDHHmmss')}.txt`);
+        const siteName = (site.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2); // create site name from incoming folder
+        self._downloadCSV(csv, `${siteName.toLowerCase()}${moment().format('YYMMDDHHmmss')}.txt`);
       }
     });
   },

@@ -28,8 +28,10 @@ function sendEmail(reportType, reportString) {
 
 // daily
 Meteor.setInterval(() => {
-  lastReportTime = 0; // reset to trigger daily report
-  // Find all users that have subscribed to receive status emails and update the mailList
+	// reset to trigger daily report
+	lastReportTime = 0;
+
+	// Find all users that have subscribed to receive status emails and update the mailList
   const listSubscribers = Meteor.users.find({
     receiveSiteStatusEmail: true,
   });

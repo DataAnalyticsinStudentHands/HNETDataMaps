@@ -370,7 +370,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
             epoch: -1,
           },
         }).fetch();
-        Meteor.call('exportData', site.AQSID, lastEpoch[2].epoch, nowEpoch);
+        Meteor.call('exportData', site.AQSID, lastEpoch[2].epoch, nowEpoch, true);
       },
     });
   }
