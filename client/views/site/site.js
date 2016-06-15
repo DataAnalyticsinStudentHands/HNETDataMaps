@@ -385,6 +385,7 @@ Template.editPoints.helpers({
 });
 
 Template.registerHelper('formatDate', function (epoch) {
+	// convert epoch (long) format to readable
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -409,7 +410,7 @@ Template.site.events({
     endEpoch.set(moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
   },
   'click #createPush' () {
-    DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
+    DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true);
   },
   'click #updateAggr' () {
     Meteor.call('new5minAggreg', Router.current().params._id,

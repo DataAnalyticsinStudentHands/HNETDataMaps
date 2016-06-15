@@ -89,17 +89,16 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
   return dataObject;
 }
 
-const pushTCEQData = Meteor.bindEnvironment(function (aqsid, data) {
-
+function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
   const site = Sites.find({
     AQSID: aqsid,
   }).fetch()[0];
 
   if (site !== undefined) {
-		// create site name from incoming folder
+    // create site name from incoming folder
     const siteName = (site.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2);
     // create csv file to be pushed in temp folder
-    const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc(moment().format('YYMMDDHHmmss'))}.uh`;
+    const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
     const csv = Papa.unparse(data);
 
     fs.writeFile(outputFile, csv, function (err) {
@@ -122,27 +121,46 @@ const pushTCEQData = Meteor.bindEnvironment(function (aqsid, data) {
         // port is added to the end of the host, ex: sftp://domain.com:22 in this case
       });
 
-      ftps.cd('UH/tmp').addFile(outputFile).exec(function (err, res) {
-        if (err || res.error) {
-          return logger.error('Error during push file:', (err || res.error));
-        }
+      // the following function creates its own scoped context
+      ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function (res) {
+        // insert a timestamp for the pushed data
+        Exports.insert({
+          _id: `${aqsid}_${moment().unix()}`,
+          epoch: moment().unix(),
+          site: aqsid,
+          startEpoch: startEpoch,
+          endEpoch: endEpoch,
+        });
         logger.info(res);
-      });
+      }, function (err) {
+        return logger.error('Error during push file:', (err || res.error));
+      }));
+
+
+
+
+      //  ftps.cd('UH/tmp').addFile(outputFile).exec(function (err, res) {
+      //  if (err || res.error) {
+      //    return logger.error('Error during push file:', (err || res.error));
+      //  }
+      //  logger.info(res);
+
+      //  });
     }
   } else {
     logger.error('Could not find dir for AQSID: ', aqsid, ' in Sites.');
   }
-});
+};
 
 Meteor.methods({
-  exportData: function (aqsid, startEpoch, endEpoch, push) {
+  exportData(aqsid, startEpoch, endEpoch, push) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
     if (data !== undefined && push) {
-      pushTCEQData(aqsid, data);
+      pushTCEQData(aqsid, startEpoch, endEpoch, data);
     }
     return data;
   },
-  insertUpdateFlag: function (siteId, epoch, instrument, measurement, flag, note) {
+  insertUpdateFlag(siteId, epoch, instrument, measurement, flag, note) {
     // id that will receive the update
     const id = `${siteId}_${epoch / 1000}`; // seconds
     // new field

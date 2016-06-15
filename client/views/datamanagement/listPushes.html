@@ -1,0 +1,49 @@
+<template name="listPushes">
+	<!-- table for pushed data -->
+					<table class="table">
+						<thead>
+							<tr>
+								<th>Push Time</th>
+								<th>Site</th>
+								<th>Start Epoch</th>
+								<th>End Epoch</th>
+								<th>Data in File</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each pushes}}
+							<tr>
+								<td>{{formatDates epoch}}</td>
+								<td>{{siteName site}}</td>
+								<td>{{startEpoch}}</td>
+								<td>{{endEpoch}}</td>
+								<td><a href="#"><i class="fa fa-table" data-site="{{site}}" data-start="{{startEpoch}}" data-end="{{endEpoch}}"></i></a></td>
+							</tr>
+							{{/each}}
+						</tbody>
+					</table>
+
+					{{> dataFile}}
+</template>
+
+<!-- Modal for showing data file -->
+<template name="dataFile">
+	<div class="modal fade" id="dataFileModal">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<div class="pull-left">
+						<h4><i class="fa fa-table" aria-hidden="true"></i> Data File</h4>
+					</div>
+				</div>
+				<div class="modal-body">
+
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" aria-label="Close" data-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</template>

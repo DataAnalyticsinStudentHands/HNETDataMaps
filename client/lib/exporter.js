@@ -1,10 +1,11 @@
 // Call for exporting data in certain formats and download client side
 DataExporter = {
-  exportForTCEQ: function (aqsid, startEpoch, endEpoch) {
+  exportForTCEQ: function (aqsid, startEpoch, endEpoch, push) {
     var self = this;
     Meteor.subscribe('sites');
 
-    Meteor.call('exportData', aqsid, startEpoch, endEpoch, true, function (error, data) {
+		// create TCEQ export formated data and push
+    Meteor.call('exportData', aqsid, startEpoch, endEpoch, push, function (error, data) {
 
       if (error) {
         alert(error);
@@ -15,6 +16,7 @@ DataExporter = {
         AQSID: aqsid,
       });
 
+			// download the data as csv file
       if (site !== undefined) {
         const csv = Papa.unparse(data);
         const siteName = (site.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2); // create site name from incoming folder

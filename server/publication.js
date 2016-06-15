@@ -340,7 +340,7 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
   );
 });
 
-// aggregation of aggregated data to be plotted with highstock for composites
+// edited points
 Meteor.publish('editedPoints', function () {
 
   const subscription = this;
@@ -374,6 +374,11 @@ Meteor.publish('editedPoints', function () {
 
   });
 
+});
+
+// pushed data time stamps
+Meteor.publish('exports', function () {
+  return Exports.find({});
 });
 
 Meteor.publish('sites', function () {

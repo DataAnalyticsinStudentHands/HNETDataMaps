@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "ftps": "^0.4.6",
-    "highcharts": "^4.2.4",
+    "highcharts": "^4.2.5",
     "junk": "^1.0.2"
   },
   "devDependencies": {
@@ -41,6 +41,7 @@
       "LiveData": true,
       "AggrData": true,
       "Sites": true,
+			"Exports": true,
       "DataExporter": true,
       "channelHash": true,
       "flagsHash": true,
@@ -55,7 +56,8 @@
           "ignoreUrls": true,
           "ignoreComments": false
         }
-      ]
+      ],
+			"arrow-body-style": ["error", "always"]
     }
   },
   "repository": {
