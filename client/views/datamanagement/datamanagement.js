@@ -4,9 +4,6 @@ const endEpoch = new ReactiveVar(moment().unix());
 Meteor.subscribe('sites');
 
 Template.datamanagement.helpers({
-  result() {
-    return Session.get('serverDataResponse') || '';
-  },
   selectedStartDate() {
     return moment.unix(startEpoch.get()).format('YYYY-MM-DD');
   },
@@ -25,19 +22,19 @@ Template.datamanagement.helpers({
 });
 
 Template.datamanagement.events = {
-  'change #startdatepicker': function (event) {
+  'change #startdatepicker'(event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'change #enddatepicker': function (event) {
+  'change #enddatepicker'(event) {
     endEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'click #createAggregates': function () {
+  'click #createAggregates'() {
     Meteor.call('new5minAggreg', $('input[type=text]').val(), $('#start').val(), $('#end').val(), function (err, response) {
       if (err) {
-        Session.set('serverDataResponse', 'Error:' + err.reason);
+        sAlert.error(`Error:\n ${err.reason}`);
         return;
       }
-      Session.set('serverDataResponse', response);
+      sAlert.success(response);
     });
   },
 };

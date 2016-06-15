@@ -38,6 +38,7 @@
       "logger": true,
       "Highcharts": true,
       "Papa": true,
+			"sAlert": true,
       "LiveData": true,
       "AggrData": true,
       "Sites": true,
@@ -50,7 +51,7 @@
     "rules": {
       "max-len": [
         2,
-        120,
+        160,
         2,
         {
           "ignoreUrls": true,

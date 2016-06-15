@@ -5,19 +5,23 @@
 							<tr>
 								<th>Push Time</th>
 								<th>Site</th>
+								<th>Start Period</th>
 								<th>Start Epoch</th>
+								<th>End Period</th>
 								<th>End Epoch</th>
-								<th>Data in File</th>
+								<th>Data File</th>
 							</tr>
 						</thead>
 						<tbody>
 							{{#each pushes}}
 							<tr>
-								<td>{{formatDates epoch}}</td>
+								<td>{{formatDates timeStamp}}</td>
 								<td>{{siteName site}}</td>
+								<td>{{formatDates startEpoch}}</td>
 								<td>{{startEpoch}}</td>
+								<td>{{formatDates endEpoch}}</td>
 								<td>{{endEpoch}}</td>
-								<td><a href="#"><i class="fa fa-table" data-site="{{site}}" data-start="{{startEpoch}}" data-end="{{endEpoch}}"></i></a></td>
+								<td class="active"><a href="#"><i class="fa fa-table" data-site="{{site}}" data-start="{{startEpoch}}" data-end="{{endEpoch}}"></i></a></td>
 							</tr>
 							{{/each}}
 						</tbody>
@@ -37,7 +41,7 @@
 					</div>
 				</div>
 				<div class="modal-body">
-
+					<p>{{dataFromFile}}</p>
 
 				</div>
 				<div class="modal-footer">

@@ -11,20 +11,40 @@ const hnetsftp = process.env.hnetsftp;
 function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
   const dataObject = {};
 
-  const aggregatData = AggrData.find({
-    $and: [{
-      epoch: {
-        $gt: parseInt(startEpoch, 10),
-        $lt: parseInt(endEpoch, 10),
-      },
+  let aggregatData;
+
+  if (endEpoch === undefined) {
+    aggregatData = AggrData.find({
+      $and: [{
+        epoch: {
+          $in: startEpoch,
+        },
+      }, {
+        site: `${aqsid}`,
+      }],
     }, {
-      site: aqsid,
-    }],
-  }, {
-    sort: {
-      epoch: 1,
-    },
-  }).fetch();
+      sort: {
+        epoch: 1,
+      },
+    }).fetch();
+  } else {
+    aggregatData = AggrData.find({
+      $and: [{
+        epoch: {
+          $gt: parseInt(startEpoch, 10),
+          $lt: parseInt(endEpoch, 10),
+        },
+      }, {
+        site: `${aqsid}`,
+      }],
+    }, {
+      sort: {
+        epoch: 1,
+      },
+    }).fetch();
+  }
+
+logger.info(`aggreData: ${aggregatData}`);
 
   dataObject.data = [];
 
@@ -91,7 +111,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 
 function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
   const site = Sites.find({
-    AQSID: aqsid,
+    AQSID: `${aqsid}`,
   }).fetch()[0];
 
   if (site !== undefined) {
@@ -124,28 +144,25 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
       // the following function creates its own scoped context
       ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function (res) {
         // insert a timestamp for the pushed data
-        Exports.insert({
-          _id: `${aqsid}_${moment().unix()}`,
-          epoch: moment().unix(),
-          site: aqsid,
-          startEpoch: startEpoch,
-          endEpoch: endEpoch,
-        });
-        logger.info(res);
+        if (endEpoch === undefined) {
+          Exports.insert({
+            _id: `${aqsid}_${moment().unix()}`,
+            timeStamp: moment().unix(),
+            site: aqsid,
+            epochList: startEpoch,
+          });
+        } else {
+          Exports.insert({
+            _id: `${aqsid}_${moment().unix()}`,
+            timeStamp: moment().unix(),
+            site: aqsid,
+            startEpoch: startEpoch,
+            endEpoch: endEpoch,
+          });
+        }
       }, function (err) {
         return logger.error('Error during push file:', (err || res.error));
       }));
-
-
-
-
-      //  ftps.cd('UH/tmp').addFile(outputFile).exec(function (err, res) {
-      //  if (err || res.error) {
-      //    return logger.error('Error during push file:', (err || res.error));
-      //  }
-      //  logger.info(res);
-
-      //  });
     }
   } else {
     logger.error('Could not find dir for AQSID: ', aqsid, ' in Sites.');

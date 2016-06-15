@@ -90,7 +90,19 @@ function selectedPoints(e) {
   // Handle the button "Push" event
   $('#btnPush').click(function (event) {
     event.preventDefault();
-    alert(`Push functionality not activated!`);
+    // Push Edited points in TCEQ format
+    const pushPoints = EditPoints.find({});
+
+    const listPushPoints = [];
+    pushPoints.forEach(function (point) {
+      listPushPoints.push(point.x);
+    });
+    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, undefined, true, false).then(function (response) {
+      sAlert.success('Push successful!');
+    }, function (error) {
+      sAlert.error(`Couldn't not find any data for site: ${Router.current().params._id} for selected epochs.`);
+    });
+
   });
 
   // Handle the button "Change Flag" event
@@ -385,7 +397,7 @@ Template.editPoints.helpers({
 });
 
 Template.registerHelper('formatDate', function (epoch) {
-	// convert epoch (long) format to readable
+  // convert epoch (long) format to readable
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
@@ -410,17 +422,18 @@ Template.site.events({
     endEpoch.set(moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
   },
   'click #createPush' () {
-    DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true);
+    // call export and push out file as well as download
+    DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true, true);
   },
   'click #updateAggr' () {
     Meteor.call('new5minAggreg', Router.current().params._id,
       startEpoch.get(), endEpoch.get(),
       function (err, response) {
         if (err) {
-          Session.set('serverDataResponse', `Error: ${err.reason}`);
+          sAlert.error(`Error: ${err.reason}`);
           return;
         }
-        Session.set('serverDataResponse', response);
+        sAlert.success(`Created Aggregates! ${response}`);
       });
   },
 });

@@ -359,7 +359,6 @@ Meteor.publish('editedPoints', function () {
         if (!datapoint.subTypes[instrument].hasOwnProperty(measurement)) continue;
 
         if (datapoint.subTypes[instrument][measurement].length > 4) {
-          //logger.info(`found one: ${datapoint.epoch}`);
           subscription.added('editedPoints', `${datapoint.epoch}_${instrument}_comp}`, {
             measurement: measurement,
             instrument: instrument,
@@ -378,13 +377,17 @@ Meteor.publish('editedPoints', function () {
 
 // pushed data time stamps
 Meteor.publish('exports', function () {
-  return Exports.find({});
+  return Exports.find({
+    epochList: {
+      $exists: false,
+    }
+  });
 });
 
 Meteor.publish('sites', function () {
   return Sites.find({
     'incoming': {
-      $exists: true
+      $exists: true,
     }
   }, {
     sort: {

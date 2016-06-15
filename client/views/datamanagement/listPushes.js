@@ -1,10 +1,21 @@
 Meteor.subscribe('exports');
 Meteor.subscribe('sites');
 
+const dataToShow = new ReactiveVar();
+
 Template.listPushes.events({
-  'click .table' (event, instance) {
-    DataExporter.exportForTCEQ(instance.$('i').data('site'), instance.$('i').data('start'), instance.$('i').data('end'), false);
-  },
+  'click .active'(event, instance) {
+    // Get data in TCEQ format
+    DataExporter.getDataTCEQ(instance.$('i').data('site'), instance.$('i').data('start'), instance.$('i').data('end'), false, false).then(function (response) {
+      dataToShow.set(response);
+      // Show the Data File modal
+      $('#dataFileModal').modal({}).modal('show');
+    }, function (error) {
+      sAlert.error(`did not find any data for site: ${instance.$('i').data('site')},
+			startEpoch: ${instance.$('i').data('start')},
+			endEpoch: ${instance.$('i').data('end')}, ${error}`);
+    });
+  }
 });
 
 Template.listPushes.helpers({
@@ -16,10 +27,16 @@ Template.listPushes.helpers({
   },
   siteName(site) {
     const selectedSite = Sites.findOne({
-      AQSID: site,
+      AQSID: site
     });
     return selectedSite.siteName;
-  },
+  }
+});
+
+Template.dataFile.helpers({
+  dataFromFile() {
+    return Papa.unparse(dataToShow.get());
+  }
 });
 
 Template.registerHelper('formatDates', (epoch) => {
