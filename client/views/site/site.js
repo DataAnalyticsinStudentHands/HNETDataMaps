@@ -26,9 +26,9 @@ const Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   var selection = [];
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function (series) {
+  Highcharts.each(this.series, function(series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
-      Highcharts.each(series.points, function (point) {
+      Highcharts.each(series.points, function(point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           // point.select(true, true);
           selection.push(point);
@@ -53,13 +53,13 @@ function selectedPoints(e) {
   var points = [];
   const series = [];
 
-  _.each(e.target.series, function (serie) {
+  _.each(e.target.series, function(serie) {
     if (serie.name.endsWith('5m')) {
       series.push(serie);
     }
   });
 
-  _.each(e.points, function (point) {
+  _.each(e.points, function(point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -88,32 +88,32 @@ function selectedPoints(e) {
   $('#editPointsModal').modal({}).modal('show');
 
   // Handle the button "Push" event
-  $('#btnPush').click(function (event) {
+  $('#btnPush').click(function(event) {
     event.preventDefault();
     // Push Edited points in TCEQ format
     const pushPoints = EditPoints.find({});
 
     const listPushPoints = [];
-    pushPoints.forEach(function (point) {
+    pushPoints.forEach(function(point) {
       listPushPoints.push(point.x);
     });
-    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, undefined, true, false).then(function (response) {
+    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, undefined, true, false).then(function(response) {
       sAlert.success('Push successful!');
-    }, function (error) {
+    }, function(error) {
       sAlert.error(`Couldn't not find any data for site: ${Router.current().params._id} for selected epochs.`);
     });
 
   });
 
   // Handle the button "Change Flag" event
-  $('#btnChange').click(function (event) {
+  $('#btnChange').click(function(event) {
     event.preventDefault();
     // update the edited points with the selected flag and note on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
     const note = $('#editNote').val();
 
-    updatedPoints.forEach(function (point) {
+    updatedPoints.forEach(function(point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal, note);
     });
 
@@ -128,7 +128,7 @@ function selectedPoints(e) {
     });
   });
 
-  $('#editPointsModal table tr .fa').click(function (event) {
+  $('#editPointsModal table tr .fa').click(function(event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -157,7 +157,7 @@ function selectedPoints(e) {
 function unselectByClick() {
   var points = this.getSelectedPoints();
   if (points.length > 0) {
-    Highcharts.each(points, function (point) {
+    Highcharts.each(points, function(point) {
       point.select(false);
     });
   }
@@ -258,9 +258,9 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   });
 }
 
-Template.site.onRendered(function () {
+Template.site.onRendered(function() {
   // Do reactive stuff when something is added or removed
-  this.autorun(function () {
+  this.autorun(function() {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
@@ -269,7 +269,7 @@ Template.site.onRendered(function () {
     let initializing = true;
 
     DataSeries.find().observeChanges({
-      added: function (series, seriesData) {
+      added: function(series, seriesData) {
         if (!initializing) { // true only when we first start
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
@@ -280,14 +280,14 @@ Template.site.onRendered(function () {
 
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
-              _id: subType
+              _id: subType,
             }, {
-              reactive: false
+              reactive: false,
             })) {
             Charts.insert({
               _id: subType,
               yAxis: [{
-                metric
+                metric,
               }],
             });
 
@@ -300,17 +300,17 @@ Template.site.onRendered(function () {
             const chart = $(`#container-chart-${subType}`).highcharts();
 
             // Add another axis if not yet existent
-            let axis_exist = false;
+            let axisExist = false;
 
             Charts.findOne({
-              _id: subType
-            }).yAxis.forEach(function (axis) {
+              _id: subType,
+            }).yAxis.forEach(function(axis) {
               if (axis.metric === metric) {
-                axis_exist = true;
+                axisExist = true;
               }
-            })
+            });
 
-            if (!axis_exist) {
+            if (!axisExist) {
               yAxisOptions.opposite = true;
               yAxisOptions.id = metric;
               chart.addAxis(
@@ -319,26 +319,26 @@ Template.site.onRendered(function () {
               Charts.update(subType, {
                 $push: {
                   yAxis: {
-                    metric
+                    metric,
                   },
                 },
               });
             }
 
             // Now just find the right axis index and assign it to the seriesData
-            let axis_index = 0;
+            let axisIndex = 0;
             Charts.findOne({
-              _id: subType
-            }).yAxis.forEach(function (axis, i) {
+              _id: subType,
+            }).yAxis.forEach(function(axis, i) {
               if (axis.metric === metric) {
                 if (i === 0) { // navigator axis will be at index 1
-                  axis_index = 0;
+                  axisIndex = 0;
                 } else {
-                  axis_index = i + 1;
+                  axisIndex = i + 1;
                 }
               }
             });
-            seriesData.yAxis = axis_index;
+            seriesData.yAxis = axisIndex;
             chart.addSeries(seriesData);
           }
         }
@@ -392,11 +392,15 @@ Template.editPoints.helpers({
     var validFlagSet = _.pluck(_.where(flagsHash, {
       selectable: true,
     }), 'val');
-    return _.contains(validFlagSet, selectedFlag.get());
+    let ok = _.contains(validFlagSet, selectedFlag.get());
+    if ($('#editNote').val() === '') {
+      ok = false;
+    }
+    return ok;
   },
 });
 
-Template.registerHelper('formatDate', function (epoch) {
+Template.registerHelper('formatDate', function(epoch) {
   // convert epoch (long) format to readable
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
@@ -424,16 +428,5 @@ Template.site.events({
   'click #createPush' () {
     // call export and push out file as well as download
     DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true, true);
-  },
-  'click #updateAggr' () {
-    Meteor.call('new5minAggreg', Router.current().params._id,
-      startEpoch.get(), endEpoch.get(),
-      function (err, response) {
-        if (err) {
-          sAlert.error(`Error: ${err.reason}`);
-          return;
-        }
-        sAlert.success(`Created Aggregates! ${response}`);
-      });
   },
 });

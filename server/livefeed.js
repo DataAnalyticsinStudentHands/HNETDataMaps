@@ -1,7 +1,7 @@
 // required packages
 const fs = Npm.require('fs');
 
-var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
+var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
   // gather all data, group by 5min epoch
   const pipeline = [{
       $match: {
@@ -40,8 +40,8 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
   LiveData.aggregate(pipeline,
     Meteor.bindEnvironment(
-      function (err, result) {
-        _.each(result, function (e) {
+      function(err, result) {
+        _.each(result, function(e) {
           const subObj = {};
           subObj._id = `${e.site}_${e._id}`;
           subObj.site = e.site;
@@ -187,7 +187,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                 for (let k = 0; k < obj.flagstore.length; k++) {
                   counts[obj.flagstore[k]] = 1 + (counts[obj.flagstore[k]] || 0);
                 }
-                const maxObj = _.max(counts, function (obj) {
+                const maxObj = _.max(counts, function(obj) {
                   return obj;
                 });
                 const majorityFlag = (_.invert(counts))[maxObj];
@@ -281,14 +281,14 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
             });
         });
       },
-      function (error) {
+      function(error) {
         Meteor._debug(`error during aggregation: ${JSON.stringify(error)}`);
       }
     )
   );
 };
 
-var makeObj = function (keys) {
+var makeObj = function(keys) {
   const obj = {};
   obj.subTypes = {};
   let metron = [];
@@ -329,7 +329,7 @@ var makeObj = function (keys) {
   return obj;
 };
 
-var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
+var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
   // find the site information using the location of the file that is being read
   const pathArray = path.split('/');
   const parentDir = pathArray[pathArray.length - 2];
@@ -354,7 +354,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
 
     // using bulCollectionUpdate
     bulkCollectionUpdate(LiveData, allObjects, {
-      callback: function () {
+      callback: function() {
 
         const nowEpoch = moment().unix();
         const agoEpoch = moment.unix(nowEpoch).subtract(24, 'hours').unix();
@@ -362,22 +362,24 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
         logger.info(`LiveData updated for : ${site.siteName}`);
         logger.info(`Calling aggr for epochs of the last 24 hours: ${agoEpoch} - ${nowEpoch}`);
         perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
-        const lastEpoch = AggrData.find({
-          site: site.AQSID,
+
+        AggrData.find({
+          site: `${site.AQSID}`,
         }, {
-          limit: 3,
           sort: {
             epoch: -1,
           },
-        }).fetch();
-        Meteor.call('exportData', site.AQSID, lastEpoch[2].epoch, nowEpoch, true);
+          limit: 1,
+        }).forEach(function(dataPoint) {
+          Meteor.call('exportData', site.AQSID, dataPoint.epoch, nowEpoch, true);
+        })
       },
     });
   }
 });
 
 
-const readFile = Meteor.bindEnvironment(function (path) {
+const readFile = Meteor.bindEnvironment(function(path) {
 
   fs.readFile(path, 'utf-8', (err, output) => {
     let secondIteration = false;

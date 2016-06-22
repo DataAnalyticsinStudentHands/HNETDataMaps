@@ -22,14 +22,18 @@ Template.datamanagement.helpers({
 });
 
 Template.datamanagement.events = {
-  'change #startdatepicker'(event) {
+  'change #startdatepicker' (event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'change #enddatepicker'(event) {
+  'change #enddatepicker' (event) {
     endEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'click #createAggregates'() {
-    Meteor.call('new5minAggreg', $('input[type=text]').val(), $('#start').val(), $('#end').val(), function (err, response) {
+  'click #createAggregates' () {
+    const site = Sites.findOne({
+      siteName: $('#selectedSite').val(),
+    });
+
+    Meteor.call('new5minAggreg', site.AQSID, $('#start').val(), $('#end').val(), function(err, response) {
       if (err) {
         sAlert.error(`Error:\n ${err.reason}`);
         return;

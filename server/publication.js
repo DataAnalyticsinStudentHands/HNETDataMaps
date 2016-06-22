@@ -1,5 +1,5 @@
 // aggregation of live and aggregated data to be plotted with highstock
-Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
+Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
 
   var subscription = this;
   var pollData = {},
@@ -33,18 +33,18 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
     },
   }, ];
 
-  AggrData.aggregate(agg5Pipe, function (err, result) {
+  AggrData.aggregate(agg5Pipe, function(err, result) {
       // create new structure for data series to be used for charts
       if (result.length > 0) {
 
         var lines = result[0].series;
-        _.each(lines, function (line) {
+        _.each(lines, function(line) {
           var epoch = line.epoch;
-          _.each(line.subTypes, function (subKey, subType) { // subType is O3, etc.
+          _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
             if (!poll5Data[subType]) {
               poll5Data[subType] = {};
             }
-            _.each(subKey, function (sub, key) { // sub is the array with metric/val pairs as subarrays
+            _.each(subKey, function(sub, key) { // sub is the array with metric/val pairs as subarrays
               if (!poll5Data[subType][key]) { // create placeholder if not exists
                 poll5Data[subType][key] = [];
               }
@@ -136,7 +136,7 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
         }
       }
     },
-    function (error) {
+    function(error) {
       Meteor._debug('error during 5min publication aggregation: ' + error);
     }
   );
@@ -164,15 +164,15 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
     }
   }];
 
-  LiveData.aggregate(aggPipe, function (err, results) {
+  LiveData.aggregate(aggPipe, function(err, results) {
       // create new structure for data series to be used for charts
-      _.each(results, function (line) {
+      _.each(results, function(line) {
         var epoch = line.epoch;
-        _.each(line.subTypes, function (subKey, subType) { // subType is O3, etc.
+        _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
           if (!pollData[subType]) {
             pollData[subType] = {};
           }
-          _.each(subKey, function (sub) { // sub is the array with metric/val pairs as subarrays
+          _.each(subKey, function(sub) { // sub is the array with metric/val pairs as subarrays
             if (sub.metric !== 'Flag') {
               if (!pollData[subType][sub.metric]) {
                 pollData[subType][sub.metric] = [];
@@ -210,6 +210,56 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
             // skip loop if the property is from prototype
             if (!pollData[pubKey].hasOwnProperty(key)) continue;
 
+            // create yAxis object
+            let yAxis = {};
+            if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
+              yAxis = {
+                allowDecimals: false,
+                labels: {
+                  format: '{value:.0f} ' + unitsHash[key],
+                },
+                title: {
+                  text: key,
+                },
+                opposite: false,
+                floor: 0,
+                ceiling: 360,
+                tickInterval: 90,
+              };
+
+              if (key === 'WS') {
+                // NOTE: there are some misreads with the sensor, and so
+                // it occasionally reports wind speeds upwards of 250mph.
+                yAxis.ceiling = 20;
+                yAxis.tickInterval = 5;
+              }
+            } else if (pubKey.indexOf('49i') >= 0) {
+              yAxis = {
+                allowDecimals: false,
+                labels: {
+                  format: '{value:.0f} ' + unitsHash[key],
+                },
+                title: {
+                  text: key,
+                },
+                opposite: false,
+                floor: 0,
+                ceiling: 250,
+              };
+            } else {
+              yAxis = {
+                allowDecimals: false,
+                labels: {
+                  format: '{value:.0f} ' + unitsHash[key],
+                },
+                title: {
+                  text: key,
+                },
+                opposite: false,
+                floor: 0,
+              };
+            }
+
             // add to subscription
             subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
               name: key + '_10s',
@@ -219,19 +269,20 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
               allowPointSelect: 'false',
               data: pollData[pubKey][key],
               zIndex: 1,
+              yAxis: yAxis,
             });
           }
         }
       }
     },
-    function (error) {
+    function(error) {
       Meteor._debug('error during livedata publication aggregation: ' + error);
     }
   );
 });
 
 // aggregation of aggregated data to be plotted with highstock for composites
-Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
+Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
 
   var subscription = this;
   var pollCompData = {};
@@ -271,15 +322,15 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
     },
   }, ];
 
-  AggrData.aggregate(aggCompPipe, function (err, results) {
+  AggrData.aggregate(aggCompPipe, function(err, results) {
 
       // create new structure for composite data series to be used for charts
       if (results.length > 0) {
-        results.forEach(function (line) {
+        results.forEach(function(line) {
           const epoch = line.data[0].epoch;
           const site = line.data[0].site;
-          _.each(line._id, function (data, instrument) { // Instrument, HPM60 etc.
-            _.each(data, function (points, measurement) { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+          _.each(line._id, function(data, instrument) { // Instrument, HPM60 etc.
+            _.each(data, function(points, measurement) { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
               if (!pollCompData[measurement]) { // create placeholder for measurement
                 pollCompData[measurement] = {};
               }
@@ -306,7 +357,7 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
             // skip loop if the property is from prototype
             if (!pollCompData[measurement].hasOwnProperty(site)) continue;
 
-            var dataSorted = pollCompData[measurement][site].sort(function (obj1, obj2) {
+            var dataSorted = pollCompData[measurement][site].sort(function(obj1, obj2) {
               // Ascending: first age less than the previous
               return obj1.x - obj2.x;
             });
@@ -334,14 +385,14 @@ Meteor.publish('compositeDataSeries', function (startEpoch, endEpoch) {
         }
       }
     },
-    function (error) {
+    function(error) {
       Meteor._debug('error during composite publication aggregation: ' + error);
     }
   );
 });
 
 // edited points
-Meteor.publish('editedPoints', function () {
+Meteor.publish('editedPoints', function() {
 
   const subscription = this;
 
@@ -349,7 +400,7 @@ Meteor.publish('editedPoints', function () {
     epoch: {
       $gt: parseInt(moment().subtract(50000, 'minutes').unix(), 10),
     },
-  }).forEach(function (datapoint) {
+  }).forEach(function(datapoint) {
     for (var instrument in datapoint.subTypes) {
       // skip loop if the property is from prototype
       if (!datapoint.subTypes.hasOwnProperty(instrument)) continue;
@@ -376,7 +427,7 @@ Meteor.publish('editedPoints', function () {
 });
 
 // pushed data time stamps
-Meteor.publish('exports', function () {
+Meteor.publish('exports', function() {
   return Exports.find({
     epochList: {
       $exists: false,
@@ -384,7 +435,7 @@ Meteor.publish('exports', function () {
   });
 });
 
-Meteor.publish('sites', function () {
+Meteor.publish('sites', function() {
   return Sites.find({
     'incoming': {
       $exists: true,
@@ -396,7 +447,7 @@ Meteor.publish('sites', function () {
   });
 });
 
-Meteor.publish('userData', function () {
+Meteor.publish('userData', function() {
   if (this.userId) {
     return Meteor.users.find({
       _id: this.userId

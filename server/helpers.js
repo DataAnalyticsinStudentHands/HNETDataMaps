@@ -44,8 +44,6 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
     }).fetch();
   }
 
-logger.info(`aggreData: ${aggregatData}`);
-
   dataObject.data = [];
 
   switch (format) {
