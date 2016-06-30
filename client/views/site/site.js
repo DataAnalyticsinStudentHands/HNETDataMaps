@@ -124,6 +124,7 @@ function selectedPoints(e) {
     e.points.forEach((point) => {
       point.update({
         color: flagsHash[selectedFlag.get()].color,
+				name: newFlagVal,
       }, true);
     });
   });
@@ -392,11 +393,7 @@ Template.editPoints.helpers({
     var validFlagSet = _.pluck(_.where(flagsHash, {
       selectable: true,
     }), 'val');
-    let ok = _.contains(validFlagSet, selectedFlag.get());
-    if ($('#editNote').val() === '') {
-      ok = false;
-    }
-    return ok;
+    return _.contains(validFlagSet, selectedFlag.get());
   },
 });
 
@@ -427,6 +424,6 @@ Template.site.events({
   },
   'click #createPush' () {
     // call export and push out file as well as download
-    DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true, true);
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true, true);
   },
 });

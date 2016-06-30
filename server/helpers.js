@@ -51,7 +51,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
       logger.info('raw export format not yet implemented.');
       break;
     default:
-      _.each(aggregatData, function (e) {
+      _.each(aggregatData, function(e) {
         const obj = {};
         const siteID = e.site.substring(e.site.length - 4, e.site.length);
         if (siteID.startsWith('0')) {
@@ -119,13 +119,13 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
     const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
     const csv = Papa.unparse(data);
 
-    fs.writeFile(outputFile, csv, function (err) {
+    fs.writeFile(outputFile, csv, function(err) {
       if (err) {
         throw err;
       }
     });
 
-    if (typeof (hnetsftp) === 'undefined') {
+    if (typeof(hnetsftp) === 'undefined') {
       // hnetsftp environment variable doesn't exists
       logger.error('No password found for hnet sftp.');
     } else {
@@ -140,25 +140,20 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
       });
 
       // the following function creates its own scoped context
-      ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function (res) {
+      ftps.cd('UH/tmp').addFile("/hnet/outgoing/temp/bh160622070330.uh").exec(null, Meteor.bindEnvironment(function(res) {
+				logger.info(res);
         // insert a timestamp for the pushed data
-        if (endEpoch === undefined) {
-          Exports.insert({
-            _id: `${aqsid}_${moment().unix()}`,
-            timeStamp: moment().unix(),
-            site: aqsid,
-            epochList: startEpoch,
-          });
-        } else {
-          Exports.insert({
-            _id: `${aqsid}_${moment().unix()}`,
-            timeStamp: moment().unix(),
-            site: aqsid,
-            startEpoch: startEpoch,
-            endEpoch: endEpoch,
-          });
-        }
-      }, function (err) {
+
+        Exports.insert({
+          _id: `${aqsid}_${moment().unix()}`,
+          timeStamp: moment().unix(),
+          site: aqsid,
+          startEpoch: startEpoch,
+          endEpoch: endEpoch,
+					file: outputFile,
+        });
+
+      }, function(err) {
         return logger.error('Error during push file:', (err || res.error));
       }));
     }

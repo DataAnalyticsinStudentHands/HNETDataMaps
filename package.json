@@ -4,7 +4,7 @@
   "description": "This is a development repository.",
   "main": "index.js",
   "dependencies": {
-    "ftps": "^0.4.6",
+    "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "highcharts": "^4.2.5",
     "junk": "^1.0.2"
   },
@@ -38,11 +38,11 @@
       "logger": true,
       "Highcharts": true,
       "Papa": true,
-			"sAlert": true,
+      "sAlert": true,
       "LiveData": true,
       "AggrData": true,
       "Sites": true,
-			"Exports": true,
+      "Exports": true,
       "DataExporter": true,
       "channelHash": true,
       "flagsHash": true,
@@ -58,7 +58,10 @@
           "ignoreComments": false
         }
       ],
-			"arrow-body-style": ["error", "always"]
+      "arrow-body-style": [
+        "error",
+        "always"
+      ]
     }
   },
   "repository": {
