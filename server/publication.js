@@ -429,8 +429,8 @@ Meteor.publish('editedPoints', function() {
 // pushed data time stamps
 Meteor.publish('exports', function() {
   return Exports.find({
-    epochList: {
-      $exists: false,
+    startEpoch: {
+      $type: 'int',
     }
   });
 });

@@ -117,7 +117,10 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
     const siteName = (site.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2);
     // create csv file to be pushed in temp folder
     const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
-    const csv = Papa.unparse(data);
+    const csvComplete = Papa.unparse(data);
+		// removing header from csv string
+    const n = csvComplete.indexOf('\n');
+    const csv = csvComplete.substring(n + 1);
 
     fs.writeFile(outputFile, csv, function (err) {
       if (err) {

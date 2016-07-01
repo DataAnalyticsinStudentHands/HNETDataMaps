@@ -20,6 +20,7 @@ DataExporter = {
         // download the data as csv file
         if (site !== undefined && download) {
           const csv = Papa.unparse(data);
+
           // create site name from incoming folder
           const siteName = (site.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2);
           DataExporter._downloadCSV(csv, `${siteName.toLowerCase()}${moment().format('YYMMDDHHmmss')}.txt`);
