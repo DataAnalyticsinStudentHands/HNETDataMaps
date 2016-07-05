@@ -6,14 +6,14 @@ const dataToShow = new ReactiveVar();
 Template.listPushes.events({
   'click .active'(event, instance) {
     // Get data in TCEQ format
-    DataExporter.getDataTCEQ(instance.$('i').data('site'), instance.$('i').data('start'), instance.$('i').data('end'), false, false).then(function (response) {
+    DataExporter.getDataTCEQ(event.target.dataset.site, event.target.dataset.start, event.target.dataset.end, false, false).then(function (response) {
       dataToShow.set(response);
       // Show the Data File modal
       $('#dataFileModal').modal({}).modal('show');
     }, function (error) {
-      sAlert.error(`did not find any data for site: ${instance.$('i').data('site')},
-			startEpoch: ${instance.$('i').data('start')},
-			endEpoch: ${instance.$('i').data('end')}, ${error}`);
+      sAlert.error(`did not find any data for site: ${event.target.dataset.site},
+			startEpoch: ${event.target.dataset.start},
+			endEpoch: ${event.target.dataset.end}, ${error}`);
     });
   }
 });
