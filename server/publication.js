@@ -411,6 +411,8 @@ Meteor.publish('editedPoints', function() {
 
         if (datapoint.subTypes[instrument][measurement].length > 4) {
           subscription.added('editedPoints', `${datapoint.epoch}_${instrument}_comp}`, {
+						epoch: datapoint.epoch,
+						site: datapoint.site,
             measurement: measurement,
             instrument: instrument,
             value: datapoint.subTypes[instrument][measurement][1],

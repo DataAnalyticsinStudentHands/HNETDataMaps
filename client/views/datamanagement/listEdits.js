@@ -1,20 +1,16 @@
 Meteor.subscribe('editedPoints');
 
 Template.listEdits.helpers({
-  points() {
-    return EditedPoints.find();
-  },
-  formatDataValue(val) {
-    return val.toFixed(3);
-  },
-  isValid() {
-    var validFlagSet = _.pluck(_.where(flagsHash, {
-      selectable: true,
-    }), 'val');
-    return _.contains(validFlagSet, selectedFlag.get());
+  siteName(site) {
+    const selectedSite = Sites.findOne({
+      AQSID: site,
+    });
+    return selectedSite.siteName;
   },
 });
 
-Template.registerHelper('formatDate', function (epoch) {
-  return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
+Template.listEdits.helpers({
+  points() {
+    return EditedPoints.find();
+  },
 });

@@ -5,7 +5,7 @@
 							<tr>
 								<th></th>
 								<th>Timestamp</th>
-								<th>Value</th>
+								<th>Site</th>
 								<th>Instrument</th>
 								<th>Measurement</th>
 								<th>Current Flag</th>
@@ -16,8 +16,8 @@
 							{{#each points}}
 							<tr>
 								<td><i class="fa fa-times js-remove-point" data-id="{{id}}"></i></td>
-								<td>{{formatDate x}}</td>
-								<td>{{formatDataValue y}}</td>
+								<td>{{formatDates epoch}}</td>
+								<td>{{siteName site}}</td>
 								<td>{{instrument}}</td>
 								<td>{{measurement}}</td>
 								<td>{{> flaginTable flag}}</td>

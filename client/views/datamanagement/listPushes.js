@@ -27,10 +27,10 @@ Template.listPushes.helpers({
   },
   siteName(site) {
     const selectedSite = Sites.findOne({
-      AQSID: site
+      AQSID: site,
     });
     return selectedSite.siteName;
-  }
+  },
 });
 
 Template.dataFile.helpers({
