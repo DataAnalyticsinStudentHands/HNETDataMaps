@@ -273,11 +273,29 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
           }
 
           subObj.subTypes = newaggr;
-          AggrData.update({
-              _id: subObj._id,
-            },
-            subObj, {
-              upsert: true,
+
+          AggrData.insert(
+            subObj,
+            function(error) {
+							// only update aggregated values if object already exists to avoid loosing edited data flags
+              if (error.code === 11000) {
+                for (var instrument in newaggr) {
+                  for (var measurement in newaggr[instrument]) {
+                    const $set = {};
+                    $set['subTypes.' + instrument + '.' + measurement + '.0'] = newaggr[instrument][measurement][0];
+                    $set['subTypes.' + instrument + '.' + measurement + '.1'] = newaggr[instrument][measurement][1];
+                    $set['subTypes.' + instrument + '.' + measurement + '.2'] = newaggr[instrument][measurement][2];
+                    $set['subTypes.' + instrument + '.' + measurement + '.3'] = newaggr[instrument][measurement][3];
+                    AggrData.update({
+                      _id: subObj._id,
+                    }, {
+                      $set: $set
+                    }, {
+                      upsert: true,
+                    });
+                  }
+                }
+              }
             });
         });
       },
