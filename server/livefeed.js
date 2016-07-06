@@ -276,9 +276,9 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
           AggrData.insert(
             subObj,
-            function(error) {
+            function(error, result) {
 							// only update aggregated values if object already exists to avoid loosing edited data flags
-              if (error.code === 11000) {
+              if (result !== undefined) {
                 for (var instrument in newaggr) {
                   for (var measurement in newaggr[instrument]) {
                     const $set = {};
