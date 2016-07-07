@@ -29,16 +29,19 @@ Template.datamanagement.events = {
     endEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
   'click #createAggregates' () {
+
+    event.preventDefault();
     const site = Sites.findOne({
       siteName: $('#selectedSite').val(),
     });
 
-    Meteor.call('new5minAggreg', site.AQSID, $('#start').val(), $('#end').val(), function(err, response) {
-      if (err) {
-        sAlert.error(`Error:\n ${err.reason}`);
-        return;
-      }
-      sAlert.success(response);
-    });
+    Meteor.call('new5minAggreg', site.AQSID, startEpoch.get(), endEpoch.get(),
+      function(err, response) {
+        if (err) {
+          sAlert.error(`Error:\n ${err.reason}`);
+          return;
+        }
+        sAlert.success(response);
+      });
   },
 };
