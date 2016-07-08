@@ -47,7 +47,7 @@ function selectPointsByDrag(e) {
 }
 
 /**
- * The handler for a custom event, fired from selection event
+ * The handler for the point selection, fired from selection event
  */
 function selectedPoints(e) {
   var points = [];
@@ -87,24 +87,6 @@ function selectedPoints(e) {
   // Show the Edit Points modal
   $('#editPointsModal').modal({}).modal('show');
 
-  // Handle the button "Push" event
-  $('#btnPush').click(function(event) {
-    event.preventDefault();
-    // Push Edited points in TCEQ format
-    const pushPoints = EditPoints.find({});
-
-    const listPushPoints = [];
-    pushPoints.forEach(function(point) {
-      listPushPoints.push(point.x);
-    });
-    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, undefined, true, false).then(function(response) {
-      sAlert.success('Push successful!');
-    }, function(error) {
-      sAlert.error(`Couldn't not find any data for site: ${Router.current().params._id} for selected epochs.`);
-    });
-
-  });
-
   // Handle the button "Change Flag" event
   $('#btnChange').click(function(event) {
     event.preventDefault();
@@ -124,9 +106,12 @@ function selectedPoints(e) {
     e.points.forEach((point) => {
       point.update({
         color: flagsHash[selectedFlag.get()].color,
-				name: newFlagVal,
+        name: newFlagVal,
       }, true);
     });
+
+    // Redraw chart
+    e.points[0].series.chart.redraw();
   });
 
   $('#editPointsModal table tr .fa').click(function(event) {
@@ -353,6 +338,22 @@ Template.editPoints.events({
   'click .dropdown-menu li a' (event) {
     event.preventDefault();
     selectedFlag.set(parseInt($(event.currentTarget).attr('data-value'), 10));
+  },
+  // Handle the button "Push" event
+  'click button#btnPush'(event) {
+    event.preventDefault();
+    // Push Edited points in TCEQ format
+    const pushPoints = EditPoints.find({});
+
+    const listPushPoints = [];
+    pushPoints.forEach(function(point) {
+      listPushPoints.push(point.x);
+    });
+    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, null, true, false).then(function(response) {
+      sAlert.success('Push successful!');
+    }, function(error) {
+      sAlert.error(`Couldn't not find any data for site: ${Router.current().params._id} for selected epochs.`);
+    });
   },
 });
 

@@ -13,7 +13,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 
   let aggregatData;
 
-  if (endEpoch === undefined) {
+  if (endEpoch === null) {
     aggregatData = AggrData.find({
       $and: [{
         epoch: {
@@ -145,7 +145,7 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
       // the following function creates its own scoped context
       ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function (res) {
         // insert a timestamp for the pushed data
-        if (endEpoch === undefined) {
+        if (endEpoch === null) {
           Exports.insert({
             _id: `${aqsid}_${moment().unix()}`,
             timeStamp: moment().unix(),

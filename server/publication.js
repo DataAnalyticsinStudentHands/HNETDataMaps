@@ -398,7 +398,7 @@ Meteor.publish('editedPoints', function() {
 
   AggrData.find({
     epoch: {
-      $gt: parseInt(moment().subtract(50000, 'minutes').unix(), 10),
+      $gt: parseInt(moment().subtract(100000, 'minutes').unix(), 10),
     },
   }).forEach(function(datapoint) {
     for (var instrument in datapoint.subTypes) {

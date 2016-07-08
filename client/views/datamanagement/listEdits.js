@@ -1,4 +1,6 @@
-Meteor.subscribe('editedPoints');
+Template.listEdits.onCreated(function() {
+  this.subscribe('editedPoints');
+});
 
 Template.listEdits.helpers({
   siteName(site) {
