@@ -1,0 +1,246 @@
+{
+	"site": [{
+			"_id": "egeKuGhzLraA2998r",
+			"incoming": "UHCBH_DAQData",
+			"AQSID": "482010570",
+			"parameters": [{
+				"parameter name": "WS"
+			}, {
+				"parameter name": "WD"
+			}, {
+				"parameter name": "RHUM"
+			}, {
+				"parameter name": "SRAD"
+			}, {
+				"parameter name": "PRECIP"
+			}, {
+				"parameter name": "O3"
+			}, {
+				"parameter name": "TEMP"
+			}, {
+				"parameter name": "WS"
+			}, {
+				"parameter name": "WD"
+			}, {
+				"parameter name": "RHUM"
+			}, {
+				"parameter name": "SRAD"
+			}, {
+				"parameter name": "PRECIP"
+			}, {
+				"parameter name": "O3"
+			}, {
+				"parameter name": "TEMP"
+			}],
+			"loc": {
+				"type": "Point",
+				"coordinates": [-95.1853, 29.5489]
+			},
+			"GMT offset": "-6.00",
+			"site code": "0570",
+			"agencyID": "TX1",
+			"country": "US",
+			"state": "TX",
+			"elevation": "13.700",
+			"status": "Inactive",
+			"siteName": "Clear Brook High School C570"
+		}, {
+			"_id": "evAGEiyrhMCG8vhLx",
+			"incoming": "UHCLH_DAQData",
+			"AQSID": "482010572",
+			"parameters": [{
+				"parameter name": "O3"
+			}, {
+				"parameter name": "WS"
+			}, {
+				"parameter name": "WD"
+			}, {
+				"parameter name": "SRAD"
+			}, {
+				"parameter name": "PRECIP"
+			}, {
+				"parameter name": "PM2.5"
+			}, {
+				"parameter name": "TEMP"
+			}, {
+				"parameter name": "O3"
+			}, {
+				"parameter name": "WS"
+			}, {
+				"parameter name": "WD"
+			}, {
+				"parameter name": "SRAD"
+			}, {
+				"parameter name": "PRECIP"
+			}, {
+				"parameter name": "PM2.5"
+			}, {
+				"parameter name": "TEMP"
+			}],
+			"loc": {
+				"type": "Point",
+				"coordinates": [-95.105, 29.5833]
+			},
+			"GMT offset": "-6.00",
+			"site code": "0572",
+			"agencyID": "TX1",
+			"country": "US",
+			"state": "TX",
+			"elevation": "6.100",
+			"status": "Inactive",
+			"siteName": "Clear Lake High School C572"
+		}, {
+			"_id": "k4e63W4YuRGTykjYq",
+			"AQSID": "481670697",
+			"parameters": [{
+				"parameter name": "TEMP"
+			}, {
+				"parameter name": "WS"
+			}, {
+				"parameter name": "WD"
+			}, {
+				"parameter name": "RHUM"
+			}, {
+				"parameter name": "BARPR"
+			}, {
+				"parameter name": "PRECIP"
+			}, {
+				"parameter name": "O3"
+			}, {
+				"parameter name": "TEMP"
+			}, {
+				"parameter name": "WS"
+			}, {
+				"parameter name": "WD"
+			}, {
+				"parameter name": "RHUM"
+			}, {
+				"parameter name": "BARPR"
+			}, {
+				"parameter name": "PRECIP"
+			}, {
+				"parameter name": "O3"
+			}],
+			"loc": {
+				"type": "Point",
+				"coordinates": [-95.041389, 29.38777]
+			},
+			"GMT offset": "-6.00",
+			"site code": "0697",
+			"agencyID": "TX1",
+			"country": "US",
+			"state": "TX",
+			"elevation": "6.100",
+			"status": "Active",
+			"incoming": "UHCC_DAQData",
+			"siteName": "Coastal Center C697"
+		}, {
+			"_id": "rbtHvKQrLap25ZbZC",
+			"AQSID": "482910699",
+			"parameters": [{
+				"parameter name": "O3"
+			}, {
+				"parameter name": "TEMP"
+			}, {
+				"parameter name": "WS"
+			}, {
+				"parameter name": "WD"
+			}, {
+				"parameter name": "RHUM"
+			}, {
+				"parameter name": "BARPR"
+			}, {
+				"parameter name": "PRECIP"
+			}, {
+				"parameter name": "O3"
+			}, {
+				"parameter name": "TEMP"
+			}, {
+				"parameter name": "WS"
+			}, {
+				"parameter name": "WD"
+			}, {
+				"parameter name": "RHUM"
+			}, {
+				"parameter name": "BARPR"
+			}, {
+				"parameter name": "PRECIP"
+			}],
+			"loc": {
+				"type": "Point",
+				"coordinates": [-94.978058, 30.058056]
+			},
+			"GMT offset": "-6.00",
+			"site code": "0699",
+			"agencyID": "TX1",
+			"country": "US",
+			"state": "TX",
+			"elevation": "24.400",
+			"status": "Active",
+			"incoming": "UHWL_DAQData",
+			"siteName": "West Liberty C699"
+		}, {
+			"_id": "yRYPv7tQHaQYbM9MB",
+			"incoming": "UHCCH_DAQData",
+			"AQSID": "481670571",
+			"parameters": [{
+				"parameter name": "O3"
+			}, {
+				"parameter name": "O3"
+			}],
+			"loc": {
+				"type": "Point",
+				"coordinates": [-95.0706, 29.5256]
+			},
+			"GMT offset": "-6.00",
+			"site code": "0571",
+			"agencyID": "TX1",
+			"country": "US",
+			"state": "TX",
+			"elevation": "13.700",
+			"status": "Inactive",
+			"siteName": "Clear Creek High School C571"
+		}, {
+			"_id": "566b47390348d64ba7605358",
+			"AQSID": "482010695",
+			"parameters": [],
+			"loc": {
+				"type": "Point",
+				"coordinates": [-95.3414, 29.7176]
+			},
+			"GMT offset": -6.0,
+			"site code": "0695",
+			"agencyID": "TX1",
+			"country": "US",
+			"state": "TX",
+			"elevation": 18,
+			"status": "Active",
+			"incoming": "UHMT_DAQData",
+			"siteName": "UH Moody Tower C695"
+		}, {
+			"_id": "572b8fb13004a2307648645d",
+			"AQSID": "480711606",
+			"parameters": [{
+				"parameter name": "NO"
+			}, {
+				"parameter name": "NOx"
+			}, {
+				"parameter name": "O3"
+			}],
+			"loc": {
+				"type": "Point",
+				"coordinates": [-94.786969, 29.546244]
+			},
+			"GMT offset": "-6.00",
+			"site code": "0013",
+			"agencyID": "TX1",
+			"country": "US",
+			"state": "TX",
+			"elevation": "1.500",
+			"status": "Active",
+			"incoming": "UHSP_DAQData",
+			"siteName": "Smith Point C1606"
+		}
+
+	]
+}
