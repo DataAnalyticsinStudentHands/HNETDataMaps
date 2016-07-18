@@ -85,11 +85,14 @@ function selectedPoints(e) {
   }
 
   // Show the Edit Points modal
-  $('#editPointsModal').modal({}).modal('show');
+  //$('#editPointsModal').modal({}).modal('show');
+	Modal.show("editPoints");
 
   // Handle the button "Change Flag" event
   $('#btnChange').click(function(event) {
+
     event.preventDefault();
+		console.log("called me");
     // update the edited points with the selected flag and note on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});

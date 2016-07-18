@@ -1,7 +1,9 @@
 const startEpoch = new ReactiveVar(moment().subtract(1, 'days').unix()); // 24 hours ago - seconds
 const endEpoch = new ReactiveVar(moment().unix());
 
-Meteor.subscribe('sites');
+Template.datamanagement.onCreated(function () {
+  Meteor.subscribe('sites');
+});
 
 Template.datamanagement.helpers({
   selectedStartDate() {
