@@ -1,5 +1,6 @@
 // required packages
 const fs = Npm.require('fs');
+const pathModule = Npm.require('path');
 
 var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
   // gather all data, group by 5min epoch
@@ -349,7 +350,7 @@ var makeObj = function (keys) {
 
 var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
   // find the site information using the location of the file that is being read
-  const pathArray = path.split('/');
+  const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = Sites.findOne({
     incoming: parentDir,
