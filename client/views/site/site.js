@@ -16,6 +16,7 @@ Highcharts.setOptions({
 
 // placeholder for EditPoints in modal
 const EditPoints = new Mongo.Collection(null);
+let listPoints= [];
 
 // placeholder for dynamic chart containers
 const Charts = new Meteor.Collection(null);
@@ -25,6 +26,7 @@ const Charts = new Meteor.Collection(null);
  */
 function selectPointsByDrag(e) {
   var selection = [];
+
   // Select points only for series where allowPointSelect
   Highcharts.each(this.series, function(series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
@@ -50,14 +52,9 @@ function selectPointsByDrag(e) {
  * The handler for the point selection, fired from selection event
  */
 function selectedPoints(e) {
-  var points = [];
-  const series = [];
-
-  _.each(e.target.series, function(serie) {
-    if (serie.name.endsWith('5m')) {
-      series.push(serie);
-    }
-  });
+	// reset variables
+  EditPoints.remove({});
+  selectedFlag.set(null);
 
   _.each(e.points, function(point) {
     if (point.series.name !== 'Navigator') {
@@ -70,51 +67,39 @@ function selectedPoints(e) {
       selectedPoint.measurement = point.series.name.split(/[_]+/)[0];
       selectedPoint.id = `${point.series.chart.title.textStr}_${point.series.name.split(/[_]+/)[0]}_${point.x}`;
       point.id = selectedPoint.id;
-      points.push(selectedPoint);
+			EditPoints.insert(selectedPoint);
     }
   });
 
-  if (points.length === 0) return;
-
-  // reset variables
-  EditPoints.remove({});
-  selectedFlag.set(null);
-
-  for (let i = 0; i < points.length; i++) {
-    EditPoints.insert(points[i]);
-  }
+	console.log(`ouside called me`);
 
   // Show the Edit Points modal
-  //$('#editPointsModal').modal({}).modal('show');
-	Modal.show("editPoints");
+  $('#editPointsModal').modal({}).modal('show');
+	//Modal.show("editPoints");
 
   // Handle the button "Change Flag" event
   $('#btnChange').click(function(event) {
 
-    event.preventDefault();
-		console.log("called me");
     // update the edited points with the selected flag and note on the server
     const newFlagVal = flagsHash[selectedFlag.get()].val;
     const updatedPoints = EditPoints.find({});
     const note = $('#editNote').val();
-
     updatedPoints.forEach(function(point) {
-      Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal, note);
+		  Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal, note);
     });
 
     // Clear note field
     $('#editNote').val('');
+    console.log(`inside called me`);
 
     // Update local point color to reflect new flag
     e.points.forEach((point) => {
+			console.log(`point: ${point.x}`);
       point.update({
         color: flagsHash[selectedFlag.get()].color,
         name: newFlagVal,
       }, true);
     });
-
-    // Redraw chart
-    e.points[0].series.chart.redraw();
   });
 
   $('#editPointsModal table tr .fa').click(function(event) {
@@ -144,6 +129,7 @@ function selectedPoints(e) {
  * On click, unselect all points
  */
 function unselectByClick() {
+	console.log(`called unselect`);
   var points = this.getSelectedPoints();
   if (points.length > 0) {
     Highcharts.each(points, function(point) {
