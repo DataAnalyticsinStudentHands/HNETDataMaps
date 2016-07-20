@@ -25,10 +25,10 @@ const Charts = new Meteor.Collection(null);
  */
 function selectPointsByDrag(e) {
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function (series) {
+  Highcharts.each(this.series, function(series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
 
-      Highcharts.each(series.points, function (point) {
+      Highcharts.each(series.points, function(point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           point.select(true, true);
         }
@@ -52,7 +52,7 @@ function selectedPoints(e) {
   EditPoints.remove({});
   selectedFlag.set(null);
 
-  _.each(e.points, function (point) {
+  _.each(e.points, function(point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -71,7 +71,7 @@ function selectedPoints(e) {
   //$('#editPointsModal').modal({}).modal('show');
   Modal.show("editPoints");
 
-  $('#editPointsModal table tr .fa').click(function (event) {
+  $('#editPointsModal table tr .fa').click(function(event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -100,7 +100,7 @@ function unselectByClick() {
   const points = this.getSelectedPoints();
 
   if (points.length > 0) {
-    Highcharts.each(points, function (point) {
+    Highcharts.each(points, function(point) {
       if (selectedFlag.get() !== null) {
         point.update({
           color: flagsHash[selectedFlag.get()].color,
@@ -207,9 +207,9 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   });
 }
 
-Template.site.onRendered(function () {
+Template.site.onRendered(function() {
   // Do reactive stuff when something is added or removed
-  this.autorun(function () {
+  this.autorun(function() {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), endEpoch.get());
@@ -218,7 +218,7 @@ Template.site.onRendered(function () {
     let initializing = true;
 
     DataSeries.find().observeChanges({
-      added: function (series, seriesData) {
+      added: function(series, seriesData) {
         if (!initializing) { // true only when we first start
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
@@ -253,7 +253,7 @@ Template.site.onRendered(function () {
 
             Charts.findOne({
               _id: subType,
-            }).yAxis.forEach(function (axis) {
+            }).yAxis.forEach(function(axis) {
               if (axis.metric === metric) {
                 axisExist = true;
               }
@@ -278,7 +278,7 @@ Template.site.onRendered(function () {
             let axisIndex = 0;
             Charts.findOne({
               _id: subType,
-            }).yAxis.forEach(function (axis, i) {
+            }).yAxis.forEach(function(axis, i) {
               if (axis.metric === metric) {
                 if (i === 0) { // navigator axis will be at index 1
                   axisIndex = 0;
@@ -313,12 +313,12 @@ Template.editPoints.events({
     const pushPoints = EditPoints.find({});
 
     const listPushPoints = [];
-    pushPoints.forEach(function (point) {
-      listPushPoints.push(point.x);
+    pushPoints.forEach(function(point) {
+      listPushPoints.push(point.x / 1000);
     });
-    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, null, true, false).then(function (response) {
+    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, null, true, false).then(function(response) {
       sAlert.success('Push successful!');
-    }, function (error) {
+    }, function(error) {
       sAlert.error(`Couldn't not find any data for site: ${Router.current().params._id} for selected epochs.`);
     });
   },
@@ -328,7 +328,7 @@ Template.editPoints.events({
     // update the edited points with the selected flag and note on the server
     const updatedPoints = EditPoints.find({});
     const note = $('#editNote').val();
-    updatedPoints.forEach(function (point) {
+    updatedPoints.forEach(function(point) {
       Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, flagsHash[selectedFlag.get()].val, note);
     });
 
@@ -378,7 +378,7 @@ Template.editPoints.helpers({
   },
 });
 
-Template.registerHelper('formatDate', function (epoch) {
+Template.registerHelper('formatDate', function(epoch) {
   // convert epoch (long) format to readable
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
