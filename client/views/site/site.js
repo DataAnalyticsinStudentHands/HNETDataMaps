@@ -86,8 +86,7 @@ function selectedPoints(e) {
     for (let i = 0; i < e.points.length; i++) {
       const p = e.points[i];
       if (p.id === pointId) {
-        p.select(false);
-        e.points.splice(i, 1);
+        p.select(false, true);
         break;
       }
     }
