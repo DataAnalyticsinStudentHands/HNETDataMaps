@@ -5,7 +5,7 @@
 			<h3 class="panel-title">Create 5 min Aggregated Data</h3>
 		</div>
 		<div class="panel-body">
-			<form>
+			<form class="management">
 			<div class="row">
 				<div class="col-xs-4">
 					<label for="selectedSite">Select Site:</label>
@@ -29,13 +29,13 @@
 
 			<div class="row">
 				<div class="col-xs-2">
-					<input type="text" class="form-control" value="{{startEpoch}}" id="start" />
+					<input type="text" class="form-control" value="{{startEpoch}}" name="start" />
 				</div>
 				<div class="col-xs-3">
 					<input type="date" class="form-control" value="{{selectedStartDate}}" id="startdatepicker">
 				</div>
 				<div class="col-xs-2">
-					<input type="text" class="form-control" value="{{endEpoch}}" id="end" />
+					<input type="text" class="form-control" value="{{endEpoch}}" name="end" />
 				</div>
 				<div class="col-xs-3">
 					<input type="date" class="form-control" value="{{selectedEndDate}}" id="enddatepicker">

@@ -30,14 +30,16 @@ Template.datamanagement.events = {
   'change #enddatepicker' (event) {
     endEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'click #createAggregates' () {
-
+  'click #createAggregates' (event, target) {
     event.preventDefault();
     const site = Sites.findOne({
       siteName: $('#selectedSite').val(),
     });
 
-    Meteor.call('new5minAggreg', site.AQSID, startEpoch.get(), endEpoch.get(),
+    const start = target.$('form.management input[name=start]').val();
+    const end = target.$('form.management input[name=end]').val();
+
+    Meteor.call('new5minAggreg', site.AQSID, start, end,
       function (err, response) {
         if (err) {
           sAlert.error(`Error:\n ${err.reason}`);
@@ -46,14 +48,16 @@ Template.datamanagement.events = {
         sAlert.success(response);
       });
   },
-  'click #downloadData' () {
-
+  'click #downloadData'(event, target) {
     event.preventDefault();
     const site = Sites.findOne({
       siteName: $('#selectedSite').val(),
     });
 
+    const start = target.$('form.management input[name=start]').val();
+    const end = target.$('form.management input[name=end]').val();
+
     // call export (no push) and download
-    DataExporter.getDataTCEQ(site.AQSID, startEpoch.get(), endEpoch.get(), false, true);
+    DataExporter.getDataTCEQ(site.AQSID, start, end, false, true);
   },
 };
