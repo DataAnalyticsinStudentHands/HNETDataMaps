@@ -277,8 +277,8 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
 
           AggrData.insert(
             subObj,
-            function(error, result) {
-							// only update aggregated values if object already exists to avoid loosing edited data flags
+            function (error, result) {
+              // only update aggregated values if object already exists to avoid loosing edited data flags
               if (result === false) {
                 for (var instrument in newaggr) {
                   for (var measurement in newaggr[instrument]) {
@@ -357,6 +357,24 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
   });
 
   if (site.AQSID) {
+    // update the timestamp for the last update for the site
+    const stats = fs.statSync(path);
+    const pathLastUpdated = moment(Date.parse(stats.mtime)); // from milliseconds into moments
+
+    console.log(`calling update: ${site.AQSID}, pathLastUpdated: ${pathLastUpdated}`);
+
+    Sites.update({
+        AQSID: 'site.AQSID',
+      }, // selector
+      {
+        $set: { lastUpdate: pathLastUpdated }
+      } // modifier
+    ), function (error, result) {
+    console.log(`result: ${result}`);
+};
+
+
+    // create objects from parsed lines
     const allObjects = [];
     for (let k = 0; k < parsedLines.length; k++) {
       const singleObj = makeObj(parsedLines[k]); // add data in
@@ -381,18 +399,6 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
         logger.info(`LiveData updated for : ${site.siteName}`);
         logger.info(`Calling aggr for epochs of the last 24 hours: ${agoEpoch} - ${nowEpoch}`);
         perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
-
-        AggrData.find({
-          site: `${site.AQSID}`,
-        }, {
-          sort: {
-            epoch: -1,
-          },
-          limit: 1,
-        }).forEach(function (dataPoint) {
-          console.log(`call exportData for site: ${site.siteName} with start: ${dataPoint.epoch} and end: ${nowEpoch}`);
-          Meteor.call('exportData', site.AQSID, dataPoint.epoch, nowEpoch, true);
-        })
       },
     });
   }
