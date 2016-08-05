@@ -1,5 +1,5 @@
 Meteor.subscribe('exports');
-Meteor.subscribe('sites');
+Meteor.subscribe('liveSites');
 
 const dataToShow = new ReactiveVar();
 
@@ -26,7 +26,7 @@ Template.listPushes.helpers({
     return val.toFixed(3);
   },
   siteName(site) {
-    const selectedSite = Sites.findOne({
+    const selectedSite = LiveSites.findOne({
       AQSID: site,
     });
     return selectedSite.siteName;

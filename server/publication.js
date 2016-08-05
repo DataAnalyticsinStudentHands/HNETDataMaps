@@ -411,8 +411,8 @@ Meteor.publish('editedPoints', function() {
 
         if (datapoint.subTypes[instrument][measurement].length > 4) {
           subscription.added('editedPoints', `${datapoint.epoch}_${instrument}_comp}`, {
-						epoch: datapoint.epoch,
-						site: datapoint.site,
+            epoch: datapoint.epoch,
+            site: datapoint.site,
             measurement: measurement,
             instrument: instrument,
             value: datapoint.subTypes[instrument][measurement][1],
@@ -437,12 +437,8 @@ Meteor.publish('exports', function() {
   });
 });
 
-Meteor.publish('sites', function() {
-  return Sites.find({
-    'incoming': {
-      $exists: true,
-    }
-  }, {
+Meteor.publish('liveSites', function() {
+  return LiveSites.find({}, {
     sort: {
       'siteName': -1
     }

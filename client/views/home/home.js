@@ -7,8 +7,8 @@ Template.home.onRendered(function () {
     doubleClickZoom: false
   });
 
-  Meteor.subscribe('sites', [lngtude, latude]);
-  Sites.find().observeChanges({
+  Meteor.subscribe('liveSites', [lngtude, latude]);
+  LiveSites.find().observeChanges({
     added: function (id, line) {
       var marker = L.marker([line.loc.coordinates[1], line.loc.coordinates[0]], {
           title: line['site name'] + line.AQSID

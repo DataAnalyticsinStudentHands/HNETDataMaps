@@ -5,7 +5,7 @@ var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
 var endEpoch = new ReactiveVar(moment().unix());
 var selectedFlag = new ReactiveVar(null);
 
-Meteor.subscribe('sites');
+Meteor.subscribe('liveSites');
 
 Highcharts.setOptions({
   global: {
@@ -385,7 +385,7 @@ Template.registerHelper('formatDate', function(epoch) {
 
 Template.site.helpers({
   sitename() {
-    const site = Sites.findOne({
+    const site = LiveSites.findOne({
       AQSID: Router.current().params._id,
     });
     return site && site.siteName;

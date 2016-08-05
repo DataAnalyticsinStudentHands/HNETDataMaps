@@ -3,7 +3,7 @@ DataExporter = {
   getDataTCEQ: function (aqsid, startEpoch, endEpoch, push, download) {
     // Return a new promise.
     return new Promise(function (resolve, reject) {
-      Meteor.subscribe('sites');
+      Meteor.subscribe('liveSites');
 
       // create TCEQ export formated data and push
       Meteor.call('exportData', aqsid, startEpoch, endEpoch, push, function (error, data) {
@@ -13,7 +13,7 @@ DataExporter = {
           return false;
         }
 
-        const site = Sites.findOne({
+        const site = LiveSites.findOne({
           AQSID: `${aqsid}`,
         });
 

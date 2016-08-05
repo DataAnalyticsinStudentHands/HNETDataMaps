@@ -108,7 +108,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 }
 
 function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
-  const site = Sites.find({
+  const site = LiveSites.find({
     AQSID: `${aqsid}`,
   }).fetch()[0];
 
@@ -166,7 +166,7 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
       }));
     }
   } else {
-    logger.error('Could not find dir for AQSID: ', aqsid, ' in Sites.');
+    logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
   }
 };
 

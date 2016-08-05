@@ -4,7 +4,7 @@ Template.listEdits.onCreated(function() {
 
 Template.listEdits.helpers({
   siteName(site) {
-    const selectedSite = Sites.findOne({
+    const selectedSite = LiveSites.findOne({
       AQSID: site,
     });
     return selectedSite.siteName;

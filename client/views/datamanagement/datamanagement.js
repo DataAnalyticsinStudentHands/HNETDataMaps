@@ -2,7 +2,7 @@ const startEpoch = new ReactiveVar(moment().subtract(1, 'days').unix()); // 24 h
 const endEpoch = new ReactiveVar(moment().unix());
 
 Template.datamanagement.onCreated(function () {
-  Meteor.subscribe('sites');
+  Meteor.subscribe('liveSites');
 });
 
 Template.datamanagement.helpers({
@@ -19,7 +19,7 @@ Template.datamanagement.helpers({
     return endEpoch.get();
   },
   availableSites() {
-    return Sites.find();
+    return LiveSites.find();
   },
 });
 
@@ -32,7 +32,7 @@ Template.datamanagement.events = {
   },
   'click #createAggregates' (event, target) {
     event.preventDefault();
-    const site = Sites.findOne({
+    const site = LiveSites.findOne({
       siteName: $('#selectedSite').val(),
     });
 
@@ -50,7 +50,7 @@ Template.datamanagement.events = {
   },
   'click #downloadData'(event, target) {
     event.preventDefault();
-    const site = Sites.findOne({
+    const site = LiveSites.findOne({
       siteName: $('#selectedSite').val(),
     });
 

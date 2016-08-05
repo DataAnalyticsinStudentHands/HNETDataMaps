@@ -352,7 +352,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
   // find the site information using the location of the file that is being read
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
-  const site = Sites.findOne({
+  const site = LiveSites.findOne({
     incoming: parentDir,
   });
 
@@ -363,7 +363,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function (parsedLines, path) {
 
     console.log(`calling update: ${site.AQSID}, pathLastUpdated: ${pathLastUpdated}`);
 
-    Sites.update({
+    LiveSites.update({
         AQSID: 'site.AQSID',
       }, // selector
       {

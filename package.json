@@ -42,6 +42,7 @@
       "LiveData": true,
       "AggrData": true,
       "Sites": true,
+			"LiveSites": true,
       "Exports": true,
       "DataExporter": true,
       "channelHash": true,
