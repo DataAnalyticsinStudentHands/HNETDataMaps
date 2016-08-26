@@ -41,6 +41,7 @@ useraccounts:iron-routing
 alanning:roles                  # Managing roles for users
 yogiben:admin                   # Admin Interface for user/collection management
 ian:accounts-ui-bootstrap-3     # accounts UI
+stylus@=2.513.4                 # needed for ian:accounts-ui-bootstrap-3
 standard-minifier-css@1.2.0
 standard-minifier-js@1.2.0
 
@@ -73,4 +74,3 @@ email@1.1.17
 epaminond:nodemailer
 juliancwirko:s-alert
 shell-server
-stylus@=2.513.4
