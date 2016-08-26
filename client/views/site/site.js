@@ -1,16 +1,15 @@
 import Highcharts from 'highcharts/highstock';
 
-// 24 hours ago - seconds
-var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
+// 3 days
+var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
 var endEpoch = new ReactiveVar(moment().unix());
 var selectedFlag = new ReactiveVar(null);
 
-Meteor.subscribe('sites');
+Meteor.subscribe('liveSites');
 
 Highcharts.setOptions({
   global: {
     useUTC: false,
-
   },
   colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
 });
@@ -25,14 +24,13 @@ const Charts = new Meteor.Collection(null);
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
-  var selection = [];
   // Select points only for series where allowPointSelect
   Highcharts.each(this.series, function(series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
+
       Highcharts.each(series.points, function(point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
-          // point.select(true, true);
-          selection.push(point);
+          point.select(true, true);
         }
       });
     }
@@ -40,18 +38,20 @@ function selectPointsByDrag(e) {
 
   // Fire a custom event
   Highcharts.fireEvent(this, 'selectedpoints', {
-    // points: this.getSelectedPoints
-    points: selection,
+    points: this.getSelectedPoints()
   });
 
   return false; // Don't zoom
 }
 
 /**
- * The handler for a custom event, fired from selection event
+ * The handler for the point selection, fired from selection event
  */
 function selectedPoints(e) {
-  var points = [];
+  // reset variables
+  EditPoints.remove({});
+  selectedFlag.set(null);
+
   _.each(e.points, function(point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
@@ -63,39 +63,13 @@ function selectedPoints(e) {
       selectedPoint.measurement = point.series.name.split(/[_]+/)[0];
       selectedPoint.id = `${point.series.chart.title.textStr}_${point.series.name.split(/[_]+/)[0]}_${point.x}`;
       point.id = selectedPoint.id;
-      points.push(selectedPoint);
+      EditPoints.insert(selectedPoint);
     }
   });
 
-  if (points.length === 0) return;
-
-	// reset variables
-	EditPoints.remove({});
-	selectedFlag.set(null);
-
-  for (let i = 0; i < points.length; i++) {
-    EditPoints.insert(points[i]);
-  }
-
   // Show the Edit Points modal
-  $('#editPointsModal').modal({}).modal('show');
-
-  $('#btnSubmit').click(function(event) {
-    // update the edited points with the selected flag on the server
-    const newFlagVal = flagsHash[selectedFlag.get()].val;
-    const updatedPoints = EditPoints.find({});
-    updatedPoints.forEach(function(point) {
-      Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, newFlagVal);
-    });
-    // Update local point color to reflect new flag
-    e.points.forEach((point) => {
-      point.update({
-        color: flagsHash[selectedFlag.get()].color,
-      }, false);
-    });
-    // Redraw chart
-    e.points[0].series.chart.redraw();
-  });
+  //$('#editPointsModal').modal({}).modal('show');
+  Modal.show("editPoints");
 
   $('#editPointsModal table tr .fa').click(function(event) {
     // Get X value stored in the data-id attribute of the button
@@ -112,8 +86,7 @@ function selectedPoints(e) {
     for (let i = 0; i < e.points.length; i++) {
       const p = e.points[i];
       if (p.id === pointId) {
-        p.select(false);
-        e.points.splice(i, 1);
+        p.select(false, true);
         break;
       }
     }
@@ -121,12 +94,19 @@ function selectedPoints(e) {
 }
 
 /**
- * On click, unselect all points
+ * On click, unselect all points & update with selected flag
  */
 function unselectByClick() {
-  var points = this.getSelectedPoints();
+  const points = this.getSelectedPoints();
+
   if (points.length > 0) {
     Highcharts.each(points, function(point) {
+      if (selectedFlag.get() !== null) {
+        point.update({
+          color: flagsHash[selectedFlag.get()].color,
+          name: flagsHash[selectedFlag.get()].val,
+        }, true);
+      }
       point.select(false);
     });
   }
@@ -211,6 +191,10 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
         count: 1,
         text: '1 Day',
       }, {
+        type: 'day',
+        count: 3,
+        text: '3 Days',
+      }, {
         type: 'minute',
         count: 60,
         text: 'Hour',
@@ -232,6 +216,7 @@ Template.site.onRendered(function() {
     Charts.remove({});
 
     let initializing = true;
+
     DataSeries.find().observeChanges({
       added: function(series, seriesData) {
         if (!initializing) { // true only when we first start
@@ -244,12 +229,15 @@ Template.site.onRendered(function() {
 
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
-              id: subType
+              _id: subType,
             }, {
-              reactive: false
+              reactive: false,
             })) {
             Charts.insert({
-              id: subType,
+              _id: subType,
+              yAxis: [{
+                metric,
+              }],
             });
 
             const seriesOptions = [];
@@ -260,17 +248,46 @@ Template.site.onRendered(function() {
             // put axis for each series
             const chart = $(`#container-chart-${subType}`).highcharts();
 
-            if (chart.series.length === 2 && seriesData.chartType === 'scatter') { // Secondary yAxis
+            // Add another axis if not yet existent
+            let axisExist = false;
+
+            Charts.findOne({
+              _id: subType,
+            }).yAxis.forEach(function(axis) {
+              if (axis.metric === metric) {
+                axisExist = true;
+              }
+            });
+
+            if (!axisExist) {
               yAxisOptions.opposite = true;
               yAxisOptions.id = metric;
               chart.addAxis(
                 yAxisOptions
               );
+              Charts.update(subType, {
+                $push: {
+                  yAxis: {
+                    metric,
+                  },
+                },
+              });
             }
 
-            if (!(chart.series.length === 2 && seriesData.chartType === 'line')) {
-              seriesData.yAxis = metric;
-            }
+            // Now just find the right axis index and assign it to the seriesData
+            let axisIndex = 0;
+            Charts.findOne({
+              _id: subType,
+            }).yAxis.forEach(function(axis, i) {
+              if (axis.metric === metric) {
+                if (i === 0) { // navigator axis will be at index 1
+                  axisIndex = 0;
+                } else {
+                  axisIndex = i + 1;
+                }
+              }
+            });
+            seriesData.yAxis = axisIndex;
             chart.addSeries(seriesData);
           }
         }
@@ -285,11 +302,48 @@ Template.editPoints.events({
     event.preventDefault();
     selectedFlag.set(parseInt($(event.currentTarget).attr('data-value'), 10));
   },
+  'click button#btnCancel' (event) {
+    event.preventDefault();
+    selectedFlag.set(null);
+  },
+  // Handle the button "Push" event
+  'click button#btnPush' (event) {
+    event.preventDefault();
+    // Push Edited points in TCEQ format
+    const pushPoints = EditPoints.find({});
+
+    const listPushPoints = [];
+    pushPoints.forEach(function(point) {
+      listPushPoints.push(point.x / 1000);
+    });
+    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, null, true, false).then(function(response) {
+      sAlert.success('Push successful!');
+    }, function(error) {
+      sAlert.error(`Couldn't not find any data for site: ${Router.current().params._id} for selected epochs.`);
+    });
+  },
+  // Handle the button "Change Flag" event
+  'click button#btnChange' (event) {
+    event.preventDefault();
+    // update the edited points with the selected flag and note on the server
+    const updatedPoints = EditPoints.find({});
+    const note = $('#editNote').val();
+    updatedPoints.forEach(function(point) {
+      Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, flagsHash[selectedFlag.get()].val, note);
+    });
+
+    // Clear note field
+    $('#editNote').val('');
+  },
 });
 
 Template.editPoints.helpers({
   points() {
-    return EditPoints.find();
+    return EditPoints.find({}, {
+      sort: {
+        'x': -1,
+      },
+    });
   },
   availableFlags() {
     return _.where(flagsHash, {
@@ -325,18 +379,19 @@ Template.editPoints.helpers({
 });
 
 Template.registerHelper('formatDate', function(epoch) {
+  // convert epoch (long) format to readable
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
 Template.site.helpers({
   sitename() {
-    const site = Sites.findOne({
+    const site = LiveSites.findOne({
       AQSID: Router.current().params._id,
     });
-    return site && site['site name'];
+    return site && site.siteName;
   },
   selectedDate() {
-    return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
+    return moment.unix(startEpoch.get()).add(2160, 'minutes').format('YYYY-MM-DD');
   },
   charts() {
     return Charts.find(); // This gives data to the html below
@@ -346,20 +401,10 @@ Template.site.helpers({
 Template.site.events({
   'change #datepicker' (event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
+    endEpoch.set(moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
   },
   'click #createPush' () {
-    DataExporter.exportForTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get());
-  },
-  'click #updateAggr' () {
-    Meteor.call('new5minAggreg', Router.current().params._id,
-      startEpoch.get(), endEpoch.get(),
-      function(err, response) {
-        if (err) {
-          Session.set('serverDataResponse', `Error: ${err.reason}`);
-          return;
-        }
-        Session.set('serverDataResponse', response);
-      });
+    // call export and push out file as well as download
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true, true);
   },
 });

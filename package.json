@@ -4,8 +4,9 @@
   "description": "This is a development repository.",
   "main": "index.js",
   "dependencies": {
-    "ftps": "^0.4.6",
-    "highcharts": "^4.2.4"
+    "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
+    "highcharts": "^4.2.5",
+    "junk": "^1.0.2"
   },
   "devDependencies": {
     "eslint": "^2.7.0",
@@ -36,14 +37,33 @@
       "moment": true,
       "logger": true,
       "Highcharts": true,
+      "Papa": true,
+      "sAlert": true,
       "LiveData": true,
+      "AggrData": true,
       "Sites": true,
+			"LiveSites": true,
+      "Exports": true,
+      "DataExporter": true,
       "channelHash": true,
-      "flagsHash": true
+      "flagsHash": true,
+      "unitsHash": true
     },
     "rules": {
-			"max-len": [2, 120, 2, {"ignoreUrls": true, "ignoreComments": false}]
-		}
+      "max-len": [
+        2,
+        160,
+        2,
+        {
+          "ignoreUrls": true,
+          "ignoreComments": false
+        }
+      ],
+      "arrow-body-style": [
+        "error",
+        "always"
+      ]
+    }
   },
   "repository": {
     "type": "git",

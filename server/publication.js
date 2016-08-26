@@ -64,8 +64,6 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
         for (var pubKey in poll5Data) { // pubKey equals instrument
           if (poll5Data.hasOwnProperty(pubKey)) {
             for (var key in poll5Data[pubKey]) { //key equals measurement
-
-
               // skip loop if the property is from prototype
               if (!poll5Data[pubKey].hasOwnProperty(key)) continue;
 
@@ -92,6 +90,19 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                   yAxis.ceiling = 20;
                   yAxis.tickInterval = 5;
                 }
+              } else if (pubKey.indexOf('49i') >= 0) {
+                yAxis = {
+                  allowDecimals: false,
+                  labels: {
+                    format: '{value:.0f} ' + unitsHash[key],
+                  },
+                  title: {
+                    text: key,
+                  },
+                  opposite: false,
+                  floor: 0,
+                  ceiling: 250,
+                };
               } else {
                 yAxis = {
                   allowDecimals: false,
@@ -108,7 +119,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
 
               subscription.added('dataSeries', `${pubKey}_${key}_5m_${poll5Data[pubKey][key][0].x}`, {
                 name: key + '_5m',
-                chartType: 'scatter',
+                type: 'scatter',
                 marker: {
                   enabled: true,
                   radius: 2,
@@ -143,13 +154,13 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
     }
   }, {
     $sort: {
-      epoch: 1
+      epoch: 1,
     }
   }, {
     $project: {
       epoch: 1,
       subTypes: 1,
-      _id: 0
+      _id: 0,
     }
   }];
 
@@ -179,27 +190,86 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
       for (var pubKey in pollData) {
         // skip loop if the property is from prototype
         if (pollData.hasOwnProperty(pubKey)) {
-          var chartType = 'line';
+          let chartType = 'line';
+          let lineWidth = 1;
+          let marker = {
+            enabled: false,
+          };
           // wind data should never be shown as line
           if (pubKey.indexOf('RMY') >= 0) {
             chartType = 'scatter';
+            lineWidth = 0;
+            marker = {
+              enabled: true,
+              radius: 1,
+              symbol: 'circle',
+            };
           }
 
           for (var key in pollData[pubKey]) {
             // skip loop if the property is from prototype
             if (!pollData[pubKey].hasOwnProperty(key)) continue;
 
+            // create yAxis object
+            let yAxis = {};
+            if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
+              yAxis = {
+                allowDecimals: false,
+                labels: {
+                  format: '{value:.0f} ' + unitsHash[key],
+                },
+                title: {
+                  text: key,
+                },
+                opposite: false,
+                floor: 0,
+                ceiling: 360,
+                tickInterval: 90,
+              };
+
+              if (key === 'WS') {
+                // NOTE: there are some misreads with the sensor, and so
+                // it occasionally reports wind speeds upwards of 250mph.
+                yAxis.ceiling = 20;
+                yAxis.tickInterval = 5;
+              }
+            } else if (pubKey.indexOf('49i') >= 0) {
+              yAxis = {
+                allowDecimals: false,
+                labels: {
+                  format: '{value:.0f} ' + unitsHash[key],
+                },
+                title: {
+                  text: key,
+                },
+                opposite: false,
+                floor: 0,
+                ceiling: 250,
+              };
+            } else {
+              yAxis = {
+                allowDecimals: false,
+                labels: {
+                  format: '{value:.0f} ' + unitsHash[key],
+                },
+                title: {
+                  text: key,
+                },
+                opposite: false,
+                floor: 0,
+              };
+            }
+
             // add to subscription
             subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
               name: key + '_10s',
-              chartType: chartType,
-              marker: {
-                enabled: false,
-              },
-              lineWidth: 1,
+              type: chartType,
+              marker: marker,
+              lineWidth: lineWidth,
               allowPointSelect: 'false',
               data: pollData[pubKey][key],
               zIndex: 1,
+              yAxis: yAxis,
             });
           }
         }
@@ -211,10 +281,166 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
   );
 });
 
-Meteor.publish('sites', function() {
-  return Sites.find({
-    'incoming': {
-      $exists: true
+// aggregation of aggregated data to be plotted with highstock for composites
+Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
+
+  var subscription = this;
+  var pollCompData = {};
+
+  var aggCompPipe = [{
+    $match: {
+      $and: [{
+        $or: [{
+          site: '482010570',
+        }, {
+          site: '482010572',
+        }, {
+          site: '481670571',
+        }, {
+          site: '480711606',
+        }],
+      }, {
+        epoch: {
+          $gt: parseInt(startEpoch, 10),
+          $lt: parseInt(endEpoch, 10),
+        },
+      }],
+    },
+  }, {
+    $sort: {
+      epoch: -1,
+    },
+  }, {
+    $group: {
+      _id: '$subTypes',
+      data: {
+        $push: {
+          site: '$site',
+          epoch: '$epoch',
+        },
+      },
+    },
+  }, ];
+
+  AggrData.aggregate(aggCompPipe, function(err, results) {
+
+      // create new structure for composite data series to be used for charts
+      if (results.length > 0) {
+        results.forEach(function(line) {
+          const epoch = line.data[0].epoch;
+          const site = line.data[0].site;
+          _.each(line._id, function(data, instrument) { // Instrument, HPM60 etc.
+            _.each(data, function(points, measurement) { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+              if (!pollCompData[measurement]) { // create placeholder for measurement
+                pollCompData[measurement] = {};
+              }
+              if (!pollCompData[measurement][site]) { // create placeholder for series if not exists
+                pollCompData[measurement][site] = [];
+              }
+
+              pollCompData[measurement]
+              if (_.last(points).metric.indexOf('Flag') >= 0) { // get all measurements
+                var datapoint = {
+                  x: epoch * 1000,
+                  y: points[1].val, // average
+                }; // milliseconds
+                pollCompData[measurement][site].push(datapoint);
+              }
+            });
+          });
+        });
+      }
+
+      for (var measurement in pollCompData) {
+        if (pollCompData.hasOwnProperty(measurement)) {
+          for (var site in pollCompData[measurement]) { //key equals measurement
+            // skip loop if the property is from prototype
+            if (!pollCompData[measurement].hasOwnProperty(site)) continue;
+
+            var dataSorted = pollCompData[measurement][site].sort(function(obj1, obj2) {
+              // Ascending: first age less than the previous
+              return obj1.x - obj2.x;
+            });
+
+            subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
+              name: site,
+              type: 'scatter',
+              marker: {
+                enabled: true,
+                radius: 2,
+                symbol: 'circle',
+              },
+              lineWidth: 0,
+              data: dataSorted,
+              yAxis: {
+                allowDecimals: false,
+                title: {
+                  text: unitsHash[measurement],
+                },
+                floor: 0,
+                opposite: false,
+              },
+            });
+          }
+        }
+      }
+    },
+    function(error) {
+      Meteor._debug('error during composite publication aggregation: ' + error);
+    }
+  );
+});
+
+// edited points
+Meteor.publish('editedPoints', function() {
+
+  const subscription = this;
+
+  AggrData.find({
+    epoch: {
+      $gt: parseInt(moment().subtract(100000, 'minutes').unix(), 10),
+    },
+  }).forEach(function(datapoint) {
+    for (var instrument in datapoint.subTypes) {
+      // skip loop if the property is from prototype
+      if (!datapoint.subTypes.hasOwnProperty(instrument)) continue;
+
+      for (var measurement in datapoint.subTypes[instrument]) {
+        // skip loop if the property is from prototype
+        if (!datapoint.subTypes[instrument].hasOwnProperty(measurement)) continue;
+
+        if (datapoint.subTypes[instrument][measurement].length > 4) {
+          subscription.added('editedPoints', `${datapoint.epoch}_${instrument}_comp}`, {
+            epoch: datapoint.epoch,
+            site: datapoint.site,
+            measurement: measurement,
+            instrument: instrument,
+            value: datapoint.subTypes[instrument][measurement][1],
+
+            //_.last(datapoint.subTypes[instrument][measurement]).metric.indexOf('Flag') >= 0) {
+          });
+        }
+      }
+
+    };
+
+  });
+
+});
+
+// pushed data time stamps
+Meteor.publish('exports', function() {
+  return Exports.find({
+    startEpoch: {
+      $type: 'int',
+    }
+  });
+});
+
+Meteor.publish('liveSites', function() {
+  return LiveSites.find({}, {
+    sort: {
+      'siteName': -1
     }
   });
 });
