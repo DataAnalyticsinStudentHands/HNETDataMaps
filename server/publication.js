@@ -362,8 +362,12 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
               return obj1.x - obj2.x;
             });
 
+						const selectedSite = LiveSites.findOne({
+				      AQSID: site,
+				    });
+
             subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
-              name: site,
+              name: selectedSite.siteName,
               type: 'scatter',
               marker: {
                 enabled: true,

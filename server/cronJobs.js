@@ -26,12 +26,37 @@ function sendEmail(reportType, reportString) {
   });
 }
 
+// Meteor.setInterval(() => {
+//
+//   // Print the titles of the five top-scoring posts
+//   const allSites = Sites.find({
+//     'incoming': {
+//       $exists: true,
+//     }
+//   });
+
+//   allSites.forEach(function (site) {
+//     const startEpoch = site.lastPush;
+//     const endEpoch = moment.unix();
+//     console.log(`called export from cron for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}`);
+//     // create TCEQ export formated data and push
+//     Meteor.call('exportData', site.AQSID, startEpoch, endEpoch, false, function (error, data) {
+//       if (error) {
+//         sAlert.error(error);
+//         return false;
+//       }
+//
+// 			console.log(`data: ${data}`);
+//     });
+//   });
+// }, 1 * 60 * 1000); // run every 15 min, to push new data
+
 // daily
 Meteor.setInterval(() => {
-	// reset to trigger daily report
-	lastReportTime = 0;
+  // reset to trigger daily report
+  lastReportTime = 0;
 
-	// Find all users that have subscribed to receive status emails and update the mailList
+  // Find all users that have subscribed to receive status emails and update the mailList
   const listSubscribers = Meteor.users.find({
     receiveSiteStatusEmail: true,
   });
