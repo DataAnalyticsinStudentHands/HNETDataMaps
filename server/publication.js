@@ -396,41 +396,43 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
 });
 
 // edited points
-Meteor.publish('editedPoints', function() {
-
-  const subscription = this;
-
-  AggrData.find({
-    epoch: {
-      $gt: parseInt(moment().subtract(100000, 'minutes').unix(), 10),
-    },
-  }).forEach(function(datapoint) {
-    for (var instrument in datapoint.subTypes) {
-      // skip loop if the property is from prototype
-      if (!datapoint.subTypes.hasOwnProperty(instrument)) continue;
-
-      for (var measurement in datapoint.subTypes[instrument]) {
-        // skip loop if the property is from prototype
-        if (!datapoint.subTypes[instrument].hasOwnProperty(measurement)) continue;
-
-        if (datapoint.subTypes[instrument][measurement].length > 4) {
-          subscription.added('editedPoints', `${datapoint.epoch}_${instrument}_comp}`, {
-            epoch: datapoint.epoch,
-            site: datapoint.site,
-            measurement: measurement,
-            instrument: instrument,
-            value: datapoint.subTypes[instrument][measurement][1],
-
-            //_.last(datapoint.subTypes[instrument][measurement]).metric.indexOf('Flag') >= 0) {
-          });
-        }
-      }
-
-    };
-
-  });
-
+Meteor.publish('aggregateEdits', function() {
+	return AggrEdits.find({});
 });
+//
+//   const subscription = this;
+//
+//   AggrData.find({
+//     epoch: {
+//       $gt: parseInt(moment().subtract(100000, 'minutes').unix(), 10),
+//     },
+//   }).forEach(function(datapoint) {
+//     for (var instrument in datapoint.subTypes) {
+//       // skip loop if the property is from prototype
+//       if (!datapoint.subTypes.hasOwnProperty(instrument)) continue;
+//
+//       for (var measurement in datapoint.subTypes[instrument]) {
+//         // skip loop if the property is from prototype
+//         if (!datapoint.subTypes[instrument].hasOwnProperty(measurement)) continue;
+//
+//         if (datapoint.subTypes[instrument][measurement].length > 4) {
+//           subscription.added('editedPoints', `${datapoint.epoch}_${instrument}_comp}`, {
+//             epoch: datapoint.epoch,
+//             site: datapoint.site,
+//             measurement: measurement,
+//             instrument: instrument,
+//             value: datapoint.subTypes[instrument][measurement][1],
+//
+//             //_.last(datapoint.subTypes[instrument][measurement]).metric.indexOf('Flag') >= 0) {
+//           });
+//         }
+//       }
+//
+//     };
+//
+//   });
+//
+// });
 
 // pushed data time stamps
 Meteor.publish('exports', function() {

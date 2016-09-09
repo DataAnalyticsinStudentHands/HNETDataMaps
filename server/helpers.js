@@ -118,7 +118,7 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
     // create csv file to be pushed in temp folder
     const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
     const csvComplete = Papa.unparse(data);
-		// removing header from csv string
+    // removing header from csv string
     const n = csvComplete.indexOf('\n');
     const csv = csvComplete.substring(n + 1);
 
@@ -181,6 +181,7 @@ Meteor.methods({
   insertUpdateFlag(siteId, epoch, instrument, measurement, flag, note) {
     // id that will receive the update
     const id = `${siteId}_${epoch / 1000}`; // seconds
+
     // new field
     const insertField = 'subTypes.' + instrument + '.' + measurement.split(/[ ]+/)[0];
     // update value
@@ -196,5 +197,22 @@ Meteor.methods({
     AggrData.update({
       _id: id,
     }, qry);
+  },
+  insertUpdateEdits(points, siteId, editEpoch, instrument, flag, note) {
+    // id that will be created
+    const id = `${siteId}_${editEpoch}`; // seconds
+
+    const newEdit = {};
+    newEdit._id = id;
+		newEdit.epoch = editEpoch;
+		newEdit.site = siteId;
+    newEdit.instrument = instrument;
+    newEdit.flag = flag;
+    newEdit.user = Meteor.user().emails[0].address; // user doing the edit
+    newEdit.note = note;
+		newEdit.points = points;
+
+    AggrEdits.insert(newEdit);
+
   },
 });
