@@ -2,7 +2,6 @@ import Highcharts from 'highcharts/highstock';
 
 // 3 days
 var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
-var endEpoch = new ReactiveVar(moment().unix());
 var selectedFlag = new ReactiveVar(null);
 
 Meteor.subscribe('liveSites');
@@ -202,7 +201,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       buttonTheme: {
         width: 60,
       },
-      selected: 0,
+      selected: 1,
     },
   });
 }
@@ -212,7 +211,7 @@ Template.site.onRendered(function() {
   this.autorun(function() {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
-      startEpoch.get(), endEpoch.get());
+      startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
     Charts.remove({});
 
     let initializing = true;
@@ -391,7 +390,7 @@ Template.site.helpers({
     return site && site.siteName;
   },
   selectedDate() {
-    return moment.unix(startEpoch.get()).add(2160, 'minutes').format('YYYY-MM-DD');
+    return moment.unix(startEpoch.get()).format('YYYY-MM-DD');
   },
   charts() {
     return Charts.find(); // This gives data to the html below
@@ -401,10 +400,9 @@ Template.site.helpers({
 Template.site.events({
   'change #datepicker' (event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
   },
   'click #createPush' () {
     // call export and push out file as well as download
-    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true, true);
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix(), true, true);
   },
 });
