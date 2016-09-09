@@ -340,9 +340,9 @@ Template.editPoints.events({
 Template.editPoints.helpers({
   points() {
     return EditPoints.find({}, {
-      sort: {
-        'x': -1,
-      },
+      // sort: {
+      //   'x': -1,
+      // },
     });
   },
   availableFlags() {
