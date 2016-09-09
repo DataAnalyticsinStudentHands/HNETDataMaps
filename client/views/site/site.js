@@ -322,8 +322,11 @@ Template.editPoints.events({
       sAlert.error(`Couldn't not find any data for site: ${Router.current().params._id} for selected epochs.`);
     });
   },
+	'change .js-editNote' (event) {
+    console.log("hello");
+  },
   // Handle the button "Change Flag" event
-  'click button#btnChange' (event) {
+  'click .js-change' (event) {
     event.preventDefault();
     // update the edited points with the selected flag and note on the server
     const updatedPoints = EditPoints.find({});
