@@ -296,7 +296,7 @@ Template.site.onRendered(function () {
       },
     });
     initializing = false;
-//  }); // end autorun
+  }); // end autorun
 }); // end of onRendered
 
 Template.editPoints.events({
@@ -395,7 +395,7 @@ Template.registerHelper('formatDate', function (epoch) {
 Template.site.helpers({
   sitename() {
     const site = LiveSites.findOne({
-       AQSID: Router.current().params._id,
+      AQSID: Router.current().params._id,
     });
     return site && site.siteName;
   },
