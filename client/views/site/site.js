@@ -5,7 +5,7 @@ var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
 var selectedFlag = new ReactiveVar(null);
 var note = new ReactiveVar(null);
 
-Meteor.subscribe('liveSites');
+//Meteor.subscribe('liveSites');
 
 Highcharts.setOptions({
   global: {
@@ -209,7 +209,9 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
 
 Template.site.onRendered(function () {
   // Do reactive stuff when something is added or removed
-  this.autorun(function () {
+
+//  this.autorun(function() {
+
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
@@ -294,7 +296,7 @@ Template.site.onRendered(function () {
       },
     });
     initializing = false;
-  }); // end autorun
+//  }); // end autorun
 }); // end of onRendered
 
 Template.editPoints.events({
@@ -392,10 +394,10 @@ Template.registerHelper('formatDate', function (epoch) {
 
 Template.site.helpers({
   sitename() {
-    const site = LiveSites.findOne({
-      AQSID: Router.current().params._id,
-    });
-    return site && site.siteName;
+    // const site = LiveSites.findOne({
+    //   AQSID: Router.current().params._id,
+    // });
+    return "name"//site && site.siteName;
   },
   selectedDate() {
     return moment.unix(startEpoch.get()).format('YYYY-MM-DD');
