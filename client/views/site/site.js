@@ -209,7 +209,9 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
 
 Template.site.onRendered(function () {
   // Do reactive stuff when something is added or removed
-  this.autorun(function () {
+
+  this.autorun(function() {
+
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id,
       startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());

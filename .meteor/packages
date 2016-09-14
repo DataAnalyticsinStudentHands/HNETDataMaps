@@ -60,10 +60,6 @@ velocity:chokidar               # chokidar - A neat wrapper around node.js fs.wa
 # mobile
 mobile-experience@1.0.4
 
-# production
-meteorhacks:kadira              # Remote performance watch
-
-
 #reload
 #random
 #ejson
