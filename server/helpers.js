@@ -65,7 +65,6 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 
         for (const subType in e.subTypes) {
           if (e.subTypes.hasOwnProperty(subType)) {
-            if (subType !== '42i') {
               const instruments = e.subTypes[subType];
               for (const instrument in instruments) {
                 if (instruments.hasOwnProperty(instrument)) {
@@ -91,7 +90,6 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
                   }
                 }
               }
-            }
           }
         }
 
