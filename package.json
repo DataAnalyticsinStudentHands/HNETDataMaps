@@ -4,6 +4,7 @@
   "description": "This is a development repository.",
   "main": "index.js",
   "dependencies": {
+    "bcrypt": "^0.8.7",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "highcharts": "^4.2.5",
     "junk": "^1.0.2"
@@ -42,8 +43,9 @@
       "LiveData": true,
       "AggrData": true,
       "Sites": true,
-			"LiveSites": true,
+      "LiveSites": true,
       "Exports": true,
+			"AggrEdits": true,
       "DataExporter": true,
       "channelHash": true,
       "flagsHash": true,
