@@ -7,23 +7,10 @@ const hnetsftp = process.env.hnetsftp;
 
 function loadTCEQDataFile(fileName) {
 
-
-
-	fs.readFile('/hnet/outgoing/temp/bh160720171802.uh', 'utf-8', (err, output) => {
-
-    Papa.parse(output, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete(results) {
-				console.log(results.data);
-        return results.data;
-      }
-      })
-});
-
-
-
+  fs.readFile('/hnet/outgoing/temp/' + fileName, 'utf-8', (err, output) => {
+    console.log(output);
+    return output;
+  });
 };
 
 /*
@@ -39,16 +26,16 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
       $and: [
         {
           epoch: {
-            $in: startEpoch,
-          },
+            $in: startEpoch
+          }
         }, {
-          site: `${aqsid}`,
-        },
-      ],
+          site: `${aqsid}`
+        }
+      ]
     }, {
       sort: {
-        epoch: 1,
-      },
+        epoch: 1
+      }
     }).fetch();
   } else {
     aggregatData = AggrData.find({
@@ -90,31 +77,31 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 
         for (const subType in e.subTypes) {
           if (e.subTypes.hasOwnProperty(subType)) {
-              const instruments = e.subTypes[subType];
-              for (const instrument in instruments) {
-                if (instruments.hasOwnProperty(instrument)) {
-                  let label = `${subType}_${instrument}_channel`;
-                  obj[label] = channelHash[subType + '_' + instrument]; // channel
-                  const data = instruments[instrument];
+            const instruments = e.subTypes[subType];
+            for (const instrument in instruments) {
+              if (instruments.hasOwnProperty(instrument)) {
+                let label = `${subType}_${instrument}_channel`;
+                obj[label] = channelHash[subType + '_' + instrument]; // channel
+                const data = instruments[instrument];
 
-                  label = `${subType}_${instrument}_flag`;
-                  obj[label] = flagsHash[_.last(data).val].label; // Flag
-                  label = `${subType}_${instrument}_value`;
-                  // taking care of flag Q (span)
-                  if (flagsHash[_.last(data).val].label === 'Q') {
-                    obj[label] = 0; // set value to 0
-                  } else {
-                    let outputValue = data[1].val; // avg
-                    // Unit conversion for Temp from C to F
-                    if (instrument === 'Temp') {
-                      outputValue = outputValue * 9 / 5 + 32;
-                    } else if (instrument === 'WS') {
-                      outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
-                    }
-                    obj[label] = outputValue.toFixed(3);
+                label = `${subType}_${instrument}_flag`;
+                obj[label] = flagsHash[_.last(data).val].label; // Flag
+                label = `${subType}_${instrument}_value`;
+                // taking care of flag Q (span)
+                if (flagsHash[_.last(data).val].label === 'Q') {
+                  obj[label] = 0; // set value to 0
+                } else {
+                  let outputValue = data[1].val; // avg
+                  // Unit conversion for Temp from C to F
+                  if (instrument === 'Temp') {
+                    outputValue = outputValue * 9 / 5 + 32;
+                  } else if (instrument === 'WS') {
+                    outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
                   }
+                  obj[label] = outputValue.toFixed(3);
                 }
               }
+            }
           }
         }
 
@@ -180,11 +167,9 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
 }
 
 Meteor.methods({
-	loadFile() {
-		const data = loadTCEQDataFile(null);
-		console.log(data);
-		return data;
-	},
+  loadFile() {
+    return fs.readFile('/hnet/outgoing/temp/bh160701203809.uh', 'utf-8');
+  },
   exportData(aqsid, startEpoch, endEpoch, push) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
     if (data !== undefined && push) {

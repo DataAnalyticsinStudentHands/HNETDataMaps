@@ -6,18 +6,13 @@ Template.viewDataCell.events({
 		const rowIndex = $(event.target).closest('tr').index();
 		const rowData = dataTable.row(rowIndex).data();
 
-		Meteor.call('loadFile',
-			function (err, response) {
-				if (err) {
-					sAlert.error(`Error:\n ${err.reason}`);
-					return;
-				}
-				sAlert.success(response);
-				console.log(response);
-				dataToShow.set(response);
-	      // Show the Data File modal
-	      $('#dataFileModal').modal({}).modal('show');
-			});
+		Meteor.call('loadFile', function(err, result)          {
+         if(!err){
+            console.log(result);
+         }else{
+            console.error('Error', err)
+         }
+       })
 
 		// Get data in TCEQ format
     // DataExporter.getDataTCEQ(rowData.site, rowData.startEpoch, rowData.endEpoch, false, false).then(function (response) {
@@ -32,8 +27,8 @@ Template.viewDataCell.events({
   },
 });
 
-Template.dataFile.helpers({
-  dataFromFile() {
-    return Papa.unparse(dataToShow.get());
-  }
-});
+// Template.dataFile.helpers({
+//   dataFromFile() {
+//     return Papa.unparse(dataToShow.get());
+//   }
+// });
