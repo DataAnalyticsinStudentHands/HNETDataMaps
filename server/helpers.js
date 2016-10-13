@@ -5,6 +5,27 @@ import FTPS from 'ftps';
 // reading ftps password from environment
 const hnetsftp = process.env.hnetsftp;
 
+function loadTCEQDataFile(fileName) {
+
+
+
+	fs.readFile('/hnet/outgoing/temp/bh160720171802.uh', 'utf-8', (err, output) => {
+
+    Papa.parse(output, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      complete(results) {
+				console.log(results.data);
+        return results.data;
+      }
+      })
+});
+
+
+
+};
+
 /*
  * Export csv data file in defined format, default: TCEQ format
  */
@@ -159,6 +180,11 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
 }
 
 Meteor.methods({
+	loadFile() {
+		const data = loadTCEQDataFile(null);
+		console.log(data);
+		return data;
+	},
   exportData(aqsid, startEpoch, endEpoch, push) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
     if (data !== undefined && push) {

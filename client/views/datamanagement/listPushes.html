@@ -1,33 +1,12 @@
 <template name="listPushes">
 	<!-- table for pushed data -->
-					<table class="table">
-						<thead>
-							<tr>
-								<th>Push Time</th>
-								<th>Site</th>
-								<th>Start Period</th>
-								<th>Start Epoch</th>
-								<th>End Period</th>
-								<th>End Epoch</th>
-								<th>Data File</th>
-							</tr>
-						</thead>
-						<tbody>
-							{{#each pushes}}
-							<tr>
-								<td>{{formatDates timeStamp}}</td>
-								<td>{{siteName site}}</td>
-								<td>{{formatDates startEpoch}}</td>
-								<td>{{startEpoch}}</td>
-								<td>{{formatDates endEpoch}}</td>
-								<td>{{endEpoch}}</td>
-								<td class="active"><a href="#"><i class="fa fa-table" data-site={{site}} data-start={{startEpoch}} data-end={{endEpoch}}></i></a></td>
-							</tr>
-							{{/each}}
-						</tbody>
-					</table>
+		{{> tabular table=TabularTables.Pushes class="table table-striped table-bordered table-condensed"}}
+	<!-- load template for modal -->
+		{{> dataFile}}
+</template>
 
-					{{> dataFile}}
+<template name="viewDataCell">
+  <button type="button" class="btn btn-xs js-view-data">View Data</button>
 </template>
 
 <!-- Modal for showing data file -->
