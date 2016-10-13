@@ -188,6 +188,13 @@ Meteor.methods({
     }
     return data;
   },
+	pushEdits(aqsid, startEpoch, endEpoch, push) {
+    const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
+    if (data !== undefined && push) {
+      pushTCEQData(aqsid, startEpoch, endEpoch, data);
+    }
+    return data;
+  },
   insertUpdateFlag(siteId, epoch, instrument, measurement, flag, note) {
     // id that will receive the update
     const id = `${siteId}_${epoch / 1000}`; // seconds
