@@ -1,17 +1,11 @@
 // required packages
 const fs = Npm.require('fs');
+const Future = Npm.require('fibers/future');
+
 import FTPS from 'ftps';
 
 // reading ftps password from environment
 const hnetsftp = process.env.hnetsftp;
-
-function loadTCEQDataFile(fileName) {
-
-  fs.readFile('/hnet/outgoing/temp/' + fileName, 'utf-8', (err, output) => {
-    console.log(output);
-    return output;
-  });
-};
 
 /*
  * Export csv data file in defined format, default: TCEQ format
@@ -26,16 +20,16 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
       $and: [
         {
           epoch: {
-            $in: startEpoch
-          }
+            $in: startEpoch,
+          },
         }, {
-          site: `${aqsid}`
-        }
-      ]
+          site: `${aqsid}`,
+        },
+      ],
     }, {
       sort: {
-        epoch: 1
-      }
+        epoch: 1,
+      },
     }).fetch();
   } else {
     aggregatData = AggrData.find({
@@ -43,16 +37,16 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
         {
           epoch: {
             $gte: parseInt(startEpoch, 10),
-            $lte: parseInt(endEpoch, 10)
-          }
+            $lte: parseInt(endEpoch, 10),
+          },
         }, {
-          site: `${aqsid}`
-        }
-      ]
+          site: `${aqsid}`,
+        },
+      ],
     }, {
       sort: {
-        epoch: 1
-      }
+        epoch: 1,
+      },
     }).fetch();
   }
 
@@ -118,6 +112,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 }
 
 function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
+
   const site = LiveSites.find({AQSID: `${aqsid}`}).fetch()[0];
 
   if (site !== undefined) {
@@ -134,13 +129,13 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
 
     fs.writeFile(outputFile, csv, function(err) {
       if (err) {
-        throw err;
+        return logger.error(`Could not write TCEQ push file. Error: ${err}`);
       }
     });
 
     if (typeof(hnetsftp) === 'undefined') {
       // hnetsftp environment variable doesn't exists
-      logger.error('No password found for hnet sftp.');
+      return logger.error('No password found for hnet sftp.');
     } else {
       const ftps = new FTPS({
         host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
@@ -152,23 +147,39 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
       // the following function creates its own scoped context
       ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
         // insert a timestamp for the pushed data
-        if (endEpoch === null) {
-          Exports.insert({_id: `${aqsid}_${moment().unix()}`, timeStamp: moment().unix(), site: aqsid, epochList: startEpoch});
-        } else {
-          Exports.insert({_id: `${aqsid}_${moment().unix()}`, timeStamp: moment().unix(), site: aqsid, startEpoch: startEpoch, endEpoch: endEpoch});
-        }
+        Exports.insert({
+          _id: `${aqsid}_${moment().unix()}`,
+          pushEpoch: moment().unix(),
+          site: aqsid,
+          startEpoch: startEpoch,
+          endEpoch: endEpoch,
+          fileName: outputFile
+        });
       }, function(err) {
         return logger.error('Error during push file:', (err || res.error));
       }));
     }
   } else {
-    logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
+    return logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
   }
 }
 
 Meteor.methods({
-  loadFile() {
-    return fs.readFile('/hnet/outgoing/temp/bh160701203809.uh', 'utf-8');
+  loadFile(path) {
+    const fut = new Future();
+
+    fs.readFile(path, 'utf-8', (err, data) => {
+      if (err) {
+        logger.err(err);
+        fut.throw(err);
+      }
+
+      fut.return(data);
+    });
+
+    const fileData = fut.wait();
+
+    return fileData;
   },
   exportData(aqsid, startEpoch, endEpoch, push) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
@@ -194,7 +205,7 @@ Meteor.methods({
     qry.$push[insertField].epoch = moment().unix();
 
     AggrData.update({
-      _id: id
+      _id: id,
     }, qry);
   },
   insertUpdateEdits(editedPoints, flag, note) {
@@ -216,6 +227,5 @@ Meteor.methods({
     newEdit.editedPoints = editedPoints;
 
     AggrEdits.insert(newEdit);
-
-  }
+  },
 });
