@@ -133,7 +133,7 @@ var perform5minAggregat = function (siteId, startEpoch, endEpoch) {
                       }
                     }
 
-                    if (data[j].metric === 'O3') {
+                    if (data[j].metric === 'O3' || data[j].metric === '49i') {
                       if (data[j].value > 250) { // taking care of 03 values to be flagged with 9(N)
                         flag = 9;
                         numValid = 0;
