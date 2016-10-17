@@ -45,7 +45,7 @@
       "Sites": true,
       "LiveSites": true,
       "Exports": true,
-			"AggrEdits": true,
+      "AggrEdits": true,
       "DataExporter": true,
       "channelHash": true,
       "flagsHash": true,

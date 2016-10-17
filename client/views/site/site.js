@@ -85,7 +85,7 @@ function selectedPoints(e) {
 
     // Query the local selected points db for that point, and remove it
     // This triggers a reactive render of the EditPoints
-    EditPoints.remove({id: pointId});
+    EditPoints.remove({ id: pointId });
 
     // Also remove the point from the HighCharts selection
     // (so it doesn't change color temporarily on approval)
@@ -305,7 +305,7 @@ Template.editPoints.events({
     selectedFlag.set(null);
   },
   // Handle the button "Push" event
-  'click button#btnPush' (event) {
+  'click button#btnPush'(event) {
     event.preventDefault();
     // Push Edited points in TCEQ format
     const pushPoints = EditPoints.find({});
@@ -315,7 +315,7 @@ Template.editPoints.events({
       listPushPoints.push(point.x / 1000);
     });
 
-    Meteor.call('pushEdits', Router.current().params._id, pushPoints, function(error, data) {
+    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, function (error, data) {
 
       if (error) {
         sAlert.error(error);
@@ -337,7 +337,7 @@ Template.editPoints.events({
     const updatedPoints = EditPoints.find({}).fetch();
 
     // add edit to the edit collection
-    Meteor.call('insertUpdateEdits', updatedPoints, flagsHash[selectedFlag.get()].val, note.get());
+    Meteor.call('insertEdits', updatedPoints, flagsHash[selectedFlag.get()].val, note.get());
 
     // update the edited points with the selected flag and note on the server
     updatedPoints.forEach(function(point) {

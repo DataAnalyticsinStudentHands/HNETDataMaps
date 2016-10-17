@@ -24,40 +24,51 @@ Template.datamanagement.helpers({
 });
 
 Template.datamanagement.events = {
-  'change #startdatepicker' (event) {
+  'change #startdatepicker'(event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'change #enddatepicker' (event) {
+  'change #enddatepicker'(event) {
     endEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'click #createAggregates' (event, target) {
+  'click #createAggregates'(event, target) {
     event.preventDefault();
-    const site = LiveSites.findOne({
-      siteName: $('#selectedSite').val(),
-    });
+    const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
 
     const start = target.$('form.management input[name=start]').val();
     const end = target.$('form.management input[name=end]').val();
 
-    Meteor.call('new5minAggreg', site.AQSID, start, end,
-      function (err, response) {
-        if (err) {
-          sAlert.error(`Error:\n ${err.reason}`);
-          return;
-        }
-        sAlert.success(response);
-      });
+    Meteor.call('new5minAggreg', site.AQSID, start, end, function (err, response) {
+      if (err) {
+        sAlert.error(`Error:\n ${err.reason}`);
+        return;
+      }
+      sAlert.success(response);
+    });
   },
   'click #downloadData'(event, target) {
     event.preventDefault();
-    const site = LiveSites.findOne({
-      siteName: $('#selectedSite').val(),
-    });
+    const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
+
+    const start = target.$('form.management input[name=start]').val();
+    const end = target.$('form.management input[name=end]').val();
+
+    // call export and download
+    DataExporter.getDataTCEQ(site.AQSID, start, end);
+  },
+  'click #pushData'(event, target) {
+    event.preventDefault();
+    const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
 
     const start = target.$('form.management input[name=start]').val();
     const end = target.$('form.management input[name=end]').val();
 
     // call export (no push) and download
-    DataExporter.getDataTCEQ(site.AQSID, start, end, false, true);
+    Meteor.call('pushData', site.AQSID, start, end, function (err, response) {
+      if (err) {
+        sAlert.error(`Error:\n ${err.reason}`);
+        return;
+      }
+      sAlert.success('Push successfull!');
+    });
   },
 };

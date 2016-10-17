@@ -28,8 +28,8 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
       ],
     }, {
       sort: {
-        epoch: 1,
-      },
+        epoch: 1
+      }
     }).fetch();
   } else {
     aggregatData = AggrData.find({
@@ -37,16 +37,16 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
         {
           epoch: {
             $gte: parseInt(startEpoch, 10),
-            $lte: parseInt(endEpoch, 10),
-          },
+            $lte: parseInt(endEpoch, 10)
+          }
         }, {
-          site: `${aqsid}`,
-        },
-      ],
+          site: `${aqsid}`
+        }
+      ]
     }, {
       sort: {
-        epoch: 1,
-      },
+        epoch: 1
+      }
     }).fetch();
   }
 
@@ -111,8 +111,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
   return dataObject;
 }
 
-function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
-
+function pushTCEQData(aqsid, data) {
   const site = LiveSites.find({AQSID: `${aqsid}`}).fetch()[0];
 
   if (site !== undefined) {
@@ -146,22 +145,16 @@ function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
 
       // the following function creates its own scoped context
       ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
-        // insert a timestamp for the pushed data
-        Exports.insert({
-          _id: `${aqsid}_${moment().unix()}`,
-          pushEpoch: moment().unix(),
-          site: aqsid,
-          startEpoch: startEpoch,
-          endEpoch: endEpoch,
-          fileName: outputFile
-        });
+        return 'Push successful.';
       }, function(err) {
-        return logger.error('Error during push file:', (err || res.error));
+        return logger.error('Error during push file:', (err));
       }));
     }
   } else {
     return logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
   }
+
+  return true;
 }
 
 Meteor.methods({
@@ -174,26 +167,61 @@ Meteor.methods({
         fut.throw(err);
       }
 
-      fut.return(data);
+      fut.return (data);
     });
 
     const fileData = fut.wait();
 
     return fileData;
   },
-  exportData(aqsid, startEpoch, endEpoch, push) {
+  exportData(aqsid, startEpoch, endEpoch) {
+    return exportDataAsCSV(aqsid, startEpoch, endEpoch);
+  },
+  pushData(aqsid, startEpoch, endEpoch) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
-    if (data !== undefined && push) {
-      pushTCEQData(aqsid, startEpoch, endEpoch, data);
+    if (data !== undefined) {
+      pushTCEQData(aqsid, data);
+      // insert a timestamp for the pushed data
+      Exports.insert({
+        _id: `${aqsid}_${moment().unix()}`,
+        pushEpoch: moment().unix(),
+        site: aqsid,
+        startEpoch: startEpoch,
+        endEpoch: endEpoch,
+        fileName: outputFile
+      });
     }
     return data;
   },
-	pushEdits(aqsid, startEpoch, endEpoch, push) {
-    const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
-    if (data !== undefined && push) {
-      pushTCEQData(aqsid, startEpoch, endEpoch, data);
+  pushEdits(aqsid, pushPoints) {
+    const startEpoch = pushPoints[0].x / 1000;
+		const endEpoch = _.last(pushPoints).x / 1000;
+		console.log(`start: ${startEpoch}`);
+		console.log(`end: ${endEpoch}`);
+    const data = exportDataAsCSV(aqsid, startEpoch);
+    if (data !== undefined) {
+			console.log(`start: ${startEpoch}`);
+			console.log(`end: ${endEpoch}`);
+      //if (pushTCEQData(aqsid, data)) {
+        // update edit data points with push date
+        var points = AggrEdits.find({
+          "startEpoch": {
+            $gt: startEpoch,
+          },
+          $and: [
+            {
+              "endEpoch": {
+                $lt: endEpoch,
+              },
+            },
+          ],
+        });
+
+        points.forEach(function(point) {
+          console.log(point);
+        });
+    //  }
     }
-    return data;
   },
   insertUpdateFlag(siteId, epoch, instrument, measurement, flag, note) {
     // id that will receive the update
@@ -212,10 +240,10 @@ Meteor.methods({
     qry.$push[insertField].epoch = moment().unix();
 
     AggrData.update({
-      _id: id,
+      _id: id
     }, qry);
   },
-  insertUpdateEdits(editedPoints, flag, note) {
+  insertEdits(editedPoints, flag, note) {
     // id that will be created
     const firstPoint = editedPoints[0];
     const editEpoch = moment().unix();
@@ -231,8 +259,9 @@ Meteor.methods({
     newEdit.flag = flag;
     newEdit.user = Meteor.user().emails[0].address; // user doing the edit
     newEdit.note = note;
+    newEdit.pushed = '';
     newEdit.editedPoints = editedPoints;
 
     AggrEdits.insert(newEdit);
-  },
+  }
 });

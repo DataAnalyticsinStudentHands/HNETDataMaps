@@ -1,12 +1,12 @@
 // Call for exporting data in certain formats and download client side
 DataExporter = {
-  getDataTCEQ: function(aqsid, startEpoch, endEpoch, push, download) {
+  getDataTCEQ: function(aqsid, startEpoch, endEpoch) {
     // Return a new promise.
     return new Promise(function(resolve, reject) {
       Meteor.subscribe('liveSites');
 
-      // create TCEQ export formated data and push
-      Meteor.call('exportData', aqsid, startEpoch, endEpoch, push, function(error, data) {
+      // get TCEQ export formated data
+      Meteor.call('exportData', aqsid, startEpoch, endEpoch, function(error, data) {
 
         if (error) {
           sAlert.error(error);
@@ -16,7 +16,7 @@ DataExporter = {
         const site = LiveSites.findOne({AQSID: `${aqsid}`});
 
         // download the data as csv file
-        if (site !== undefined && download) {
+        if (site !== undefined) {
           const csv = Papa.unparse(data);
 
           // create site name from incoming folder
