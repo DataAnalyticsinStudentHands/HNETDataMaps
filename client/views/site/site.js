@@ -48,7 +48,6 @@ function selectPointsByDrag(e) {
 
   // Fire a custom event
   Highcharts.fireEvent(this, 'selectedpoints', {points: this.getSelectedPoints()});
-
   return false; // Don't zoom
 }
 
@@ -85,7 +84,7 @@ function selectedPoints(e) {
 
     // Query the local selected points db for that point, and remove it
     // This triggers a reactive render of the EditPoints
-    EditPoints.remove({ id: pointId });
+    EditPoints.remove({id: pointId});
 
     // Also remove the point from the HighCharts selection
     // (so it doesn't change color temporarily on approval)
@@ -167,7 +166,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
           tooltipX = this.chart.plotLeft;
           tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
         }
-        return { x: tooltipX, y: tooltipY };
+        return {x: tooltipX, y: tooltipY};
       },
       formatter() {
         let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
@@ -305,7 +304,7 @@ Template.editPoints.events({
     selectedFlag.set(null);
   },
   // Handle the button "Push" event
-  'click button#btnPush'(event) {
+  'click button#btnPush' (event) {
     event.preventDefault();
     // Push Edited points in TCEQ format
     const pushPoints = EditPoints.find({});
@@ -320,8 +319,9 @@ Template.editPoints.events({
       if (error) {
         sAlert.error(error);
       }
-
-      sAlert.success('Push successful!');
+      if (data) {
+        sAlert.success('Push successful!');
+      }
     });
   },
   // Handle the note filed change event (update note)

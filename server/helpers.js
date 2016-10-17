@@ -20,12 +20,12 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
       $and: [
         {
           epoch: {
-            $in: startEpoch,
-          },
+            $in: startEpoch
+          }
         }, {
-          site: `${aqsid}`,
-        },
-      ],
+          site: `${aqsid}`
+        }
+      ]
     }, {
       sort: {
         epoch: 1
@@ -112,62 +112,64 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 }
 
 function pushTCEQData(aqsid, data) {
+
   const site = LiveSites.find({AQSID: `${aqsid}`}).fetch()[0];
 
-  if (site !== undefined) {
-    // create site name from incoming folder
-    const siteName = (site.incoming.match(new RegExp('UH' +
-    '(.*)' +
-    '_')))[1].slice(-2);
-    // create csv file to be pushed in temp folder
-    const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
-    const csvComplete = Papa.unparse(data);
-    // removing header from csv string
-    const n = csvComplete.indexOf('\n');
-    const csv = csvComplete.substring(n + 1);
-
-    fs.writeFile(outputFile, csv, function(err) {
-      if (err) {
-        return logger.error(`Could not write TCEQ push file. Error: ${err}`);
-      }
-    });
-
-    if (typeof(hnetsftp) === 'undefined') {
-      // hnetsftp environment variable doesn't exists
-      return logger.error('No password found for hnet sftp.');
-    } else {
-      const ftps = new FTPS({
-        host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
-        // protocol is added on beginning of host, ex : sftp://domain.com in this case
-        port: 990, // optional
-        // port is added to the end of the host, ex: sftp://domain.com:22 in this case
-      });
-
-      // the following function creates its own scoped context
-      ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
-        return 'Push successful.';
-      }, function(err) {
-        return logger.error('Error during push file:', (err));
-      }));
-    }
-  } else {
+  if (site === undefined) {
     return logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
   }
 
-  return true;
+  // create site name from incoming folder
+  const siteName = (site.incoming.match(new RegExp('UH' +
+  '(.*)' +
+  '_')))[1].slice(-2);
+  // create csv file to be pushed in temp folder
+  const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
+  const csvComplete = Papa.unparse(data);
+  // removing header from csv string
+  const n = csvComplete.indexOf('\n');
+  const csv = csvComplete.substring(n + 1);
+
+  fs.writeFile(outputFile, csv, function(err) {
+    if (err) {
+      logger.error(`Could not write TCEQ push file. Error: ${err}`);
+      throw new Meteor.Error(`Could not write TCEQ push file. Error: ${err}`);
+    }
+  });
+
+  if (typeof(hnetsftp) === 'undefined') {
+    // hnetsftp environment variable doesn't exists
+    logger.error('No password found for hnet sftp.');
+    throw new Meteor.Error('No password found for hnet sftp.');
+  }
+
+  const ftps = new FTPS({
+    host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
+    // protocol is added on beginning of host, ex : sftp://domain.com in this case
+    port: 990, // optional
+    // port is added to the end of the host, ex: sftp://domain.com:22 in this case
+  });
+
+  // the following function creates its own scoped context
+  ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {}, function(err) {
+    logger.error('Error during push file:', (err));
+    throw new Meteor.Error('Error during push file:', (err));
+  }));
+
+  return outputFile;
 }
 
 Meteor.methods({
   loadFile(path) {
-    const fut = new Future();
+    var fut = new Future();
 
     fs.readFile(path, 'utf-8', (err, data) => {
       if (err) {
-        logger.err(err);
+        logger.error(err);
         fut.throw(err);
+      } else {
+        fut.return(data);
       }
-
-      fut.return (data);
     });
 
     const fileData = fut.wait();
@@ -193,35 +195,39 @@ Meteor.methods({
     }
     return data;
   },
-  pushEdits(aqsid, pushPoints) {
-    const startEpoch = pushPoints[0].x / 1000;
-		const endEpoch = _.last(pushPoints).x / 1000;
-		console.log(`start: ${startEpoch}`);
-		console.log(`end: ${endEpoch}`);
-    const data = exportDataAsCSV(aqsid, startEpoch);
-    if (data !== undefined) {
-			console.log(`start: ${startEpoch}`);
-			console.log(`end: ${endEpoch}`);
-      //if (pushTCEQData(aqsid, data)) {
-        // update edit data points with push date
-        var points = AggrEdits.find({
-          "startEpoch": {
-            $gt: startEpoch,
-          },
-          $and: [
-            {
-              "endEpoch": {
-                $lt: endEpoch,
-              },
-            },
-          ],
-        });
+  pushEdits(aqsid, pushPointsEpochs) {
+    const startEpoch = pushPointsEpochs[0];
+    const endEpoch = _.last(pushPointsEpochs);
+    const data = exportDataAsCSV(aqsid, pushPointsEpochs, null);
 
-        points.forEach(function(point) {
-          console.log(point);
-        });
-    //  }
+    if (data === undefined) {
+      throw new Meteor.Error('Could not find data for selected period.');
     }
+    const fileName = pushTCEQData(aqsid, data);
+    // update edit data points with push date
+    var points = AggrEdits.find({
+      "startEpoch": {
+        $gt: startEpoch
+      },
+      $and: [
+        {
+          "endEpoch": {
+            $lt: endEpoch
+          }
+        }
+      ]
+    });
+
+    points.forEach(function(point) {
+      console.log(point._id, fileName);
+      AggrEdits.update({
+        _id: point._id
+      }, {
+        $set: {
+          pushed: fileName
+        }
+      });
+    });
   },
   insertUpdateFlag(siteId, epoch, instrument, measurement, flag, note) {
     // id that will receive the update
