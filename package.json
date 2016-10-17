@@ -64,7 +64,11 @@
       "arrow-body-style": [
         "error",
         "always"
-      ]
+      ],
+			"comma-dangle": [
+				"error",
+				"never"
+			]
     }
   },
   "repository": {
