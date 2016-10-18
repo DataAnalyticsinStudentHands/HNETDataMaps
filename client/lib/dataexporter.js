@@ -9,11 +9,11 @@ DataExporter = {
       Meteor.call('exportData', aqsid, startEpoch, endEpoch, function(error, data) {
 
         if (error) {
-          sAlert.error(error);
+          sAlert.error(`Error:\n ${error.reason}`);
           return false;
         }
 
-        const site = LiveSites.findOne({AQSID: `${aqsid}`});
+        const site = LiveSites.findOne({ AQSID: `${aqsid}` });
 
         // download the data as csv file
         if (site !== undefined) {
