@@ -50,13 +50,15 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
     }).fetch();
   }
 
-  dataObject.data = [];
-
   switch (format) {
     case 'raw':
       logger.info('raw export format not yet implemented.');
       break;
     default:
+      console.log(aggregatData);
+      if (aggregatData.length !== 0) {
+        dataObject.data = [];
+      }
       _.each(aggregatData, function(e) {
         const obj = {};
         const siteID = e.site.substring(e.site.length - 4, e.site.length);
@@ -168,7 +170,7 @@ Meteor.methods({
         logger.error(err);
         fut.throw(err);
       } else {
-        fut.return(data);
+        fut.return (data);
       }
     });
 
@@ -182,7 +184,9 @@ Meteor.methods({
   pushData(aqsid, startEpoch, endEpoch) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
 
-    if (data === undefined) {
+    console.log(data);
+    if (Object.keys(data).length === 0 && data.constructor === Object) {
+      console.log("data empty")
       throw new Meteor.Error('Could not find data for selected period.');
     }
 
@@ -197,7 +201,7 @@ Meteor.methods({
       fileName: outputFileName
     });
 
-		return outputFileName;
+    return outputFileName;
   },
   pushEdits(aqsid, pushPointsEpochs) {
     const startEpoch = pushPointsEpochs[0];

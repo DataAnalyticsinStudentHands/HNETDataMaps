@@ -14,10 +14,10 @@ function sendEmail(reportType, reportString) {
     from: 'HNET Site Watcher <dashadmin@uh.edu>',
     to: mailList,
     subject: reportType,
-    text: reportString,
+    text: reportString
   };
 
-  transporter.sendMail(mailOptions, function (error, info) {
+  transporter.sendMail(mailOptions, function(error, info) {
     if (error) {
       logger.info('Can not send email. Error: ', error);
     } else {
@@ -29,25 +29,31 @@ function sendEmail(reportType, reportString) {
 // every 15 mins push data
 Meteor.setInterval(() => {
   // get sites
-  const activeSites = LiveSites.find({
-    'active': true
-  });
+  const activeSites = LiveSites.find({ status: 'Active' });
 
-  activeSites.forEach(function (site) {
-    const startEpoch = site.lastPush;
-    const endEpoch = moment.unix();
-    console.log(`called export from cron for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}`);
-    // create TCEQ export formated data and push
-    Meteor.call('exportData', site.AQSID, startEpoch, endEpoch, false, function (error, data) {
-      if (error) {
-        sAlert.error(error);
-        return false;
-      }
-
-			console.log(`data: ${data}`);
-    });
+  activeSites.forEach(function(site) {
+    const now = moment().unix();
+		console.log(site.status, now - site.lastPush);
+    // check last push not older than 24 hours
+    if ((now - site.lastPush) < 86400) {
+      const startEpoch = site.lastPush;
+      const endEpoch = moment().unix();
+      console.log(`called export from cron for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}`);
+      // create TCEQ export formated data and push
+      Meteor.call('pushData', site.AQSID, startEpoch, endEpoch, (err, output) => {
+        if (output) {
+          LiveSites.update({
+            _id: site._id
+          }, {
+            $set: {
+              lastPush: now
+            }
+          });
+        }
+      });
+    }
   });
-}, 15 * 60 * 1000); // run every 15 min, to push new data
+}, 1 * 30 * 1000); // run every 15 min, to push new data
 
 // daily reset of values for reports
 Meteor.setInterval(() => {
@@ -55,13 +61,11 @@ Meteor.setInterval(() => {
   lastReportTime = 0;
 
   // Find all users that have subscribed to receive status emails and update the mailList
-  const listSubscribers = Meteor.users.find({
-    receiveSiteStatusEmail: true,
-  });
+  const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
 
   mailList = '';
 
-  listSubscribers.forEach(function (user) {
+  listSubscribers.forEach(function(user) {
     if (user.receiveSiteStatusEmail) {
       mailList = `${user.emails[0].address},${mailList}`;
     }
@@ -75,8 +79,8 @@ Meteor.setInterval(() => {
   // report
   let reportString = `H-NET Site Status as of ${moment().format('YYYY/MM/DD, HH:mm:ss')} \n`;
 
-  fs.readdir(watchedPath, function (err, folders) {
-    folders.filter(junk.not).forEach(function (afolder) {
+  fs.readdir(watchedPath, function(err, folders) {
+    folders.filter(junk.not).forEach(function(afolder) {
       const stats = fs.statSync(watchedPath + afolder);
 
       const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments
