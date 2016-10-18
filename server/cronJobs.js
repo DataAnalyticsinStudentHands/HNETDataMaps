@@ -33,22 +33,37 @@ Meteor.setInterval(() => {
 
   activeSites.forEach(function(site) {
     const now = moment().unix();
-		console.log(site.status, now - site.lastPush);
+		console.log(site.status, now - site.lastPushEpoch);
     // check last push not older than 24 hours
-    if ((now - site.lastPush) < 86400) {
-      const startEpoch = site.lastPush;
+    if ((now - site.lastPushEpoch) < 86400) {
+      const startEpoch = site.lastPushEpoch;
       const endEpoch = moment().unix();
-      console.log(`called export from cron for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}`);
+			const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-hh-mm-ss');
+      const endTime = moment.unix(endEpoch).format('YYYY-MM-DD-hh-mm-ss');
+      console.log(`called export from cron for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endEpoch: ${endTime}`);
       // create TCEQ export formated data and push
-      Meteor.call('pushData', site.AQSID, startEpoch, endEpoch, (err, output) => {
-        if (output) {
+      Meteor.call('exportData', site.AQSID, startEpoch, endEpoch, (err, data) => {
+				// create csv file to be pushed in temp folder
+				const outputFile = `/hnet/test/${moment.utc().format('YYMMDDHHmmss')}.uh`;
+				const csvComplete = Papa.unparse(data);
+				// removing header from csv string
+				const n = csvComplete.indexOf('\n');
+				const csv = csvComplete.substring(n + 1);
+
+				fs.writeFile(outputFile, csv, function(err) {
+					if (err) {
+						logger.error(`Could not write TCEQ push file. Error: ${err}`);
+						throw new Meteor.Error(`Could not write TCEQ push file. Error: ${err}`);
+					}
+				});
+        if (!err) {
           LiveSites.update({
             _id: site._id
           }, {
             $set: {
-              lastPush: now
+              lastPushEpoch: now
             }
-          });
+          }, { validate: false });
         }
       });
     }

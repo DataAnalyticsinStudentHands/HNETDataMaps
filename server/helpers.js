@@ -55,11 +55,10 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
       logger.info('raw export format not yet implemented.');
       break;
     default:
-      console.log(aggregatData);
       if (aggregatData.length !== 0) {
         dataObject.data = [];
       }
-      _.each(aggregatData, function(e) {
+      _.each(aggregatData, (e) => {
         const obj = {};
         const siteID = e.site.substring(e.site.length - 4, e.site.length);
         if (siteID.startsWith('0')) {
@@ -179,15 +178,19 @@ Meteor.methods({
     return fileData;
   },
   exportData(aqsid, startEpoch, endEpoch) {
-    return exportDataAsCSV(aqsid, startEpoch, endEpoch);
+    const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
+
+    if (Object.keys(data).length === 0 && data.constructor === Object) {
+      throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
+    }
+
+    return data;
   },
   pushData(aqsid, startEpoch, endEpoch) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
 
-    console.log(data);
     if (Object.keys(data).length === 0 && data.constructor === Object) {
-      console.log("data empty")
-      throw new Meteor.Error('Could not find data for selected period.');
+      throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
     }
 
     const outputFileName = pushTCEQData(aqsid, data);
@@ -276,5 +279,18 @@ Meteor.methods({
     newEdit.editedPoints = editedPoints;
 
     AggrEdits.insert(newEdit);
+  },
+  // reste the last push epoch for a site
+  resetLastPushDate(aqsid) {
+    LiveSites.update({
+      // Selector
+      AQSID: `${aqsid}`
+    }, {
+      // Modifier
+      $set: {
+        lastPushEpoch: moment().unix()
+      }
+    }, { validate: false });
+    logger.info(`Reset last push epoch called for ${aqsid}`);
   }
 });
