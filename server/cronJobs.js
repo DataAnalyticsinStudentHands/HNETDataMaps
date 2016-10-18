@@ -26,32 +26,30 @@ function sendEmail(reportType, reportString) {
   });
 }
 
-// Meteor.setInterval(() => {
-//
-//   // Print the titles of the five top-scoring posts
-//   const allSites = Sites.find({
-//     'incoming': {
-//       $exists: true,
-//     }
-//   });
+// every 15 mins push data
+Meteor.setInterval(() => {
+  // get sites
+  const activeSites = LiveSites.find({
+    'active': true
+  });
 
-//   allSites.forEach(function (site) {
-//     const startEpoch = site.lastPush;
-//     const endEpoch = moment.unix();
-//     console.log(`called export from cron for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}`);
-//     // create TCEQ export formated data and push
-//     Meteor.call('exportData', site.AQSID, startEpoch, endEpoch, false, function (error, data) {
-//       if (error) {
-//         sAlert.error(error);
-//         return false;
-//       }
-//
-// 			console.log(`data: ${data}`);
-//     });
-//   });
-// }, 1 * 60 * 1000); // run every 15 min, to push new data
+  activeSites.forEach(function (site) {
+    const startEpoch = site.lastPush;
+    const endEpoch = moment.unix();
+    console.log(`called export from cron for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}`);
+    // create TCEQ export formated data and push
+    Meteor.call('exportData', site.AQSID, startEpoch, endEpoch, false, function (error, data) {
+      if (error) {
+        sAlert.error(error);
+        return false;
+      }
 
-// daily
+			console.log(`data: ${data}`);
+    });
+  });
+}, 15 * 60 * 1000); // run every 15 min, to push new data
+
+// daily reset of values for reports
 Meteor.setInterval(() => {
   // reset to trigger daily report
   lastReportTime = 0;
@@ -70,6 +68,7 @@ Meteor.setInterval(() => {
   });
 }, 24 * 3600 * 1000);
 
+// 5 mins check for site down
 Meteor.setInterval(() => {
   const watchedPath = '/hnet/incoming/current/';
 
