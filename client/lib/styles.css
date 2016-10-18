@@ -1,6 +1,7 @@
 body {
     padding-top: 70px;
 }
+
 .navbar-default {
   background-color: #3c8dbc;
   border-color: #517a9d;
@@ -91,8 +92,8 @@ body {
   }
 }
 
-
 .footer {
+
   bottom: 0;
   width: 100%;
   /* Set the fixed height of the footer here */
