@@ -47,6 +47,7 @@
       "Exports": true,
       "AggrEdits": true,
       "DataExporter": true,
+			"SimpleSchema": true,
       "channelHash": true,
       "flagsHash": true,
       "unitsHash": true

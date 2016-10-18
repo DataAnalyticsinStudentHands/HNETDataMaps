@@ -1,28 +1,37 @@
-Accounts.config({
-  forbidClientAccountCreation: false,
-});
+Accounts.config({forbidClientAccountCreation: false});
 
 Accounts.ui.config({
   passwordSignupFields: 'EMAIL_ONLY',
-  extraSignupFields: [{
-    fieldName: 'first-name',
-    fieldLabel: 'First name',
-    inputType: 'text',
-    visible: true,
-    validate: function (value, errorFunction) {
-      if (!value) {
-        errorFunction("Please write your first name");
-        return false;
-      } else {
-        return true;
+  extraSignupFields: [
+    {
+      fieldName: 'first-name',
+      fieldLabel: 'First name',
+      inputType: 'text',
+      visible: true,
+      validate: function(value, errorFunction) {
+        if (!value) {
+          errorFunction('Please write your first name');
+          return false;
+        } else {
+          return true;
+        }
       }
+    }, {
+      fieldName: 'last-name',
+      fieldLabel: 'Last name',
+      inputType: 'text',
+      visible: true
     }
-  }, {
-    fieldName: 'last-name',
-    fieldLabel: 'Last name',
-    inputType: 'text',
-    visible: true,
-  }, ],
+  ]
+});
+
+AdminDashboard.addCollectionItem(function(collection, path) {
+  if (collection === 'LiveSites') {
+    return {
+      title: 'Troubleshoot',
+      url: path + '/fixSites'
+    };
+  }
 });
 
 sAlert.config({
@@ -48,8 +57,8 @@ sAlert.config({
   //     warning: '/beep-warning.mp3'
   // }
   onClose: _.noop, //
-    // examples:
-    // onClose: function() {
-    //     /* Code here will be executed once the alert closes. */
-    // }
+  // examples:
+  // onClose: function() {
+  //     /* Code here will be executed once the alert closes. */
+  // }
 });
