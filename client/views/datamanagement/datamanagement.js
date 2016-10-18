@@ -68,7 +68,7 @@ Template.datamanagement.events = {
         sAlert.error(`Error:\n ${err.reason}`);
         return;
       }
-      sAlert.success('Push successfull!');
+      sAlert.success(`Pushed file\n ${response} successfull!`);
     });
   },
 };

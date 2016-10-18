@@ -181,19 +181,23 @@ Meteor.methods({
   },
   pushData(aqsid, startEpoch, endEpoch) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
-    if (data !== undefined) {
-      pushTCEQData(aqsid, data);
-      // insert a timestamp for the pushed data
-      Exports.insert({
-        _id: `${aqsid}_${moment().unix()}`,
-        pushEpoch: moment().unix(),
-        site: aqsid,
-        startEpoch: startEpoch,
-        endEpoch: endEpoch,
-        fileName: outputFile
-      });
+
+    if (data === undefined) {
+      throw new Meteor.Error('Could not find data for selected period.');
     }
-    return data;
+
+    const outputFileName = pushTCEQData(aqsid, data);
+    // insert a timestamp for the pushed data
+    Exports.insert({
+      _id: `${aqsid}_${moment().unix()}`,
+      pushEpoch: moment().unix(),
+      site: aqsid,
+      startEpoch: startEpoch,
+      endEpoch: endEpoch,
+      fileName: outputFileName
+    });
+
+		return outputFileName;
   },
   pushEdits(aqsid, pushPointsEpochs) {
     const startEpoch = pushPointsEpochs[0];
@@ -219,7 +223,6 @@ Meteor.methods({
     });
 
     points.forEach(function(point) {
-      console.log(point._id, fileName);
       AggrEdits.update({
         _id: point._id
       }, {
