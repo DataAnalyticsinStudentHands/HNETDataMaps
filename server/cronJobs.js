@@ -26,7 +26,7 @@ function sendEmail(reportType, reportString) {
   });
 }
 
-// every 15 mins push data
+// every 10 mins push data
 Meteor.setInterval(() => {
   // get sites
   const activeSites = LiveSites.find({ status: 'Active' });
@@ -71,7 +71,7 @@ Meteor.setInterval(() => {
       });
     }
   });
-}, 15 * 30 * 1000); // run every 15 min, to push new data
+}, 10 * 60 * 1000); // run every 10 min, to push new data
 
 // daily reset of values for reports
 Meteor.setInterval(() => {
