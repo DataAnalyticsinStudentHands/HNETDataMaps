@@ -282,15 +282,20 @@ Meteor.methods({
   },
   // reste the last push epoch for a site
   resetLastPushDate(aqsid) {
+    // get closest 5 min intervall
+    const ROUNDING = 5 * 60 * 1000;/* ms */
+    let now = moment();
+    now = moment(Math.floor((+ now) / ROUNDING) * ROUNDING);
+
     LiveSites.update({
       // Selector
       AQSID: `${aqsid}`
     }, {
       // Modifier
       $set: {
-        lastPushEpoch: moment().unix()
+        lastPushEpoch: moment(now).unix()
       }
-    }, { validate: false });
+    }, {validate: false});
     logger.info(`Reset last push epoch called for ${aqsid}`);
   }
 });
