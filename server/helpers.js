@@ -1,5 +1,7 @@
 // required packages
 const fs = Npm.require('fs');
+const Future = Npm.require('fibers/future');
+
 import FTPS from 'ftps';
 
 // reading ftps password from environment
@@ -15,43 +17,48 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 
   if (endEpoch === null) {
     aggregatData = AggrData.find({
-      $and: [{
-        epoch: {
-          $in: startEpoch,
-        },
-      }, {
-        site: `${aqsid}`,
-      }],
+      $and: [
+        {
+          epoch: {
+            $in: startEpoch
+          }
+        }, {
+          site: `${aqsid}`
+        }
+      ]
     }, {
       sort: {
-        epoch: 1,
-      },
+        epoch: 1
+      }
     }).fetch();
   } else {
     aggregatData = AggrData.find({
-      $and: [{
-        epoch: {
-          $gte: parseInt(startEpoch, 10),
-          $lte: parseInt(endEpoch, 10),
-        },
-      }, {
-        site: `${aqsid}`,
-      }],
+      $and: [
+        {
+          epoch: {
+            $gte: parseInt(startEpoch, 10),
+            $lte: parseInt(endEpoch, 10)
+          }
+        }, {
+          site: `${aqsid}`
+        }
+      ]
     }, {
       sort: {
-        epoch: 1,
-      },
+        epoch: 1
+      }
     }).fetch();
   }
-
-  dataObject.data = [];
 
   switch (format) {
     case 'raw':
       logger.info('raw export format not yet implemented.');
       break;
     default:
-      _.each(aggregatData, function (e) {
+      if (aggregatData.length !== 0) {
+        dataObject.data = [];
+      }
+      _.each(aggregatData, (e) => {
         const obj = {};
         const siteID = e.site.substring(e.site.length - 4, e.site.length);
         if (siteID.startsWith('0')) {
@@ -65,30 +72,28 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 
         for (const subType in e.subTypes) {
           if (e.subTypes.hasOwnProperty(subType)) {
-            if (subType !== '42i') {
-              const instruments = e.subTypes[subType];
-              for (const instrument in instruments) {
-                if (instruments.hasOwnProperty(instrument)) {
-                  let label = `${subType}_${instrument}_channel`;
-                  obj[label] = channelHash[subType + '_' + instrument]; // channel
-                  const data = instruments[instrument];
+            const instruments = e.subTypes[subType];
+            for (const instrument in instruments) {
+              if (instruments.hasOwnProperty(instrument)) {
+                let label = `${subType}_${instrument}_channel`;
+                obj[label] = channelHash[subType + '_' + instrument]; // channel
+                const data = instruments[instrument];
 
-                  label = `${subType}_${instrument}_flag`;
-                  obj[label] = flagsHash[_.last(data).val].label; // Flag
-                  label = `${subType}_${instrument}_value`;
-                  // taking care of flag Q (span)
-                  if (flagsHash[_.last(data).val].label === 'Q') {
-                    obj[label] = 0; // set value to 0
-                  } else {
-                    let outputValue = data[1].val; // avg
-                    // Unit conversion for Temp from C to F
-                    if (instrument === 'Temp') {
-                      outputValue = outputValue * 9 / 5 + 32;
-                    } else if (instrument === 'WS') {
-                      outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
-                    }
-                    obj[label] = outputValue.toFixed(3);
+                label = `${subType}_${instrument}_flag`;
+                obj[label] = flagsHash[_.last(data).val].label; // Flag
+                label = `${subType}_${instrument}_value`;
+                // taking care of flag Q (span)
+                if (flagsHash[_.last(data).val].label === 'Q') {
+                  obj[label] = 0; // set value to 0
+                } else {
+                  let outputValue = data[1].val; // avg
+                  // Unit conversion for Temp from C to F
+                  if (instrument === 'Temp') {
+                    outputValue = outputValue * 9 / 5 + 32;
+                  } else if (instrument === 'WS') {
+                    outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
                   }
+                  obj[label] = outputValue.toFixed(3);
                 }
               }
             }
@@ -107,80 +112,137 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
   return dataObject;
 }
 
-function pushTCEQData(aqsid, startEpoch, endEpoch, data) {
-  const site = LiveSites.find({
-    AQSID: `${aqsid}`,
-  }).fetch()[0];
+function pushTCEQData(aqsid, data) {
 
-  if (site !== undefined) {
-    // create site name from incoming folder
-    const siteName = (site.incoming.match(new RegExp('UH' + '(.*)' + '_')))[1].slice(-2);
-    // create csv file to be pushed in temp folder
-    const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
-    const csvComplete = Papa.unparse(data);
-		// removing header from csv string
-    const n = csvComplete.indexOf('\n');
-    const csv = csvComplete.substring(n + 1);
+  const site = LiveSites.find({AQSID: `${aqsid}`}).fetch()[0];
 
-    fs.writeFile(outputFile, csv, function (err) {
+  if (site === undefined) {
+    return logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
+  }
+
+  // create site name from incoming folder
+  const siteName = (site.incoming.match(new RegExp('UH' +
+  '(.*)' +
+  '_')))[1].slice(-2);
+  // create csv file to be pushed in temp folder
+  const outputFile = `/hnet/outgoing/temp/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
+  const csvComplete = Papa.unparse(data);
+  // removing header from csv string
+  const n = csvComplete.indexOf('\n');
+  const csv = csvComplete.substring(n + 1);
+
+  fs.writeFile(outputFile, csv, function(err) {
+    if (err) {
+      logger.error(`Could not write TCEQ push file. Error: ${err}`);
+      throw new Meteor.Error(`Could not write TCEQ push file. Error: ${err}`);
+    }
+  });
+
+  if (typeof(hnetsftp) === 'undefined') {
+    // hnetsftp environment variable doesn't exists
+    logger.error('No password found for hnet sftp.');
+    throw new Meteor.Error('No password found for hnet sftp.');
+  }
+
+  const ftps = new FTPS({
+    host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
+    // protocol is added on beginning of host, ex : sftp://domain.com in this case
+    port: 990, // optional
+    // port is added to the end of the host, ex: sftp://domain.com:22 in this case
+  });
+
+  // the following function creates its own scoped context
+  ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {}, function(err) {
+    logger.error('Error during push file:', (err));
+    throw new Meteor.Error('Error during push file:', (err));
+  }));
+
+  return outputFile;
+}
+
+Meteor.methods({
+  loadFile(path) {
+    var fut = new Future();
+
+    fs.readFile(path, 'utf-8', (err, data) => {
       if (err) {
-        throw err;
+        logger.error(err);
+        fut.throw(err);
+      } else {
+        fut.return (data);
       }
     });
 
-    if (typeof (hnetsftp) === 'undefined') {
-      // hnetsftp environment variable doesn't exists
-      logger.error('No password found for hnet sftp.');
-    } else {
-      const ftps = new FTPS({
-        host: 'ftps.tceq.texas.gov',
-        username: 'jhflynn@central.uh.edu',
-        password: hnetsftp,
-        protocol: 'ftps',
-        // protocol is added on beginning of host, ex : sftp://domain.com in this case
-        port: 990, // optional
-        // port is added to the end of the host, ex: sftp://domain.com:22 in this case
-      });
+    const fileData = fut.wait();
 
-      // the following function creates its own scoped context
-      ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function (res) {
-        // insert a timestamp for the pushed data
-        if (endEpoch === null) {
-          Exports.insert({
-            _id: `${aqsid}_${moment().unix()}`,
-            timeStamp: moment().unix(),
-            site: aqsid,
-            epochList: startEpoch,
-          });
-        } else {
-          Exports.insert({
-            _id: `${aqsid}_${moment().unix()}`,
-            timeStamp: moment().unix(),
-            site: aqsid,
-            startEpoch: startEpoch,
-            endEpoch: endEpoch,
-          });
-        }
-      }, function (err) {
-        return logger.error('Error during push file:', (err || res.error));
-      }));
-    }
-  } else {
-    logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
-  }
-};
-
-Meteor.methods({
-  exportData(aqsid, startEpoch, endEpoch, push) {
+    return fileData;
+  },
+  exportData(aqsid, startEpoch, endEpoch) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
-    if (data !== undefined && push) {
-      pushTCEQData(aqsid, startEpoch, endEpoch, data);
+
+    if (Object.keys(data).length === 0 && data.constructor === Object) {
+      throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
     }
+
     return data;
+  },
+  pushData(aqsid, startEpoch, endEpoch) {
+    const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
+
+    if (Object.keys(data).length === 0 && data.constructor === Object) {
+      throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
+    }
+
+    const outputFileName = pushTCEQData(aqsid, data);
+    // insert a timestamp for the pushed data
+    Exports.insert({
+      _id: `${aqsid}_${moment().unix()}`,
+      pushEpoch: moment().unix(),
+      site: aqsid,
+      startEpoch: startEpoch,
+      endEpoch: endEpoch,
+      fileName: outputFileName
+    });
+
+    return outputFileName;
+  },
+  pushEdits(aqsid, pushPointsEpochs) {
+    const startEpoch = pushPointsEpochs[0];
+    const endEpoch = _.last(pushPointsEpochs);
+    const data = exportDataAsCSV(aqsid, pushPointsEpochs, null);
+
+    if (data === undefined) {
+      throw new Meteor.Error('Could not find data for selected period.');
+    }
+    const fileName = pushTCEQData(aqsid, data);
+    // update edit data points with push date
+    var points = AggrEdits.find({
+      "startEpoch": {
+        $gt: startEpoch
+      },
+      $and: [
+        {
+          "endEpoch": {
+            $lt: endEpoch
+          }
+        }
+      ]
+    });
+
+    points.forEach(function(point) {
+      AggrEdits.update({
+        _id: point._id
+      }, {
+        $set: {
+          pushed: fileName
+        }
+      });
+    });
   },
   insertUpdateFlag(siteId, epoch, instrument, measurement, flag, note) {
     // id that will receive the update
     const id = `${siteId}_${epoch / 1000}`; // seconds
+
     // new field
     const insertField = 'subTypes.' + instrument + '.' + measurement.split(/[ ]+/)[0];
     // update value
@@ -194,7 +256,46 @@ Meteor.methods({
     qry.$push[insertField].epoch = moment().unix();
 
     AggrData.update({
-      _id: id,
+      _id: id
     }, qry);
   },
+  insertEdits(editedPoints, flag, note) {
+    // id that will be created
+    const firstPoint = editedPoints[0];
+    const editEpoch = moment().unix();
+    const id = `${firstPoint.site}_${editEpoch}`; // seconds
+
+    const newEdit = {};
+    newEdit._id = id;
+    newEdit.editEpoch = editEpoch;
+    newEdit.startEpoch = firstPoint.x / 1000;
+    newEdit.endEpoch = editedPoints[editedPoints.length - 1].x / 1000;
+    newEdit.site = firstPoint.site;
+    newEdit.instrument = firstPoint.instrument;
+    newEdit.flag = flag;
+    newEdit.user = Meteor.user().emails[0].address; // user doing the edit
+    newEdit.note = note;
+    newEdit.pushed = '';
+    newEdit.editedPoints = editedPoints;
+
+    AggrEdits.insert(newEdit);
+  },
+  // reste the last push epoch for a site
+  resetLastPushDate(aqsid) {
+    // get closest 5 min intervall
+    const ROUNDING = 5 * 60 * 1000;/* ms */
+    let now = moment();
+    now = moment(Math.floor((+ now) / ROUNDING) * ROUNDING);
+
+    LiveSites.update({
+      // Selector
+      AQSID: `${aqsid}`
+    }, {
+      // Modifier
+      $set: {
+        lastPushEpoch: moment(now).unix()
+      }
+    }, {validate: false});
+    logger.info(`Reset last push epoch called for ${aqsid}`);
+  }
 });

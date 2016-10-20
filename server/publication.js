@@ -1,5 +1,5 @@
 // aggregation of live and aggregated data to be plotted with highstock
-Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
+Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
 
   var subscription = this;
   var pollData = {},
@@ -261,6 +261,8 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             }
 
             // add to subscription
+						if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
+						} else {
             subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
               name: key + '_10s',
               type: chartType,
@@ -271,6 +273,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               zIndex: 1,
               yAxis: yAxis,
             });
+					}
           }
         }
       }
@@ -362,8 +365,12 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
               return obj1.x - obj2.x;
             });
 
+						const selectedSite = LiveSites.findOne({
+				      AQSID: site,
+				    });
+
             subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
-              name: site,
+              name: selectedSite.siteName,
               type: 'scatter',
               marker: {
                 enabled: true,
@@ -392,40 +399,8 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
 });
 
 // edited points
-Meteor.publish('editedPoints', function() {
-
-  const subscription = this;
-
-  AggrData.find({
-    epoch: {
-      $gt: parseInt(moment().subtract(100000, 'minutes').unix(), 10),
-    },
-  }).forEach(function(datapoint) {
-    for (var instrument in datapoint.subTypes) {
-      // skip loop if the property is from prototype
-      if (!datapoint.subTypes.hasOwnProperty(instrument)) continue;
-
-      for (var measurement in datapoint.subTypes[instrument]) {
-        // skip loop if the property is from prototype
-        if (!datapoint.subTypes[instrument].hasOwnProperty(measurement)) continue;
-
-        if (datapoint.subTypes[instrument][measurement].length > 4) {
-          subscription.added('editedPoints', `${datapoint.epoch}_${instrument}_comp}`, {
-            epoch: datapoint.epoch,
-            site: datapoint.site,
-            measurement: measurement,
-            instrument: instrument,
-            value: datapoint.subTypes[instrument][measurement][1],
-
-            //_.last(datapoint.subTypes[instrument][measurement]).metric.indexOf('Flag') >= 0) {
-          });
-        }
-      }
-
-    };
-
-  });
-
+Meteor.publish('aggregateEdits', function() {
+	return AggrEdits.find({});
 });
 
 // pushed data time stamps

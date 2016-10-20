@@ -14,10 +14,10 @@ function sendEmail(reportType, reportString) {
     from: 'HNET Site Watcher <dashadmin@uh.edu>',
     to: mailList,
     subject: reportType,
-    text: reportString,
+    text: reportString
   };
 
-  transporter.sendMail(mailOptions, function (error, info) {
+  transporter.sendMail(mailOptions, function(error, info) {
     if (error) {
       logger.info('Can not send email. Error: ', error);
     } else {
@@ -26,33 +26,79 @@ function sendEmail(reportType, reportString) {
   });
 }
 
-// daily
-Meteor.setInterval(() => {
-	// reset to trigger daily report
-	lastReportTime = 0;
+// every 10 mins push data
+// Meteor.setInterval(() => {
+//   // get sites
+//   const activeSites = LiveSites.find({ status: 'Active' });
+//
+//   activeSites.forEach(function(site) {
+//     // get closest 5 min intervall
+//     const ROUNDING = 5 * 60 * 1000;/* ms */
+//     let end = moment();
+//     end = moment(Math.floor((+ end) / ROUNDING) * ROUNDING);
+//
+//     // check last push not older than 24 hours
+//     if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
+//       const startEpoch = site.lastPushEpoch;
+//       const endEpoch = moment(end).unix();
+//       const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-hh-mm-ss');
+//       const endTime = moment.unix(endEpoch).format('YYYY-MM-DD-hh-mm-ss');
+//       console.log(`called export from cron for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endEpoch: ${endTime}`);
+//       // create TCEQ export formated data and push
+//       Meteor.call('exportData', site.AQSID, startEpoch, endEpoch, (err, data) => {
+//         // create csv file to be pushed in temp folder
+//         const outputFile = `/hnet/test/${moment.utc().format('YYMMDDHHmmss')}.uh`;
+//         const csvComplete = Papa.unparse(data);
+//         // removing header from csv string
+//         const n = csvComplete.indexOf('\n');
+//         const csv = csvComplete.substring(n + 1);
+//
+//         fs.writeFile(outputFile, csv, function(err) {
+//           if (err) {
+//             logger.error(`Could not write TCEQ push file. Error: ${err}`);
+//             throw new Meteor.Error(`Could not write TCEQ push file. Error: ${err}`);
+//           }
+//         });
+//         if (!err) {
+//           LiveSites.update({
+//             _id: site._id
+//           }, {
+//             $set: {
+//               lastPushEpoch: endEpoch
+//             }
+//           }, { validate: false });
+//         }
+//       });
+//     }
+//   });
+// }, 10 * 60 * 1000); // run every 10 min, to push new data
 
-	// Find all users that have subscribed to receive status emails and update the mailList
-  const listSubscribers = Meteor.users.find({
-    receiveSiteStatusEmail: true,
-  });
+// daily reset of values for reports
+Meteor.setInterval(() => {
+  // reset to trigger daily report
+  lastReportTime = 0;
+
+  // Find all users that have subscribed to receive status emails and update the mailList
+  const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
 
   mailList = '';
 
-  listSubscribers.forEach(function (user) {
+  listSubscribers.forEach(function(user) {
     if (user.receiveSiteStatusEmail) {
       mailList = `${user.emails[0].address},${mailList}`;
     }
   });
 }, 24 * 3600 * 1000);
 
+// 5 mins check for site down
 Meteor.setInterval(() => {
   const watchedPath = '/hnet/incoming/current/';
 
   // report
   let reportString = `H-NET Site Status as of ${moment().format('YYYY/MM/DD, HH:mm:ss')} \n`;
 
-  fs.readdir(watchedPath, function (err, folders) {
-    folders.filter(junk.not).forEach(function (afolder) {
+  fs.readdir(watchedPath, function(err, folders) {
+    folders.filter(junk.not).forEach(function(afolder) {
       const stats = fs.statSync(watchedPath + afolder);
 
       const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments

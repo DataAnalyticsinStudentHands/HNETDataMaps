@@ -1,29 +1,11 @@
 <template name="listEdits">
 	<!-- table for edited points -->
-					<table class="table">
-						<thead>
-							<tr>
-								<th></th>
-								<th>Timestamp</th>
-								<th>Site</th>
-								<th>Instrument</th>
-								<th>Measurement</th>
-								<th>Current Flag</th>
-								<th>New Flag</th>
-							</tr>
-						</thead>
-						<tbody>
-							{{#each points}}
-							<tr>
-								<td><i class="fa fa-times js-remove-point" data-id="{{id}}"></i></td>
-								<td>{{formatDates epoch}}</td>
-								<td>{{siteName site}}</td>
-								<td>{{instrument}}</td>
-								<td>{{measurement}}</td>
-								<td>{{> flaginTable flag}}</td>
-								<td>{{> flaginTable flagSelected}}</td>
-							</tr>
-							{{/each}}
-						</tbody>
-					</table>
+		{{> tabular table=TabularTables.Edits class="table table-striped table-bordered table-condensed"}}
+
+		<!-- load template for modal -->
+		{{> dataFile}}
+</template>
+
+<template name="viewEditsCell">
+  <button type="button" class="btn btn-xs js-view-edits">View Edits</button>
 </template>

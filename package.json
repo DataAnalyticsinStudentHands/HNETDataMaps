@@ -4,12 +4,13 @@
   "description": "This is a development repository.",
   "main": "index.js",
   "dependencies": {
+    "bcrypt": "^0.8.7",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "highcharts": "^4.2.5",
     "junk": "^1.0.2"
   },
   "devDependencies": {
-    "eslint": "^2.7.0",
+    "eslint": "^3.5.0",
     "eslint-config-airbnb": "^6.2.0",
     "eslint-plugin-meteor": "^3.4.0",
     "eslint-plugin-react": "^4.2.3"
@@ -42,9 +43,11 @@
       "LiveData": true,
       "AggrData": true,
       "Sites": true,
-			"LiveSites": true,
+      "LiveSites": true,
       "Exports": true,
+      "AggrEdits": true,
       "DataExporter": true,
+			"SimpleSchema": true,
       "channelHash": true,
       "flagsHash": true,
       "unitsHash": true
@@ -62,7 +65,11 @@
       "arrow-body-style": [
         "error",
         "always"
-      ]
+      ],
+			"comma-dangle": [
+				"error",
+				"never"
+			]
     }
   },
   "repository": {

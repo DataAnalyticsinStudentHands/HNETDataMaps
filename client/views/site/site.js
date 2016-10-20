@@ -2,16 +2,26 @@ import Highcharts from 'highcharts/highstock';
 
 // 3 days
 var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
-var endEpoch = new ReactiveVar(moment().unix());
 var selectedFlag = new ReactiveVar(null);
+var note = new ReactiveVar(null);
 
 Meteor.subscribe('liveSites');
 
 Highcharts.setOptions({
   global: {
-    useUTC: false,
+    useUTC: false
   },
-  colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
+  colors: [
+    '#058DC7',
+    '#50B432',
+    '#ED561B',
+    '#DDDF00',
+    '#24CBE5',
+    '#64E572',
+    '#FF9655',
+    '#FFF263',
+    '#6AF9C4'
+  ]
 });
 
 // placeholder for EditPoints in modal
@@ -37,10 +47,7 @@ function selectPointsByDrag(e) {
   });
 
   // Fire a custom event
-  Highcharts.fireEvent(this, 'selectedpoints', {
-    points: this.getSelectedPoints()
-  });
-
+  Highcharts.fireEvent(this, 'selectedpoints', {points: this.getSelectedPoints()});
   return false; // Don't zoom
 }
 
@@ -77,9 +84,7 @@ function selectedPoints(e) {
 
     // Query the local selected points db for that point, and remove it
     // This triggers a reactive render of the EditPoints
-    EditPoints.remove({
-      id: pointId,
-    });
+    EditPoints.remove({id: pointId});
 
     // Also remove the point from the HighCharts selection
     // (so it doesn't change color temporarily on approval)
@@ -104,7 +109,7 @@ function unselectByClick() {
       if (selectedFlag.get() !== null) {
         point.update({
           color: flagsHash[selectedFlag.get()].color,
-          name: flagsHash[selectedFlag.get()].val,
+          name: flagsHash[selectedFlag.get()].val
         }, true);
       }
       point.select(false);
@@ -118,33 +123,33 @@ function unselectByClick() {
 function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   const mychart = new Highcharts.StockChart({
     exporting: {
-      enabled: true,
+      enabled: true
     },
     chart: {
       events: {
         selection: selectPointsByDrag,
         selectedpoints: selectedPoints,
-        click: unselectByClick,
+        click: unselectByClick
       },
       zoomType: 'x',
-      renderTo: chartName,
+      renderTo: chartName
     },
     title: {
-      text: titleText,
+      text: titleText
     },
     xAxis: {
       type: 'datetime',
       title: {
-        text: 'Local Time',
+        text: 'Local Time'
       },
-      minRange: 3600,
+      minRange: 3600
     },
     navigator: {
       xAxis: {
         dateTimeLabelFormats: {
-          hour: '%e. %b',
-        },
-      },
+          hour: '%e. %b'
+        }
+      }
     },
     yAxis: yAxisOptions,
     series: seriesOptions,
@@ -161,58 +166,58 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
           tooltipX = this.chart.plotLeft;
           tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
         }
-        return {
-          x: tooltipX,
-          y: tooltipY,
-        };
+        return {x: tooltipX, y: tooltipY};
       },
       formatter() {
         let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
         s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
         return s;
       },
-      shared: false,
+      shared: false
     },
     credits: {
-      enabled: false,
+      enabled: false
     },
     legend: {
       enabled: true,
       align: 'right',
       layout: 'vertical',
       verticalAlign: 'top',
-      y: 100,
+      y: 100
     },
     rangeSelector: {
       inputEnabled: false,
       allButtonsEnabled: true,
-      buttons: [{
-        type: 'day',
-        count: 1,
-        text: '1 Day',
-      }, {
-        type: 'day',
-        count: 3,
-        text: '3 Days',
-      }, {
-        type: 'minute',
-        count: 60,
-        text: 'Hour',
-      }],
+      buttons: [
+        {
+          type: 'day',
+          count: 1,
+          text: '1 Day'
+        }, {
+          type: 'day',
+          count: 3,
+          text: '3 Days'
+        }, {
+          type: 'minute',
+          count: 60,
+          text: 'Hour'
+        }
+      ],
       buttonTheme: {
-        width: 60,
+        width: 60
       },
-      selected: 0,
-    },
+      selected: 1
+    }
   });
 }
 
 Template.site.onRendered(function() {
   // Do reactive stuff when something is added or removed
+
   this.autorun(function() {
+
     // Subscribe
-    Meteor.subscribe('dataSeries', Router.current().params._id,
-      startEpoch.get(), endEpoch.get());
+    Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
     Charts.remove({});
 
     let initializing = true;
@@ -229,15 +234,13 @@ Template.site.onRendered(function() {
 
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
-              _id: subType,
-            }, {
-              reactive: false,
-            })) {
+            _id: subType
+          }, {reactive: false})) {
             Charts.insert({
               _id: subType,
               yAxis: [{
-                metric,
-              }],
+                  metric
+                }]
             });
 
             const seriesOptions = [];
@@ -251,9 +254,7 @@ Template.site.onRendered(function() {
             // Add another axis if not yet existent
             let axisExist = false;
 
-            Charts.findOne({
-              _id: subType,
-            }).yAxis.forEach(function(axis) {
+            Charts.findOne({_id: subType}).yAxis.forEach(function(axis) {
               if (axis.metric === metric) {
                 axisExist = true;
               }
@@ -262,23 +263,19 @@ Template.site.onRendered(function() {
             if (!axisExist) {
               yAxisOptions.opposite = true;
               yAxisOptions.id = metric;
-              chart.addAxis(
-                yAxisOptions
-              );
+              chart.addAxis(yAxisOptions);
               Charts.update(subType, {
                 $push: {
                   yAxis: {
-                    metric,
-                  },
-                },
+                    metric
+                  }
+                }
               });
             }
 
             // Now just find the right axis index and assign it to the seriesData
             let axisIndex = 0;
-            Charts.findOne({
-              _id: subType,
-            }).yAxis.forEach(function(axis, i) {
+            Charts.findOne({_id: subType}).yAxis.forEach(function(axis, i) {
               if (axis.metric === metric) {
                 if (i === 0) { // navigator axis will be at index 1
                   axisIndex = 0;
@@ -291,7 +288,7 @@ Template.site.onRendered(function() {
             chart.addSeries(seriesData);
           }
         }
-      },
+      }
     });
     initializing = false;
   }); // end autorun
@@ -316,39 +313,52 @@ Template.editPoints.events({
     pushPoints.forEach(function(point) {
       listPushPoints.push(point.x / 1000);
     });
-    DataExporter.getDataTCEQ(Router.current().params._id, listPushPoints, null, true, false).then(function(response) {
-      sAlert.success('Push successful!');
-    }, function(error) {
-      sAlert.error(`Couldn't not find any data for site: ${Router.current().params._id} for selected epochs.`);
+
+    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, function (error, data) {
+
+      if (error) {
+        sAlert.error(error);
+      }
+      if (data) {
+        sAlert.success('Push successful!');
+      }
     });
   },
+  // Handle the note filed change event (update note)
+  'change .js-editNote' (event) {
+    // Get value from editNote element
+    const text = event.currentTarget.value;
+    note.set(text);
+  },
   // Handle the button "Change Flag" event
-  'click button#btnChange' (event) {
+  'click .js-change' (event) {
     event.preventDefault();
+
+    const updatedPoints = EditPoints.find({}).fetch();
+
+    // add edit to the edit collection
+    Meteor.call('insertEdits', updatedPoints, flagsHash[selectedFlag.get()].val, note.get());
+
     // update the edited points with the selected flag and note on the server
-    const updatedPoints = EditPoints.find({});
-    const note = $('#editNote').val();
     updatedPoints.forEach(function(point) {
-      Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, flagsHash[selectedFlag.get()].val, note);
+      Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, flagsHash[selectedFlag.get()].val, note.get());
     });
 
     // Clear note field
     $('#editNote').val('');
-  },
+  }
 });
 
 Template.editPoints.helpers({
   points() {
     return EditPoints.find({}, {
-      sort: {
-        'x': -1,
-      },
+      // sort: {
+      //   'x': -1,
+      // },
     });
   },
   availableFlags() {
-    return _.where(flagsHash, {
-      selectable: true,
-    });
+    return _.where(flagsHash, {selectable: true});
   },
   flagSelected() {
     return flagsHash[selectedFlag.get()];
@@ -360,8 +370,8 @@ Template.editPoints.helpers({
     }
     return EditPoints.find({
       'flag.val': {
-        $not: newFlag,
-      },
+        $not: newFlag
+      }
     }).count();
   },
   numPointsSelected() {
@@ -371,11 +381,9 @@ Template.editPoints.helpers({
     return val.toFixed(3);
   },
   isValid() {
-    var validFlagSet = _.pluck(_.where(flagsHash, {
-      selectable: true,
-    }), 'val');
+    var validFlagSet = _.pluck(_.where(flagsHash, {selectable: true}), 'val');
     return _.contains(validFlagSet, selectedFlag.get());
-  },
+  }
 });
 
 Template.registerHelper('formatDate', function(epoch) {
@@ -385,26 +393,23 @@ Template.registerHelper('formatDate', function(epoch) {
 
 Template.site.helpers({
   sitename() {
-    const site = LiveSites.findOne({
-      AQSID: Router.current().params._id,
-    });
+    const site = LiveSites.findOne({AQSID: Router.current().params._id});
     return site && site.siteName;
   },
   selectedDate() {
-    return moment.unix(startEpoch.get()).add(2160, 'minutes').format('YYYY-MM-DD');
+    return moment.unix(startEpoch.get()).format('YYYY-MM-DD');
   },
   charts() {
     return Charts.find(); // This gives data to the html below
-  },
+  }
 });
 
 Template.site.events({
   'change #datepicker' (event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
   },
   'click #createPush' () {
     // call export and push out file as well as download
-    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), endEpoch.get(), true, true);
-  },
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix(), true, true);
+  }
 });

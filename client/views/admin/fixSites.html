@@ -1,0 +1,31 @@
+<template name="fixSites">
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title">Reset Last Push</h3>
+		</div>
+		<div class="panel-body">
+			<p>Sites need to be active and have a last pushed date not older than the last 24 hours. If a site had been deactivated this action will reset the last push date to the current date/time.</p>
+			<form class="management">
+			<div class="row">
+				<div class="col-xs-4">
+					<label for="selectedSite">Select Site:</label>
+					<select class="form-control" id="selectedSite">
+						{{#each availableSites}}
+						<option>{{siteName}}</option>
+						{{/each}}
+					</select>
+				</div>
+			</div>
+			<br>
+			<div class="row">
+				<div class="col-xs-2">
+					<button type="submit" class="btn btn-primary" id="resetLastPush"
+						data-toggle="tooltip" data-placement="bottom" title="Reset last push date for selected site">
+						Reset Last Push
+					</button>
+				</div>
+			</div>
+		</form>
+		</div>
+	</div>
+</template>

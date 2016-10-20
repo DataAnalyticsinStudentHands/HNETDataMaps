@@ -1,6 +1,7 @@
 body {
     padding-top: 70px;
 }
+
 .navbar-default {
   background-color: #3c8dbc;
   border-color: #517a9d;
@@ -89,6 +90,15 @@ body {
     color: #bdc8d2;
     background-color: #517a9d;
   }
+}
+
+.footer {
+
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+  background-color: #f5f5f5;
 }
 /* Edit points modal */
 .modal-body {
