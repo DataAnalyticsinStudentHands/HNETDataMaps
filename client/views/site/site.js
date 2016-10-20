@@ -1,7 +1,9 @@
 import Highcharts from 'highcharts/highstock';
 
 // 3 days
-var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
+const controller = Iron.controller();
+//var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
+controller.state.set('startEpoch', moment(event.target.value, 'YYYY-MM-DD').unix());
 var selectedFlag = new ReactiveVar(null);
 var note = new ReactiveVar(null);
 
@@ -214,9 +216,15 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
 Template.site.onRendered(function() {
   // Do reactive stuff when something is added or removed
 
+	if (Router.current().params.query.startEpoch) {
+		console.log(Router.current().params.query.startEpoch);
+		startEpoch.set(Router.current().params.query.startEpoch);
+	}
+
   this.autorun(function() {
 
     // Subscribe
+		console.log(startEpoch);
     Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
     Charts.remove({});
 
@@ -402,16 +410,12 @@ Template.site.helpers({
   charts() {
     return Charts.find(); // This gives data to the html below
   },
-	postId() {
-    var controller = Iron.controller();
-		console.log(controller.state.get('postId'));
-    // reactively return the value of postId
-    return controller.state.get('postId');
-  }
 });
 
 Template.site.events({
   'change #datepicker' (event) {
+		var controller = Iron.controller();
+		controller.state.set(moment(event.target.value, 'YYYY-MM-DD').unix());
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
   'click #createPush' () {
