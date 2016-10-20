@@ -42,7 +42,7 @@ Template.datamanagement.events = {
         sAlert.error(`Error:\n ${err.reason}`);
         return;
       }
-      sAlert.success(response);
+      sAlert.success(`Called Creating Aggregates!`);
     });
   },
   'click #downloadData' (event, target) {

@@ -401,6 +401,12 @@ Template.site.helpers({
   },
   charts() {
     return Charts.find(); // This gives data to the html below
+  },
+	postId() {
+    var controller = Iron.controller();
+		console.log(controller.state.get('postId'));
+    // reactively return the value of postId
+    return controller.state.get('postId');
   }
 });
 
