@@ -2,7 +2,7 @@
 const fs = Npm.require('fs');
 const pathModule = Npm.require('path');
 
-var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
+function perform5minAggregat(siteId, startEpoch, endEpoch) {
   // gather all data, group by 5min epoch
   const pipeline = [
     {
@@ -259,11 +259,12 @@ var perform5minAggregat = function(siteId, startEpoch, endEpoch) {
           }
         }
       });
+
     });
   }, function(error) {
-    Meteor._debug(`error during aggregation: ${JSON.stringify(error)}`);
+    throw new Meteor.Error(`error during aggregation: ${JSON.stringify(error)}`);
   }));
-};
+}
 
 var makeObj = function(keys) {
   const obj = {};
@@ -306,13 +307,13 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
   // find the site information using the location of the file that is being read
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
-  const site = LiveSites.findOne({ incoming: parentDir });
+  const site = LiveSites.findOne({incoming: parentDir});
 
   if (site.AQSID) {
     // update the timestamp for the last update for the site
     const stats = fs.statSync(path);
     const pathLastUpdated = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
-		console.log(pathLastUpdated);
+    console.log(pathLastUpdated);
     LiveSites.update({
       // Selector
       AQSID: `${site.AQSID}`
@@ -342,10 +343,10 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
     bulkCollectionUpdate(LiveData, allObjects, {
       callback: function() {
         const nowEpoch = moment().unix();
-        const agoEpoch = moment.unix(nowEpoch).subtract(24, 'hours').unix();
+        // const agoEpoch = moment.unix(nowEpoch).subtract(24, 'hours').unix();
+        const agoEpoch = site.lastPushEpoch;
 
-        logger.info(`LiveData updated for : ${site.siteName}`);
-        logger.info(`Calling aggr for epochs of the last 24 hours: ${agoEpoch} - ${nowEpoch}`);
+        logger.info(`LiveData updated for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch}`);
         perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
       }
     });
@@ -374,7 +375,7 @@ const readFile = Meteor.bindEnvironment(function(path) {
 Meteor.methods({
   new5minAggreg(siteId, startEpoch, endEpoch) {
     logger.info(`Helper called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}`);
-    perform5minAggregat(siteId, startEpoch, endEpoch);
+		perform5minAggregat(siteId, startEpoch, endEpoch);
   }
 });
 

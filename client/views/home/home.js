@@ -1,5 +1,3 @@
-const ReactiveVar selectedSite;
-
 Template.home.onRendered(function() {
 
   const latude = 29.721; // Houston
