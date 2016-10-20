@@ -1,5 +1,5 @@
 // import packages
-import fs from 'fs';
+import fs from 'fs-extra';
 import junk from 'junk';
 
 let lastReportTime = 0;
@@ -88,6 +88,16 @@ Meteor.setInterval(() => {
       mailList = `${user.emails[0].address},${mailList}`;
     }
   });
+
+  // Create directory for outgoing files for tomorrow
+  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function(err) {
+    if (err) {
+      logger.error(err);
+    }
+
+    console.log("successel create for tomorrow!")
+  });
+
 }, 24 * 3600 * 1000);
 
 // 5 mins check for site down

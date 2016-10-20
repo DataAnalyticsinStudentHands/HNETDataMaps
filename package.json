@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "bcrypt": "^0.8.7",
+    "fs-extra": "^0.30.0",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "highcharts": "^4.2.5",
     "junk": "^1.0.2"
@@ -47,7 +48,7 @@
       "Exports": true,
       "AggrEdits": true,
       "DataExporter": true,
-			"SimpleSchema": true,
+      "SimpleSchema": true,
       "channelHash": true,
       "flagsHash": true,
       "unitsHash": true
@@ -66,10 +67,10 @@
         "error",
         "always"
       ],
-			"comma-dangle": [
-				"error",
-				"never"
-			]
+      "comma-dangle": [
+        "error",
+        "never"
+      ]
     }
   },
   "repository": {
