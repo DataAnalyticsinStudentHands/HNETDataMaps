@@ -36,6 +36,7 @@
       "Highcharts": true,
       "Papa": true,
       "sAlert": true,
+			"Winston": true,
       "LiveData": true,
       "AggrData": true,
       "Sites": true,
