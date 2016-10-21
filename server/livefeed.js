@@ -220,6 +220,14 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (!newaggr[instrument][measurement]) {
               newaggr[instrument][measurement] = [];
             }
+
+						// automatic flagging of aggregated values that are out of range
+            if (instrument === 'O3' || instrument === '49i') {
+              if (obj.avg > 250) { // taking care of 03 values to be flagged with 9(N)
+                obj.Flag = 9;
+              }
+            }
+
             newaggr[instrument][measurement].push({ metric: 'sum', val: obj.sum });
             newaggr[instrument][measurement].push({ metric: 'avg', val: obj.avg });
             newaggr[instrument][measurement].push({ metric: 'numValid', val: obj.numValid });
