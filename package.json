@@ -8,7 +8,7 @@
     "eslint-plugin-import": "^2.0.1",
     "fs-extra": "^0.30.0",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
-    "highcharts": "^4.2.5",
+    "highcharts": "^4.2.7",
     "junk": "^1.0.2"
   },
   "scripts": {
@@ -36,7 +36,7 @@
       "Highcharts": true,
       "Papa": true,
       "sAlert": true,
-			"Winston": true,
+      "Winston": true,
       "LiveData": true,
       "AggrData": true,
       "Sites": true,
@@ -63,7 +63,15 @@
         "error",
         "always"
       ],
-			"no-underscore-dangle": ["error", { "allow": ["foo_", "_id"] }],
+      "no-underscore-dangle": [
+        "error",
+        {
+          "allow": [
+            "foo_",
+            "_id"
+          ]
+        }
+      ],
       "comma-dangle": [
         "error",
         "never"

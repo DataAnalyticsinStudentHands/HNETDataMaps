@@ -24,6 +24,8 @@ reactive-dict@1.1.8
 fortawesome:fontawesome         # fontawesome packaged for Meteor
 makalu:better-dateinput-polyfill # Date picker
 twbs:bootstrap                  # UI package
+peppelg:bootstrap-3-modal       # better modal windows
+aldeed:tabular									# reactive data tables
 
 # data
 mongo@1.1.12                           # The database Meteor supports right now
@@ -57,18 +59,14 @@ momentjs:moment                 # Time calculations
 harrison:papa-parse             # csv parsing used for push file generation
 velocity:chokidar               # chokidar - A neat wrapper around node.js fs.watch / fs.watchFile / fsevents
 
+# email
+email@1.1.17
+epaminond:nodemailer
+
 # mobile
 mobile-experience@1.0.4
 
-#reload
-#random
-#ejson
-peppelg:bootstrap-3-modal
-
-
-email@1.1.17
-epaminond:nodemailer
 juliancwirko:s-alert
 shell-server
-aldeed:tabular
+
 meteorhacks:kadira
