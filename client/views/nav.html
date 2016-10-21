@@ -35,13 +35,11 @@
 	<li class="dropdown">
 		<a href="#" data-toggle="dropdown" class="dropdown-toggle">Sites <b class="caret"></b></a>
 		<ul class="dropdown-menu">
-			<li><a href="{{ pathFor 'site' _id='482010570'}}">Clear Brook Highschool</a></li>
-			<li><a href="{{ pathFor 'site' _id='481670571'}}">Clear Creek Highschool</a></li>
-			<li><a href="{{ pathFor 'site' _id='482010572'}}">Clear Lake Highschool</a></li>
-			<li><a href="{{ pathFor 'site' _id='481670697'}}">Coastal Center</a></li>
-			<li><a href="{{ pathFor 'site' _id='482010695'}}">Moody Towers</a></li>
-			<li><a href="{{ pathFor 'site' _id='480711606'}}">Smith Point</a></li>
-			<li><a href="{{ pathFor 'site' _id='482910699'}}">West Liberty</a></li>
+			{{#each sites}}
+			  <li>
+			    <a href="{{ pathFor 'site' _id=AQSID }}"> {{siteName}} </a>
+			  </li>
+			{{/each}}
 			<li class="divider"></li>
 			<li><a href="#">Launch Trailer</a></li>
 		</ul>

@@ -1,7 +1,7 @@
 import Highcharts from 'highcharts/highstock';
 
 // 3 days
-var startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
+const startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
 var selectedFlag = new ReactiveVar(null);
 var note = new ReactiveVar(null);
 
@@ -212,10 +212,12 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
 }
 
 Template.site.onRendered(function() {
-  // Do reactive stuff when something is added or removed
+  // use query parameter if enetering site through different route
+	const controller = Iron.controller();
+  startEpoch.set(controller.state.get('fromRouter'));
 
+	// load based on date selection
   this.autorun(function() {
-
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
     Charts.remove({});
@@ -292,19 +294,20 @@ Template.site.onRendered(function() {
     });
     initializing = false;
   }); // end autorun
+  Router.current().params.query.startEpoch = undefined;
 }); // end of onRendered
 
 Template.editPoints.events({
-  'click .dropdown-menu li a' (event) {
+  'click .dropdown-menu li a'(event) {
     event.preventDefault();
     selectedFlag.set(parseInt($(event.currentTarget).attr('data-value'), 10));
   },
-  'click button#btnCancel' (event) {
+  'click button#btnCancel'(event) {
     event.preventDefault();
     selectedFlag.set(null);
   },
   // Handle the button "Push" event
-  'click button#btnPush' (event) {
+  'click button#btnPush'(event) {
     event.preventDefault();
     // Push Edited points in TCEQ format
     const pushPoints = EditPoints.find({});
@@ -314,7 +317,7 @@ Template.editPoints.events({
       listPushPoints.push(point.x / 1000);
     });
 
-    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, function (error, data) {
+    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, function(error, data) {
 
       if (error) {
         sAlert.error(error);
@@ -325,13 +328,13 @@ Template.editPoints.events({
     });
   },
   // Handle the note filed change event (update note)
-  'change .js-editNote' (event) {
+  'change .js-editNote'(event) {
     // Get value from editNote element
     const text = event.currentTarget.value;
     note.set(text);
   },
   // Handle the button "Change Flag" event
-  'click .js-change' (event) {
+  'click .js-change'(event) {
     event.preventDefault();
 
     const updatedPoints = EditPoints.find({}).fetch();
@@ -405,11 +408,12 @@ Template.site.helpers({
 });
 
 Template.site.events({
-  'change #datepicker' (event) {
+  'change #datepicker'(event) {
+		// update reactive var whith selected date
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'click #createPush' () {
-    // call export and push out file as well as download
-    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix(), true, true);
+  'click #downloadCurrent'() {
+    // call export and download
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
   }
 });

@@ -10,13 +10,13 @@ Template.viewDataCell.events({
     Meteor.call('loadFile', rowData.fileName, function(err, response) {
       if (!err) {
         dataToShow.set(response);
-				dataFilePath.set(rowData.fileName);
+        dataFilePath.set(rowData.fileName);
         // Show the Data File modal
         $('#dataFileModal').modal({}).modal('show');
       } else {
-        sAlert.error(`Could not find file.`);
+        sAlert.error('Could not find file.');
       }
-    })
+    });
   }
 });
 
@@ -24,7 +24,22 @@ Template.dataFile.helpers({
   dataFromFile() {
     return dataToShow.get();
   },
-	dataFileName() {
+  dataFileName() {
     return dataFilePath.get();
+  }
+});
+
+Template.viewDataCell.helpers({
+  pushed() {
+    if (this.item.fileName === '') {
+      return 'red';
+    }
+    return 'green';
   },
+  isPushed() {
+    if (this.item.fileName === '') {
+      return false;
+    }
+    return true;
+  }
 });

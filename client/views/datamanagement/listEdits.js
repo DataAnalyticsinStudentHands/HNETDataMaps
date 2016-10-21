@@ -1,9 +1,11 @@
 Template.viewEditsCell.events({
   'click .js-view-edits': function (event) {
-		var dataTable = $(event.target).closest('table').DataTable();
-		var rowData = dataTable.row(event.currentTarget).data();
-    // Your click handler logic here
-    Router.go(`/site/${this.site}`);
+		const dataTable = $(event.target).closest('table').DataTable();
+    const rowIndex = $(event.target).closest('tr').index();
+    const rowData = dataTable.row(rowIndex).data();
+
+		// go back to site with startEpoch
+		Router.go('site', {_id: `${this.site}`}, { query: `startEpoch=${rowData.startEpoch}` });
   },
 });
 

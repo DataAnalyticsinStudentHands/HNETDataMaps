@@ -1,0 +1,147 @@
+{ 
+    "_id" : ObjectId("57d95ffc3004eaffb76f9b41"), 
+    "AQSID" : "482010570", 
+    "loc" : {
+        "type" : "Point", 
+        "coordinates" : [
+            -95.1853, 
+            29.5489
+        ]
+    }, 
+    "siteName" : "Clear Brook High School C570", 
+    "incoming" : "UHCBH_DAQData", 
+    "lastUpdateEpoch" : NumberInt(1477016347), 
+    "lastPushEpoch" : NumberInt(0), 
+    "GMT offset" : "-6.00", 
+    "agencyID" : "TX1", 
+    "country" : "US", 
+    "state" : "TX", 
+    "status" : "Inactive", 
+    "site code" : "0570"
+}
+{ 
+    "_id" : ObjectId("57d95ffc3004eaffb76f9b42"), 
+    "AQSID" : "482010572", 
+    "loc" : {
+        "type" : "Point", 
+        "coordinates" : [
+            -95.105, 
+            29.5833
+        ]
+    }, 
+    "siteName" : "Clear Lake High School C572", 
+    "incoming" : "UHCLH_DAQData", 
+    "lastUpdateEpoch" : NumberInt(0), 
+    "lastPushEpoch" : NumberInt(0), 
+    "GMT offset" : "-6.00", 
+    "agencyID" : "TX1", 
+    "country" : "US", 
+    "state" : "TX", 
+    "status" : "Inactive", 
+    "site code" : "0572"
+}
+{ 
+    "_id" : ObjectId("57d95ffc3004eaffb76f9b45"), 
+    "AQSID" : "481670571", 
+    "loc" : {
+        "type" : "Point", 
+        "coordinates" : [
+            -95.0706, 
+            29.5256
+        ]
+    }, 
+    "siteName" : "Clear Creek High School C571", 
+    "incoming" : "UHCCH_DAQData", 
+    "lastUpdateEpoch" : NumberInt(1477016144), 
+    "lastPushEpoch" : NumberInt(0), 
+    "GMT offset" : "-6.00", 
+    "agencyID" : "TX1", 
+    "country" : "US", 
+    "state" : "TX", 
+    "status" : "Inactive", 
+    "site code" : "0571"
+}
+{ 
+    "_id" : ObjectId("57d95ffc3004eaffb76f9b43"), 
+    "AQSID" : "481670697", 
+    "loc" : {
+        "type" : "Point", 
+        "coordinates" : [
+            -95.041389, 
+            29.38777
+        ]
+    }, 
+    "siteName" : "Coastal Center C697", 
+    "incoming" : "UHCC_DAQData", 
+    "lastUpdateEpoch" : NumberInt(0), 
+    "lastPushEpoch" : NumberInt(0), 
+    "GMT offset" : "-6.00", 
+    "agencyID" : "TX1", 
+    "country" : "US", 
+    "state" : "TX", 
+    "status" : "Inactive", 
+    "site code" : "0697"
+}
+{ 
+    "_id" : ObjectId("57d95ffc3004eaffb76f9b44"), 
+    "AQSID" : "482910699", 
+    "loc" : {
+        "type" : "Point", 
+        "coordinates" : [
+            -94.978058, 
+            30.058056
+        ]
+    }, 
+    "siteName" : "West Liberty C699", 
+    "incoming" : "UHWL_DAQData", 
+    "lastUpdateEpoch" : NumberInt(1477016094), 
+    "lastPushEpoch" : NumberInt(0), 
+    "GMT offset" : "-6.00", 
+    "agencyID" : "TX1", 
+    "country" : "US", 
+    "state" : "TX", 
+    "status" : "Inactive", 
+    "site code" : "0699"
+}
+{ 
+    "_id" : ObjectId("57d95ffc3004eaffb76f9b46"), 
+    "AQSID" : "482010695", 
+    "loc" : {
+        "type" : "Point", 
+        "coordinates" : [
+            -95.3414, 
+            29.7176
+        ]
+    }, 
+    "siteName" : "UH Moody Tower C695", 
+    "incoming" : "UHMT_DAQData", 
+    "lastUpdateEpoch" : NumberInt(0), 
+    "lastPushEpoch" : NumberInt(0), 
+    "GMT offset" : "-6.00", 
+    "agencyID" : "TX1", 
+    "country" : "US", 
+    "state" : "TX", 
+    "status" : "Inactive", 
+    "site code" : "0695"
+}
+{ 
+    "_id" : ObjectId("57d95ffc3004eaffb76f9b47"), 
+    "AQSID" : "480711606", 
+    "loc" : {
+        "type" : "Point", 
+        "coordinates" : [
+            -94.786969, 
+            29.546244
+        ]
+    }, 
+    "siteName" : "Smith Point C1606", 
+    "incoming" : "UHSP_DAQData", 
+    "lastUpdateEpoch" : NumberInt(1477016399), 
+    "lastPushEpoch" : NumberInt(0), 
+    "GMT offset" : "-6.00", 
+    "agencyID" : "TX1", 
+    "country" : "US", 
+    "state" : "TX", 
+    "status" : "Inactive", 
+    "site code" : "1606"
+}
