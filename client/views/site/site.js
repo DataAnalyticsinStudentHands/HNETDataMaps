@@ -131,7 +131,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
         selectedpoints: selectedPoints,
         click: unselectByClick
       },
-      zoomType: 'x',
+      zoomType: 'xy',
       renderTo: chartName
     },
     title: {
@@ -142,6 +142,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       title: {
         text: 'Local Time'
       },
+			ordinal: false,
       minRange: 3600
     },
     navigator: {
@@ -213,10 +214,10 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
 
 Template.site.onRendered(function() {
   // use query parameter if enetering site through different route
-	const controller = Iron.controller();
+  const controller = Iron.controller();
   startEpoch.set(controller.state.get('fromRouter'));
 
-	// load based on date selection
+  // load based on date selection
   this.autorun(function() {
     // Subscribe
     Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
