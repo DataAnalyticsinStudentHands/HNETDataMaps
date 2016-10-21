@@ -415,7 +415,7 @@ Meteor.publish('exports', function() {
 Meteor.publish('liveSites', function() {
   return LiveSites.find({}, {
     sort: {
-      'siteName': -1
+      'siteName': 1
     }
   });
 });
