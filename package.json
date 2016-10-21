@@ -5,16 +5,11 @@
   "main": "index.js",
   "dependencies": {
     "bcrypt": "^0.8.7",
+    "eslint-plugin-import": "^2.0.1",
     "fs-extra": "^0.30.0",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "highcharts": "^4.2.5",
     "junk": "^1.0.2"
-  },
-  "devDependencies": {
-    "eslint": "^3.5.0",
-    "eslint-config-airbnb": "^6.2.0",
-    "eslint-plugin-meteor": "^3.4.0",
-    "eslint-plugin-react": "^4.2.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -67,6 +62,7 @@
         "error",
         "always"
       ],
+			"no-underscore-dangle": ["error", { "allow": ["foo_", "_id"] }],
       "comma-dangle": [
         "error",
         "never"
@@ -82,5 +78,14 @@
   "bugs": {
     "url": "https://github.com/DataAnalyticsinStudentHands/DataMaps/issues"
   },
-  "homepage": "https://github.com/DataAnalyticsinStudentHands/DataMaps"
+  "homepage": "https://github.com/DataAnalyticsinStudentHands/DataMaps",
+  "devDependencies": {
+    "babel-eslint": "^7.0.0",
+    "eslint": "^3.8.1",
+    "eslint-config-airbnb": "^12.0.0",
+    "eslint-import-resolver-meteor": "^0.3.3",
+    "eslint-plugin-jsx-a11y": "^2.2.3",
+    "eslint-plugin-meteor": "^4.0.1",
+    "eslint-plugin-react": "^6.4.1"
+  }
 }
