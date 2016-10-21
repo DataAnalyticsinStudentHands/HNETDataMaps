@@ -1,8 +1,8 @@
 {
   "name": "dash_data_maps",
-  "version": "1.0.0",
-  "description": "This is a development repository.",
-  "main": "index.js",
+  "version": "0.9.0",
+  "description": "DASH DataMaps - a real time analysis & visualization frame work",
+  "main": "main.html",
   "dependencies": {
     "bcrypt": "^0.8.7",
     "eslint-plugin-import": "^2.0.1",
