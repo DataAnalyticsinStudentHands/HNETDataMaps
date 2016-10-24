@@ -1,11 +1,13 @@
-html {
-  position: relative;
-  min-height: 100%;
+body {
+	height: 100%;
 }
 
-body {
+#content .container, #subcontent .container {
+	max-width: 80%;
+}
 
-	padding: 70px;
+.navbar-spacer {
+	height: 70px;
 }
 
 .navbar-default {
@@ -98,13 +100,20 @@ body {
   }
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 50px;
-  background-color: #3c8dbc;
+/* Wrapper for page content to push down footer */
+.sticky-wrapper {
+  min-height: 100%;
+  height: auto;
+  /* Negative indent footer by its height */
+  margin: 0 auto (@footer_height * -1);
+  /* Pad bottom by footer height */
+  padding: 0 0 @footer_height;
+}
 
+/* Fixed height of the footer */
+.sticky-footer {
+  height: 60px;
+	background-color: #517a9d;
 }
 /* Edit points modal */
 .modal-body {
