@@ -2,15 +2,11 @@ body {
 	height: 100%;
 }
 
-#content .container, #subcontent .container {
-	max-width: 80%;
-}
-
 .navbar-spacer {
 	height: 70px;
 }
 
-.navbar-default {
+/*.navbar-default {
   background-color: #3c8dbc;
   border-color: #517a9d;
 }
@@ -82,7 +78,7 @@ body {
 }
 .navbar-default .navbar-link:hover {
   color: #bdc8d2;
-}
+}*/
 
 @media (max-width: 767px) {
   .navbar-default .navbar-nav .open .dropdown-menu > li > a {
@@ -113,7 +109,6 @@ body {
 /* Fixed height of the footer */
 .sticky-footer {
   height: 60px;
-	background-color: #517a9d;
 }
 /* Edit points modal */
 .modal-body {

@@ -1,5 +1,5 @@
 <template name="site">
-
+ <div class="container-fluid">
 	<div class="panel panel-default">
 		<div class="panel-heading">
 			<h3 class="panel-title">Site: {{sitename}}</h3>
@@ -20,6 +20,7 @@
 	{{else}}
     <p >Found no data for the selected date.</p>
 	{{/each}} {{> editPoints}}
+</div>
 </template>
 
 <!-- Modal for editing points -->
