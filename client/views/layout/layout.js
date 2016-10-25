@@ -11,3 +11,10 @@ Template.navItems.helpers({
     return LiveSites.find({});
   }
 });
+
+Template.footer.helpers({
+  siteSpecific() {
+    const site = LiveSites.findOne({ AQSID: Router.current().params._id });
+    return site && site.footerText;
+  }
+});
