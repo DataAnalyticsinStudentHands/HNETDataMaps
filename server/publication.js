@@ -100,8 +100,10 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                     text: key,
                   },
                   opposite: false,
-                  floor: 0,
-                  ceiling: 250,
+                //  floor: 0,
+                //  ceiling: 250,
+									min: 0,
+									max: 250
                 };
               } else {
                 yAxis = {
@@ -243,8 +245,8 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                   text: key,
                 },
                 opposite: false,
-                floor: 0,
-                ceiling: 250,
+              //  floor: 0,
+              //  ceiling: 250,
               };
             } else {
               yAxis = {

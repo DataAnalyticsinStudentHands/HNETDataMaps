@@ -15,12 +15,21 @@
 
 	<!-- container for charts -->
 	{{#each charts}}
-	<div id="container-chart-{{_id}}"></div>
+	<form class="adjust" id = "mygraphs">
 
-	<!-- placeholder for editPoints modal -->
+<div id="container-chart-{{_id}}" style="min-width: 310px; height: 500px; margin: 0 auto"></div>
+<div class="input-group pull-right" style="margin-top:-450px;">
+<input type="text" name="min" placeholder="min" />
+<input type="text" name="max" placeholder="max" >
+<input type="submit" value="Adjust min/max y-Axis">
+</div>
+</form>
+
 	{{else}}
     <p >Found no data for the selected date.</p>
-	{{/each}} {{> editPoints}}
+	{{/each}}
+<!-- placeholder for editPoints modal -->
+	{{> editPoints}}
 </div>
 </template>
 
