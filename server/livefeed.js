@@ -127,20 +127,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 
                 let flag = data[0].val;
 
-                if (data[j].metric === 'NOx') {
-                  if (data[j].value < -1) { // taking care of NOx values to be flagged with 9(N)
-                    flag = 9;
-                    numValid = 0;
-                  }
-                }
-
-                if (data[j].metric === 'O3' || data[j].metric === '49i') {
-                  if (data[j].value > 250) { // taking care of 03 values to be flagged with 9(N)
-                    flag = 9;
-                    numValid = 0;
-                  }
-                }
-
                 if (!aggrSubTypes[newkey]) {
                   aggrSubTypes[newkey] = {
                     'sum': Number(data[j].val),
@@ -206,32 +192,31 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             const windDirAvg = (Math.atan2(obj.avgWindEast, obj.avgWindNord) / Math.PI * 180 + 360) % 360;
             const windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
 
+            newaggr[instrument].WD.push({metric: 'sum', val: 'Nan'});
+            newaggr[instrument].WD.push({metric: 'avg', val: windDirAvg});
+            newaggr[instrument].WD.push({metric: 'numValid', val: obj.numValid});
+            newaggr[instrument].WD.push({metric: 'Flag', val: obj.Flag});
 
-            newaggr[instrument].WD.push({ metric: 'sum', val: 'Nan' });
-            newaggr[instrument].WD.push({ metric: 'avg', val: windDirAvg });
-            newaggr[instrument].WD.push({ metric: 'numValid', val: obj.numValid });
-            newaggr[instrument].WD.push({ metric: 'Flag', val: obj.Flag });
-
-            newaggr[instrument].WS.push({ metric: 'sum', val: 'Nan' });
-            newaggr[instrument].WS.push({ metric: 'avg', val: windSpdAvg });
-            newaggr[instrument].WS.push({ metric: 'numValid', val: obj.numValid });
-            newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag });
+            newaggr[instrument].WS.push({metric: 'sum', val: 'Nan'});
+            newaggr[instrument].WS.push({metric: 'avg', val: windSpdAvg});
+            newaggr[instrument].WS.push({metric: 'numValid', val: obj.numValid});
+            newaggr[instrument].WS.push({metric: 'Flag', val: obj.Flag});
           } else { // all other measurements
             if (!newaggr[instrument][measurement]) {
               newaggr[instrument][measurement] = [];
             }
 
-						// automatic flagging of aggregated values that are out of range
+            // automatic flagging of aggregated values that are out of range for NO2 only
             if (instrument === 'O3' || instrument === '49i') {
               if (obj.avg > 250) { // taking care of 03 values to be flagged with 9(N)
                 obj.Flag = 9;
               }
             }
 
-            newaggr[instrument][measurement].push({ metric: 'sum', val: obj.sum });
-            newaggr[instrument][measurement].push({ metric: 'avg', val: obj.avg });
-            newaggr[instrument][measurement].push({ metric: 'numValid', val: obj.numValid });
-            newaggr[instrument][measurement].push({ metric: 'Flag', val: obj.Flag });
+            newaggr[instrument][measurement].push({metric: 'sum', val: obj.sum});
+            newaggr[instrument][measurement].push({metric: 'avg', val: obj.avg});
+            newaggr[instrument][measurement].push({metric: 'numValid', val: obj.numValid});
+            newaggr[instrument][measurement].push({metric: 'Flag', val: obj.Flag});
           }
         }
       }
@@ -277,9 +262,10 @@ var makeObj = function(keys) {
       }
       const subKeys = newKey.split('_'); // split each column header
       if (subKeys.length > 1) { // skipping 'TheTime'
-        metron = subKeys[2]; // instrument i.e. wind, O3, etc.
-        const measurement = subKeys[3]; //
+        metron = subKeys[2]; // instrument i.e. Wind, Ozone etc.
+        const measurement = subKeys[3]; // measurement conc, temp, etc.
         const value = keys[key];
+
         if (!obj.subTypes[metron]) {
           obj.subTypes[metron] = [
             {
@@ -289,10 +275,21 @@ var makeObj = function(keys) {
           ];
         } else {
           if (measurement === 'Flag') { // Flag should be always first
-            obj.subTypes[metron].unshift({ metric: measurement, val: value });
+            obj.subTypes[metron].unshift({metric: measurement, val: value});
           } else {
-            obj.subTypes[metron].push({ metric: measurement, val: value });
+            obj.subTypes[metron].push({metric: measurement, val: value});
           }
+        }
+      }
+    }
+  }
+
+  for (var subType in obj.subTypes) {
+    if (obj.subTypes.hasOwnProperty(subType)) {
+      // taking care of 03 values to be flagged with 9(N)
+      if (subType === 'O3' || subType === '49i') {
+        if (obj.subTypes[subType][1].val > 250) {
+          obj.subTypes[subType][0].val = 9;
         }
       }
     }
@@ -305,7 +302,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
   // find the site information using the location of the file that is being read
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
-  const site = LiveSites.findOne({ incoming: parentDir });
+  const site = LiveSites.findOne({incoming: parentDir});
 
   if (site.AQSID) {
     // update the timestamp for the last update for the site
@@ -320,7 +317,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
         $set: {
           lastUpdateEpoch: fileModified
         }
-      }, { validate: false });
+      }, {validate: false});
     }
 
     // create objects from parsed lines

@@ -1,4 +1,5 @@
 import Highcharts from 'highcharts/highstock';
+require('highcharts/modules/exporting')(Highcharts);
 
 // 3 days
 const startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
@@ -134,6 +135,27 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       zoomType: 'xy',
       renderTo: chartName
     },
+		exporting: {
+			buttons: {
+                contextButton: {
+                    menuItems: [{
+                        text: 'Export to PNG (small)',
+                        onclick: function () {
+                            this.exportChart({
+                                width: 250
+                            });
+                        }
+                    }, {
+                        text: 'Export to PNG (large)',
+                        onclick: function () {
+                            this.exportChart();
+                        },
+                        separator: false
+                    }]
+                }
+							},
+        enabled: true
+    },
     title: {
       text: titleText
     },
@@ -233,6 +255,7 @@ Template.site.onRendered(function() {
 
           // store yAxis options in separate variable
           const yAxisOptions = seriesData.yAxis;
+
           delete seriesData.yAxis;
 
           // insert object into Charts if not yet exists and create new chart

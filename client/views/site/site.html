@@ -15,7 +15,12 @@
 
 	<!-- container for charts -->
 	{{#each charts}}
-	<div id="container-chart-{{_id}}"></div>
+	<input id="min" type="text" value="1">
+<input id="max" type="text" value="2">
+<button id="change-{{_id}}">change!</button>
+	<div id="container-chart-{{_id}}">
+	</div>
+
 	<!-- placeholder for editPoints modal -->
 	{{else}}
     <p >Found no data for the selected date.</p>
