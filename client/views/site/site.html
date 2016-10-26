@@ -7,7 +7,7 @@
 		<div class="panel-body">
 			<h5>Select Date:</h5>
 			<input type="date" value="{{selectedDate}}" id="datepicker">
-			<button class="btn btn-primary" id="downloadCurrent">
+			<button class="btn btn-primary btn-sm" id="downloadCurrent">
 				Download Current Data
 			</button>
 		</div>
@@ -15,18 +15,19 @@
 
 	<!-- container for charts -->
 	{{#each charts}}
-	<form class="adjust" id = "mygraphs">
+	<form class="adjust" id="{{_id}}">
+  <div id="container-chart-{{_id}}" style="min-width: 310px; height: 500px; margin: 0 auto"></div>
+  <div class="input-group pull-right" style="margin-top:-450px;">
+    <input type="text" name="min" placeholder="min" value={{min}} style="margin-right: 5px;" />
 
-<div id="container-chart-{{_id}}" style="min-width: 310px; height: 500px; margin: 0 auto"></div>
-<div class="input-group pull-right" style="margin-top:-450px;">
-<input type="text" name="min" placeholder="min" />
-<input type="text" name="max" placeholder="max" >
-<input type="submit" value="Adjust min/max y-Axis">
-</div>
+    <input type="text" name="max" placeholder="max" value={{max}} style="margin-right: 5px;" />
+
+    <input class="btn btn-default btn-xs" type="submit" value="Adjust min/max y-Axis" />
+  </div>
 </form>
-
 	{{else}}
-    <p >Found no data for the selected date.</p>
+	<div class="alert alert-info" role="alert">Found no data for the selected date.</div>
+
 	{{/each}}
 <!-- placeholder for editPoints modal -->
 	{{> editPoints}}

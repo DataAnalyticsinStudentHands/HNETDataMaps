@@ -74,14 +74,15 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                   allowDecimals: false,
                   labels: {
                     format: '{value:.0f} ' + unitsHash[key],
+										rotation: 90
                   },
                   title: {
-                    text: key,
+                    text: key
                   },
                   opposite: false,
                   floor: 0,
                   ceiling: 360,
-                  tickInterval: 90,
+                  tickInterval: 90
                 };
 
                 if (key === 'WS') {
@@ -89,6 +90,7 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                   // it occasionally reports wind speeds upwards of 250mph.
                   yAxis.ceiling = 20;
                   yAxis.tickInterval = 5;
+									yAxis.rotation = 90;
                 }
               } else if (pubKey.indexOf('49i') >= 0) {
                 yAxis = {
@@ -263,7 +265,7 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
             }
 
             // add to subscription
-						if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
+						if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments (no 10s data)
 						} else {
             subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
               name: key + '_10s',
