@@ -71,7 +71,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               let windDir;
               let windSpd;
               for (let j = 1; j < data.length; j++) {
-                if (data[j].val === '') { // taking care of empty data values
+                if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
                   numValid = 0;
                 }
                 if (data[j].metric === 'WD') {
@@ -121,7 +121,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               for (let j = 1; j < data.length; j++) {
                 newkey = subType + '_' + data[j].metric;
 
-                if (data[j].val === '') { // taking care of empty data values
+                if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
                   numValid = 0;
                 }
 
@@ -249,7 +249,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   }));
 }
 
-var makeObj = function(keys) {
+var makeObj = function(keys, previousObject) {
   const obj = {};
   obj.subTypes = {};
   let metron = [];
@@ -288,9 +288,17 @@ var makeObj = function(keys) {
     if (obj.subTypes.hasOwnProperty(subType)) {
       // automatic flagging of 03 values to be flagged with 9(N)
       if (subType === 'O3' || subType === '49i') {
+				// condition: O3 value above 250
         if (obj.subTypes[subType][1].val > 250) {
           obj.subTypes[subType][0].val = 9;
         }
+				// if a O3 value changes for more than 30 ppb from previous value
+				if (previousObject) {
+					const diff = obj.subTypes[subType][1].val - previousObject.subTypes[subType][1].val;
+					if (diff >= 30) {
+						obj.subTypes[subType][0].val = 9;
+					}
+				}
       }
     }
   }
@@ -322,8 +330,14 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
 
     // create objects from parsed lines
     const allObjects = [];
+		let previousObject = {};
     for (let k = 0; k < parsedLines.length; k++) {
-      const singleObj = makeObj(parsedLines[k]); // add data in
+      let singleObj = {};
+			if (k === 0) {
+				singleObj = makeObj(parsedLines[k]);
+			} else {
+				singleObj= makeObj(parsedLines[k], previousObject);
+			}
       let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + (6 * 3600);
       epoch = epoch - (epoch % 1); // rounding down
       singleObj.epoch = epoch;
@@ -333,6 +347,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
       singleObj.file = pathArray[pathArray.length - 1];
       singleObj._id = `${site.AQSID}_${epoch}`;
       allObjects.push(singleObj);
+			previousObject = singleObj;
     }
 
     // using bulkCollectionUpdate
