@@ -88,7 +88,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 
               let flag = data[0].val;
 
-              // taking care of high wind speed values/flag with 9 (N)
+              // automatic flagging of high wind speed values/flag with 9(N)
               if (windSpd >= 35) {
                 numValid = 0;
                 flag = 9;
@@ -206,9 +206,9 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               newaggr[instrument][measurement] = [];
             }
 
-            // automatic flagging of aggregated values that are out of range for NO2 only
-            if (instrument === 'O3' || instrument === '49i') {
-              if (obj.avg > 250) { // taking care of 03 values to be flagged with 9(N)
+            // automatic flagging of aggregated values that are out of range for NO2 to be flagged with 9(N)
+            if (instrument === '42i') {
+              if (obj.avg < -0.5) {
                 obj.Flag = 9;
               }
             }
@@ -286,7 +286,7 @@ var makeObj = function(keys) {
 
   for (var subType in obj.subTypes) {
     if (obj.subTypes.hasOwnProperty(subType)) {
-      // taking care of 03 values to be flagged with 9(N)
+      // automatic flagging of 03 values to be flagged with 9(N)
       if (subType === 'O3' || subType === '49i') {
         if (obj.subTypes[subType][1].val > 250) {
           obj.subTypes[subType][0].val = 9;
