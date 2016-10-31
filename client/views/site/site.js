@@ -12,17 +12,15 @@ Highcharts.setOptions({
   global: {
     useUTC: false
   },
-   colors: [
-     'black',
-     'grey',
-     'green',
-  //   '#DDDF00',
-  //   '#24CBE5',
-  //   '#64E572',
-  //   '#FF9655',
-  //   '#FFF263',
-  //   '#6AF9C4'
-   ]
+  colors: [
+    'black', 'grey', 'green',
+    //   '#DDDF00',
+    //   '#24CBE5',
+    //   '#64E572',
+    //   '#FF9655',
+    //   '#FFF263',
+    //   '#6AF9C4'
+  ]
 });
 
 // placeholder for EditPoints in modal
@@ -35,7 +33,7 @@ const Charts = new Meteor.Collection(null);
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
-	// only select points with shift key down
+  // only select points with shift key down
   if (shiftSelected.get()) {
     // Select points only for series where allowPointSelect
     Highcharts.each(this.series, function(series) {
@@ -191,7 +189,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       align: 'right',
       layout: 'vertical',
       verticalAlign: 'top',
-      y: 100
+      y: 200
     },
     rangeSelector: {
       inputEnabled: false,
@@ -272,13 +270,25 @@ Template.site.onRendered(function() {
             yAxisOptions.id = metric;
             const chart = createChart(`container-chart-${chartId}`, subType, seriesOptions, yAxisOptions);
 
-            // Set value for min/max form element
+            // Set text value for min/max form element
             const yAxis = chart.get(metric);
             const extremes = yAxis.getExtremes();
-            //  $('#min').attr('value', extremes.min);
-            //  $('#max').attr('value', extremes.max);
 
-            Charts.update({ _id: chartId }, { min: Math.floor(extremes.min), max: Math.floor(extremes.max) });
+            Charts.update({
+              _id: chartId
+            }, {
+              min: Math.floor(extremes.min),
+              max: Math.floor(extremes.max)
+            });
+
+            // add another static legend to show flag colors
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 50, 2).attr({fill: 'red'}).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Valid (K)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 47).add();
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 38, 2).attr({fill: 'orange'}).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Span (Q)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 35).add();
+						chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 26, 2).attr({fill: 'black'}).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Offline (N)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 23).add();
+
           } else {
             // add other series that belongs to this chart
             const chart = $(`#container-chart-${chartId}`).highcharts();

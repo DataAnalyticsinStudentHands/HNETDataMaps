@@ -73,11 +73,10 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                 yAxis = {
                   allowDecimals: false,
                   labels: {
-                    format: '{value:.0f} ' + unitsHash[key],
-										rotation: 90
+                    format: '{value:.0f}'
                   },
                   title: {
-                    text: key
+                    text: `${key}[${unitsHash[key]}]`
                   },
                   opposite: false,
                   floor: 0,
@@ -90,20 +89,17 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                   // it occasionally reports wind speeds upwards of 250mph.
                   yAxis.ceiling = 20;
                   yAxis.tickInterval = 5;
-									yAxis.rotation = 90;
                 }
               } else if (pubKey.indexOf('49i') >= 0) {
                 yAxis = {
                   allowDecimals: false,
                   labels: {
-                    format: '{value:.0f} ' + unitsHash[key],
+                    format: '{value:.0f}'
                   },
                   title: {
-                    text: key,
+                    text: `${key}[${unitsHash[key]}]`
                   },
                   opposite: false,
-                //  floor: 0,
-                //  ceiling: 250,
 									min: 0,
 									max: 250
                 };
@@ -111,10 +107,10 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                 yAxis = {
                   allowDecimals: false,
                   labels: {
-                    format: '{value:.0f} ' + unitsHash[key],
+                    format: '{value:.0f}'
                   },
                   title: {
-                    text: key,
+                    text: `${key}[${unitsHash[key]}]`
                   },
                   opposite: false,
                   floor: 0,
@@ -220,15 +216,15 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
               yAxis = {
                 allowDecimals: false,
                 labels: {
-                  format: '{value:.0f} ' + unitsHash[key],
+                  format: '{value:.0f}',
                 },
                 title: {
-                  text: key,
+                  text: `${key}[${unitsHash[key]}]`
                 },
                 opposite: false,
                 floor: 0,
                 ceiling: 360,
-                tickInterval: 90,
+                tickInterval: 90
               };
 
               if (key === 'WS') {
@@ -236,37 +232,189 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                 // it occasionally reports wind speeds upwards of 250mph.
                 yAxis.ceiling = 20;
                 yAxis.tickInterval = 5;
+                yAxis.rotation = 90;
               }
             } else if (pubKey.indexOf('49i') >= 0) {
               yAxis = {
                 allowDecimals: false,
                 labels: {
-                  format: '{value:.0f} ' + unitsHash[key],
+                  format: '{value:.0f} '
                 },
                 title: {
-                  text: key,
+                  text: `${key}[${unitsHash[key]}]`
                 },
                 opposite: false,
-              //  floor: 0,
-              //  ceiling: 250,
+                min: 0,
+                max: 250
               };
             } else {
               yAxis = {
                 allowDecimals: false,
                 labels: {
-                  format: '{value:.0f} ' + unitsHash[key],
+                  format: '{value:.0f}'
                 },
                 title: {
-                  text: key,
+                  text: `${key}[${unitsHash[key]}]`
                 },
                 opposite: false,
-                floor: 0,
+                floor: 0
               };
             }
 
-            // add to subscription
-						if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments (no 10s data)
-						} else {
+            subscription.added('dataSeries', `${pubKey}_${key}_5m_${poll5Data[pubKey][key][0].x}`, {
+              name: key + '_5m',
+              type: 'scatter',
+              marker: {
+                enabled: true,
+                radius: 2,
+                symbol: 'circle'
+              },
+              lineWidth: 0,
+              allowPointSelect: 'true',
+              data: poll5Data[pubKey][key],
+              zIndex: 2,
+              yAxis: yAxis
+            });
+          }
+        }
+      }
+  }, function(error) {
+    Meteor._debug('error during 5min publication aggregation: ' + error);
+  });
+
+  var aggPipe = [
+    {
+      $match: {
+        $and: [
+          {
+            site: siteName
+          }, {
+            epoch: {
+              $gt: parseInt(startEpoch, 10),
+              $lt: parseInt(endEpoch, 10)
+            }
+          }
+        ]
+      }
+    }, {
+      $sort: {
+        epoch: 1
+      }
+    }, {
+      $project: {
+        epoch: 1,
+        subTypes: 1,
+        _id: 0
+      }
+    }
+  ];
+
+  LiveData.aggregate(aggPipe, function(err, results) {
+    // create new structure for data series to be used for charts
+    _.each(results, function(line) {
+      var epoch = line.epoch;
+      _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
+        if (!pollData[subType]) {
+          pollData[subType] = {};
+        }
+        _.each(subKey, function(sub) { // sub is the array with metric/val pairs as subarrays
+          if (sub.metric !== 'Flag') {
+            if (!pollData[subType][sub.metric]) {
+              pollData[subType][sub.metric] = [];
+            }
+            var xy = [
+              epoch * 1000,
+              sub.val
+            ]; // milliseconds
+            if (isNaN(sub.val) || sub.val === '') {
+              xy = [
+                epoch * 1000,
+                null
+              ];
+            }
+            pollData[subType][sub.metric].push(xy);
+          }
+        });
+      });
+    });
+
+    for (var pubKey in pollData) {
+      // skip loop if the property is from prototype
+      if (pollData.hasOwnProperty(pubKey)) {
+        let chartType = 'line';
+        let lineWidth = 1;
+        let marker = {
+          enabled: false
+        };
+        // wind data should never be shown as line
+        if (pubKey.indexOf('RMY') >= 0) {
+          chartType = 'scatter';
+          lineWidth = 0;
+          marker = {
+            enabled: true,
+            radius: 1,
+            symbol: 'circle'
+          };
+        }
+
+        for (var key in pollData[pubKey]) {
+          // skip loop if the property is from prototype
+          if (!pollData[pubKey].hasOwnProperty(key))
+            continue;
+
+          // create yAxis object
+          let yAxis = {};
+          if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
+            yAxis = {
+              allowDecimals: false,
+              labels: {
+                format: '{value:.0f}'
+              },
+              title: {
+                text: `${key}[${unitsHash[key]}]`
+              },
+              opposite: false,
+              floor: 0,
+              ceiling: 360,
+              tickInterval: 90
+            };
+
+            if (key === 'WS') {
+              // NOTE: there are some misreads with the sensor, and so
+              // it occasionally reports wind speeds upwards of 250mph.
+              yAxis.ceiling = 20;
+              yAxis.tickInterval = 5;
+            }
+          } else if (pubKey.indexOf('49i') >= 0) {
+            yAxis = {
+              allowDecimals: false,
+              labels: {
+                format: '{value:.0f}'
+              },
+              title: {
+                text: `${key}[${unitsHash[key]}]`
+              },
+              opposite: false,
+              //  floor: 0,
+              //  ceiling: 250,
+            };
+          } else {
+            yAxis = {
+              allowDecimals: false,
+              labels: {
+                format: '{value:.0f} ' + unitsHash[key]
+              },
+              title: {
+                text: key
+              },
+              opposite: false,
+              floor: 0
+            };
+          }
+
+          // add to subscription
+          if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments (no 10s data)
+          } else {
             subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
               name: key + '_10s',
               type: chartType,
