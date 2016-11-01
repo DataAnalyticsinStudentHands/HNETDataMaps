@@ -5,10 +5,21 @@ import junk from 'junk';
 let lastReportTime = 0;
 // structure to hold current/before status information
 const statusObject = {};
-// list of receipients
-let mailList = '';
 
 function sendEmail(reportType, reportString) {
+
+	// Find all users that have subscribed to receive status emails and update the mailList
+  const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
+
+	// list of receipients
+	let mailList = '';
+
+  listSubscribers.forEach(function(user) {
+    if (user.receiveSiteStatusEmail) {
+      mailList = `${user.emails[0].address},${mailList}`;
+    }
+  });
+
   const transporter = Nodemailer.createTransport();
   let mailOptions = {
     from: 'HNET Site Watcher <dashadmin@uh.edu>',
@@ -77,17 +88,6 @@ function sendEmail(reportType, reportString) {
 Meteor.setInterval(() => {
   // reset to trigger daily report
   lastReportTime = 0;
-
-  // Find all users that have subscribed to receive status emails and update the mailList
-  const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
-
-  mailList = '';
-
-  listSubscribers.forEach(function(user) {
-    if (user.receiveSiteStatusEmail) {
-      mailList = `${user.emails[0].address},${mailList}`;
-    }
-  });
 
   // Create directory for outgoing files for tomorrow
   fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function(err) {
