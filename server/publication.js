@@ -8,18 +8,18 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
   var agg5Pipe = [{
     $match: {
       $and: [{
-        site: siteName,
+        site: siteName
       }, {
         epoch: {
           $gt: parseInt(startEpoch, 10),
-          $lt: parseInt(endEpoch, 10),
-        },
-      }],
-    },
+          $lt: parseInt(endEpoch, 10)
+        }
+      }]
+    }
   }, {
     $sort: {
-      epoch: 1,
-    },
+      epoch: 1
+    }
   }, {
     $group: {
       _id: '$siteName',
@@ -27,11 +27,11 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
       series: {
         $push: {
           'subTypes': '$subTypes',
-          'epoch': '$epoch',
-        },
-      },
-    },
-  }, ];
+          'epoch': '$epoch'
+        }
+      }
+    }
+  }];
 
   AggrData.aggregate(agg5Pipe, function(err, result) {
       // create new structure for data series to be used for charts
@@ -100,8 +100,8 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                     text: `${key}[${unitsHash[key]}]`
                   },
                   opposite: false,
-									min: 0,
-									max: 250
+                  min: 0,
+                  max: 250
                 };
               } else {
                 yAxis = {
@@ -113,7 +113,7 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                     text: `${key}[${unitsHash[key]}]`
                   },
                   opposite: false,
-                  floor: 0,
+                  min: 0
                 };
               }
 
@@ -123,13 +123,13 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                 marker: {
                   enabled: true,
                   radius: 2,
-                  symbol: 'circle',
+                  symbol: 'circle'
                 },
                 lineWidth: 0,
                 allowPointSelect: 'true',
                 data: poll5Data[pubKey][key],
                 zIndex: 2,
-                yAxis: yAxis,
+                yAxis: yAxis
               });
             }
           }
@@ -154,13 +154,13 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
     }
   }, {
     $sort: {
-      epoch: 1,
+      epoch: 1
     }
   }, {
     $project: {
       epoch: 1,
       subTypes: 1,
-      _id: 0,
+      _id: 0
     }
   }];
 
@@ -216,7 +216,7 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
               yAxis = {
                 allowDecimals: false,
                 labels: {
-                  format: '{value:.0f}',
+                  format: '{value:.0f}'
                 },
                 title: {
                   text: `${key}[${unitsHash[key]}]`
@@ -232,20 +232,17 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                 // it occasionally reports wind speeds upwards of 250mph.
                 yAxis.ceiling = 20;
                 yAxis.tickInterval = 5;
-                yAxis.rotation = 90;
               }
             } else if (pubKey.indexOf('49i') >= 0) {
               yAxis = {
                 allowDecimals: false,
                 labels: {
-                  format: '{value:.0f} '
+                  format: '{value:.0f}'
                 },
                 title: {
                   text: `${key}[${unitsHash[key]}]`
                 },
-                opposite: false,
-                min: 0,
-                max: 250
+                opposite: false
               };
             } else {
               yAxis = {
@@ -257,164 +254,13 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
                   text: `${key}[${unitsHash[key]}]`
                 },
                 opposite: false,
-                floor: 0
+                min: 0
               };
             }
 
-            subscription.added('dataSeries', `${pubKey}_${key}_5m_${poll5Data[pubKey][key][0].x}`, {
-              name: key + '_5m',
-              type: 'scatter',
-              marker: {
-                enabled: true,
-                radius: 2,
-                symbol: 'circle'
-              },
-              lineWidth: 0,
-              allowPointSelect: 'true',
-              data: poll5Data[pubKey][key],
-              zIndex: 2,
-              yAxis: yAxis
-            });
-          }
-        }
-      }
-  }, function(error) {
-    Meteor._debug('error during 5min publication aggregation: ' + error);
-  });
-
-  var aggPipe = [
-    {
-      $match: {
-        $and: [
-          {
-            site: siteName
-          }, {
-            epoch: {
-              $gt: parseInt(startEpoch, 10),
-              $lt: parseInt(endEpoch, 10)
-            }
-          }
-        ]
-      }
-    }, {
-      $sort: {
-        epoch: 1
-      }
-    }, {
-      $project: {
-        epoch: 1,
-        subTypes: 1,
-        _id: 0
-      }
-    }
-  ];
-
-  LiveData.aggregate(aggPipe, function(err, results) {
-    // create new structure for data series to be used for charts
-    _.each(results, function(line) {
-      var epoch = line.epoch;
-      _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
-        if (!pollData[subType]) {
-          pollData[subType] = {};
-        }
-        _.each(subKey, function(sub) { // sub is the array with metric/val pairs as subarrays
-          if (sub.metric !== 'Flag') {
-            if (!pollData[subType][sub.metric]) {
-              pollData[subType][sub.metric] = [];
-            }
-            var xy = [
-              epoch * 1000,
-              sub.val
-            ]; // milliseconds
-            if (isNaN(sub.val) || sub.val === '') {
-              xy = [
-                epoch * 1000,
-                null
-              ];
-            }
-            pollData[subType][sub.metric].push(xy);
-          }
-        });
-      });
-    });
-
-    for (var pubKey in pollData) {
-      // skip loop if the property is from prototype
-      if (pollData.hasOwnProperty(pubKey)) {
-        let chartType = 'line';
-        let lineWidth = 1;
-        let marker = {
-          enabled: false
-        };
-        // wind data should never be shown as line
-        if (pubKey.indexOf('RMY') >= 0) {
-          chartType = 'scatter';
-          lineWidth = 0;
-          marker = {
-            enabled: true,
-            radius: 1,
-            symbol: 'circle'
-          };
-        }
-
-        for (var key in pollData[pubKey]) {
-          // skip loop if the property is from prototype
-          if (!pollData[pubKey].hasOwnProperty(key))
-            continue;
-
-          // create yAxis object
-          let yAxis = {};
-          if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
-            yAxis = {
-              allowDecimals: false,
-              labels: {
-                format: '{value:.0f}'
-              },
-              title: {
-                text: `${key}[${unitsHash[key]}]`
-              },
-              opposite: false,
-              floor: 0,
-              ceiling: 360,
-              tickInterval: 90
-            };
-
-            if (key === 'WS') {
-              // NOTE: there are some misreads with the sensor, and so
-              // it occasionally reports wind speeds upwards of 250mph.
-              yAxis.ceiling = 20;
-              yAxis.tickInterval = 5;
-            }
-          } else if (pubKey.indexOf('49i') >= 0) {
-            yAxis = {
-              allowDecimals: false,
-              labels: {
-                format: '{value:.0f}'
-              },
-              title: {
-                text: `${key}[${unitsHash[key]}]`
-              },
-              opposite: false,
-              //  floor: 0,
-              //  ceiling: 250,
-            };
-          } else {
-            yAxis = {
-              allowDecimals: false,
-              labels: {
-                format: '{value:.0f} ' + unitsHash[key]
-              },
-              title: {
-                text: key
-              },
-              opposite: false,
-              floor: 0
-            };
-          }
-
-          // add to subscription
-          if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments (no 10s data)
-          } else {
+            // add to subscription
+						if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments (no 10s data)
+						} else {
             subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
               name: key + '_10s',
               type: chartType,
@@ -423,9 +269,9 @@ Meteor.publish('dataSeries', function (siteName, startEpoch, endEpoch) {
               allowPointSelect: 'false',
               data: pollData[pubKey][key],
               zIndex: 1,
-              yAxis: yAxis,
+              yAxis: yAxis
             });
-					}
+           }
           }
         }
       }
@@ -446,36 +292,36 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
     $match: {
       $and: [{
         $or: [{
-          site: '482010570',
+          site: '482010570'
         }, {
-          site: '482010572',
+          site: '482010572'
         }, {
-          site: '481670571',
+          site: '481670571'
         }, {
-          site: '480711606',
-        }],
+          site: '480711606'
+        }]
       }, {
         epoch: {
           $gt: parseInt(startEpoch, 10),
-          $lt: parseInt(endEpoch, 10),
-        },
-      }],
-    },
+          $lt: parseInt(endEpoch, 10)
+        }
+      }]
+    }
   }, {
     $sort: {
-      epoch: -1,
-    },
+      epoch: -1
+    }
   }, {
     $group: {
       _id: '$subTypes',
       data: {
         $push: {
           site: '$site',
-          epoch: '$epoch',
-        },
-      },
-    },
-  }, ];
+          epoch: '$epoch'
+        }
+      }
+    }
+  }];
 
   AggrData.aggregate(aggCompPipe, function(err, results) {
 
@@ -497,7 +343,7 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
               if (_.last(points).metric.indexOf('Flag') >= 0) { // get all measurements
                 var datapoint = {
                   x: epoch * 1000,
-                  y: points[1].val, // average
+                  y: points[1].val // average
                 }; // milliseconds
                 pollCompData[measurement][site].push(datapoint);
               }
@@ -517,9 +363,9 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
               return obj1.x - obj2.x;
             });
 
-						const selectedSite = LiveSites.findOne({
-				      AQSID: site,
-				    });
+            const selectedSite = LiveSites.findOne({
+              AQSID: site
+            });
 
             subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
               name: selectedSite.siteName,
@@ -527,18 +373,18 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
               marker: {
                 enabled: true,
                 radius: 2,
-                symbol: 'circle',
+                symbol: 'circle'
               },
               lineWidth: 0,
               data: dataSorted,
               yAxis: {
                 allowDecimals: false,
                 title: {
-                  text: unitsHash[measurement],
+                  text: unitsHash[measurement]
                 },
                 floor: 0,
-                opposite: false,
-              },
+                opposite: false
+              }
             });
           }
         }
@@ -559,7 +405,7 @@ Meteor.publish('aggregateEdits', function() {
 Meteor.publish('exports', function() {
   return Exports.find({
     startEpoch: {
-      $type: 'int',
+      $type: 'int'
     }
   });
 });
