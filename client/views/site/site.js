@@ -14,7 +14,7 @@ Highcharts.setOptions({
     useUTC: false
   },
   colors: [
-    'black', 'grey', 'green',
+    '#540002', '#4F525C', '#555500'
     //   '#DDDF00',
     //   '#24CBE5',
     //   '#64E572',
@@ -234,7 +234,12 @@ Template.site.onRendered(function() {
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
 
-          const chartId = `${subType}_${metric}`;
+          let chartId = '';
+          if (subType === '42i') {
+            chartId = `${subType}`;
+          } else {
+            chartId = `${subType}_${metric}`;
+          }
 
           // store yAxis options in separate variable
           const yAxisOptions = seriesData.yAxis;
@@ -257,7 +262,7 @@ Template.site.onRendered(function() {
             const seriesOptions = [];
             seriesOptions.push(seriesData);
             yAxisOptions.id = metric;
-            const chart = createChart(`container-chart-${chartId}`, subType, seriesOptions, yAxisOptions);
+            const chart = createChart(`container-chart-${chartId}`, `${subType} ${metric}`, seriesOptions, yAxisOptions);
 
             // Set text value for min/max form element
             const yAxis = chart.get(metric);
@@ -275,7 +280,7 @@ Template.site.onRendered(function() {
             chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Valid (K)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 47).add();
             chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 38, 2).attr({fill: 'orange'}).add();
             chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Span (Q)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 35).add();
-						chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 26, 2).attr({fill: 'black'}).add();
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 26, 2).attr({fill: 'black'}).add();
             chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Offline (N)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 23).add();
 
           } else {

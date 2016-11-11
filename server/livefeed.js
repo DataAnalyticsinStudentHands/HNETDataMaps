@@ -356,7 +356,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
         const nowEpoch = moment().unix();
         const agoEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
 
-        logger.info(`LiveData updated for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch}`);
+        logger.info(`LiveData updated for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
         perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
       }
     });
