@@ -6,7 +6,7 @@ let lastReportTime = 0;
 // structure to hold current/before status information
 const statusObject = {};
 
-function sendEmail(reportType, reportString) {
+const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
 
 	// Find all users that have subscribed to receive status emails and update the mailList
   const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
@@ -35,7 +35,7 @@ function sendEmail(reportType, reportString) {
       logger.info('Message sent: ', info);
     }
   });
-}
+});
 
 // every 10 mins push data
 // Meteor.setInterval(() => {
