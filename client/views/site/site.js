@@ -67,7 +67,7 @@ function selectedPoints(e) {
       selectedPoint.y = point.y;
       selectedPoint.flag = flagsHash[point.name];
       selectedPoint.site = Router.current().params._id;
-      selectedPoint.instrument = point.series.chart.title.textStr;
+      selectedPoint.instrument = point.series.chart.title.textStr.split(/(\s+)/)[0];
       selectedPoint.measurement = point.series.name.split(/[_]+/)[0];
       selectedPoint.id = `${point.series.chart.title.textStr}_${point.series.name.split(/[_]+/)[0]}_${point.x}`;
       point.id = selectedPoint.id;
