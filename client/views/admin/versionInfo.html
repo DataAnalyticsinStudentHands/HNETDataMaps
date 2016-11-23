@@ -1,0 +1,8 @@
+<template name="versionInfo">
+	<div>
+	  <p>short hash: {{gitRev 'short'}}</p> <!-- short hash: bac4761 -->
+	  <p>long hash: {{gitRev 'long'}}</p>   <!-- long hash: bac4761beb43861c9ce8dd1469aa9d73a0d9af80 -->
+	  <p>tag: {{gitRev 'tag'}}</p>          <!-- tag: 0.1.0 -->
+	  <p>branch: {{gitRev 'branch'}}</p>    <!-- branch: master -->
+	</div>
+</template>

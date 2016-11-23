@@ -34,6 +34,8 @@ AdminDashboard.addCollectionItem(function(collection, path) {
   }
 });
 
+AdminDashboard.addSidebarItem('Version', AdminDashboard.path('versionInfo'), { icon: 'info' });
+
 sAlert.config({
   effect: '',
   position: 'top-right',

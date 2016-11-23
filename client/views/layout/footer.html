@@ -1,3 +1,8 @@
 <template name='footer'>
-        <p class="text-muted">If we got some footer content, we will put it here. &copy; 2016 University of Houston <br> {{siteSpecific}} </p>
+	<div class="container">
+	  <div class="row">
+	    <div class="col-md-6 text-muted">Data Analytics in Student Hands &copy; 2016 University of Houston <br> {{siteSpecific}}</div><div class="col-md-6">
+				<span class="pull-right text-muted ">Version: {{gitRev 'tag'}}</span></div>
+	  </div>
+	</div>
 </template>
