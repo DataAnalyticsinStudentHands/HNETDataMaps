@@ -118,7 +118,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                   text: `${key}[${unitsHash[key]}]`
                 },
                 opposite: false,
-                floor: 0
+                min: 0
               };
             }
 
@@ -271,7 +271,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                 text: `${key}[${unitsHash[key]}]`
               },
               opposite: false,
-              floor: 0
+              min: 0
             };
           }
 
@@ -386,7 +386,7 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
               title: {
                 text: unitsHash[measurement]
               },
-              floor: 0,
+              min: 0,
               opposite: false
             }
           });
