@@ -152,7 +152,7 @@ function pushTCEQData(aqsid, data) {
   });
 
   // the following function creates its own scoped context
-  ftps.cd('UH/tmp').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {}, function(err) {
+  ftps.cd('UH/C696').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {}, function(err) {
     logger.error('Error during push file:', (err));
     throw new Meteor.Error('Error during push file:', (err));
   }));
