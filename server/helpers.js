@@ -114,6 +114,11 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
 
 function pushTCEQData(aqsid, data) {
 
+  if (typeof(hnetsftp) === 'undefined') {
+    // hnetsftp environment variable doesn't exists
+    return logger.error('No password found for hnet sftp.');
+  }
+
   const site = LiveSites.find({AQSID: `${aqsid}`}).fetch()[0];
 
   if (site === undefined) {
@@ -131,30 +136,25 @@ function pushTCEQData(aqsid, data) {
   const n = csvComplete.indexOf('\n');
   const csv = csvComplete.substring(n + 1);
 
-  fs.writeFile(outputFile, csv, function(err) {
+  fs.writeFile(outputFile, csv, Meteor.bindEnvironment(function (err) {
     if (err) {
-      logger.error(`Could not write TCEQ push file. Error: ${err}`);
-      throw new Meteor.Error(`Could not write TCEQ push file. Error: ${err}`);
+      return logger.error(`Could not write TCEQ push file. Error: ${err}`);
+    } else {
+
+      const ftps = new FTPS({
+        host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
+        // protocol is added on beginning of host, ex : sftp://domain.com in this case
+        port: 990, // optional
+        // port is added to the end of the host, ex: sftp://domain.com:22 in this case
+      });
+
+      // the following function creates its own scoped context
+      ftps.cd('UH/c696').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
+        logger.info(`Pushed ${outputFile}`);
+      }, function (pusherr) {
+        return logger.error('Error during push file:', (pusherr));
+      }));
     }
-  });
-
-  if (typeof(hnetsftp) === 'undefined') {
-    // hnetsftp environment variable doesn't exists
-    logger.error('No password found for hnet sftp.');
-    throw new Meteor.Error('No password found for hnet sftp.');
-  }
-
-  const ftps = new FTPS({
-    host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
-    // protocol is added on beginning of host, ex : sftp://domain.com in this case
-    port: 990, // optional
-    // port is added to the end of the host, ex: sftp://domain.com:22 in this case
-  });
-
-  // the following function creates its own scoped context
-  ftps.cd('UH/C696').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {}, function(err) {
-    logger.error('Error during push file:', (err));
-    throw new Meteor.Error('Error during push file:', (err));
   }));
 
   return outputFile;
