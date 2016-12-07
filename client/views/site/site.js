@@ -4,7 +4,7 @@ import Highcharts from 'highcharts/highstock';
 
 // 3 days
 const startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
-var selectedFlag = new ReactiveVar(null);
+const selectedFlag = new ReactiveVar(null);
 var note = new ReactiveVar(null);
 
 Meteor.subscribe('liveSites');
@@ -13,15 +13,7 @@ Highcharts.setOptions({
   global: {
     useUTC: false
   },
-  colors: [
-    '#540002', '#4F525C', '#555500'
-    //   '#DDDF00',
-    //   '#24CBE5',
-    //   '#64E572',
-    //   '#FF9655',
-    //   '#FFF263',
-    //   '#6AF9C4'
-  ]
+  colors: ['#4F525C', '#DDDF00', '#24CBE5', '#64E572', '#FF9655']
 });
 
 // placeholder for EditPoints in modal
@@ -34,20 +26,20 @@ const Charts = new Meteor.Collection(null);
  * Custom selection handler that selects points and cancels the default zoom behaviour
  */
 function selectPointsByDrag(e) {
-    // Select points only for series where allowPointSelect
-    Highcharts.each(this.series, function(series) {
-      if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
+  // Select points only for series where allowPointSelect
+  Highcharts.each(this.series, function(series) {
+    if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
 
-        Highcharts.each(series.points, function(point) {
-          if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
-            point.select(true, true);
-          }
-        });
-      }
-    });
+      Highcharts.each(series.points, function(point) {
+        if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
+          point.select(true, true);
+        }
+      });
+    }
+  });
 
-    // Fire a custom event
-    Highcharts.fireEvent(this, 'selectedpoints', {points: this.getSelectedPoints()});
+  // Fire a custom event
+  Highcharts.fireEvent(this, 'selectedpoints', {points: this.getSelectedPoints()});
 
   return false; // Don't zoom
 }
@@ -59,6 +51,7 @@ function selectedPoints(e) {
   // reset variables
   EditPoints.remove({});
   selectedFlag.set(null);
+  note.set(null);
 
   _.each(e.points, function(point) {
     if (point.series.name !== 'Navigator') {
@@ -418,7 +411,7 @@ Template.editPoints.helpers({
     return val.toFixed(3);
   },
   isValid() {
-    var validFlagSet = _.pluck(_.where(flagsHash, {selectable: true}), 'val');
+    const validFlagSet = _.pluck(_.where(flagsHash, {selectable: true}), 'val');
     return _.contains(validFlagSet, selectedFlag.get());
   }
 });
@@ -447,11 +440,10 @@ Template.site.events({
 
     // Prevent default browser form submit
     event.preventDefault();
-
+    // find axis of graph
     const target = event.target;
-    const metric = target.id.split(/[_]+/)[1]; // measurment
-
     const chart = $(`#container-chart-${target.id}`).highcharts();
+    const metric = chart.title.textStr.split(/[ ]+/)[1]; // measurement
     const yAxis = chart.get(metric);
     // Set value from form element
     yAxis.setExtremes(target.min.value, target.max.value);
