@@ -10,7 +10,8 @@ const hnetsftp = process.env.hnetsftp;
 /*
  * Export csv data file in defined format, default: TCEQ format
  */
-function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
+function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
+
   const dataObject = {};
 
   let aggregatData;
@@ -50,11 +51,11 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
     }).fetch();
   }
 
-  switch (format) {
+  switch (fileFormat) {
     case 'raw':
-      logger.info('raw export format not yet implemented.');
+      logger.error('raw export format not yet implemented.');
       break;
-    default:
+    case 'tceq_allchannels':
       if (aggregatData.length !== 0) {
         dataObject.data = [];
       }
@@ -70,27 +71,27 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
         obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
         obj.status = 0;
 
-        for (const subType in e.subTypes) {
-          if (e.subTypes.hasOwnProperty(subType)) {
-            const instruments = e.subTypes[subType];
-            for (const instrument in instruments) {
-              if (instruments.hasOwnProperty(instrument)) {
-                let label = `${subType}_${instrument}_channel`;
-                obj[label] = channelHash[subType + '_' + instrument]; // channel
-                const data = instruments[instrument];
+        for (const instrument in e.subTypes) {
+          if (e.subTypes.hasOwnProperty(instrument)) {
+            const measurements = e.subTypes[instrument];
+            for (const measurement in measurements) {
+              if (measurements.hasOwnProperty(measurement)) {
+                let label = `${instrument}_${measurement}_channel`;
+                obj[label] = channelHash[instrument + '_' + measurement]; // channel
+                const data = measurements[measurement];
 
-                label = `${subType}_${instrument}_flag`;
+                label = `${instrument}_${measurement}_flag`;
                 obj[label] = flagsHash[_.last(data).val].label; // Flag
-                label = `${subType}_${instrument}_value`;
+                label = `${instrument}_${measurement}_value`;
                 // taking care of flag Q (span)
                 if (flagsHash[_.last(data).val].label === 'Q') {
                   obj[label] = 0; // set value to 0
                 } else {
                   let outputValue = data[1].val; // avg
                   // Unit conversion for Temp from C to F
-                  if (instrument === 'Temp') {
+                  if (measurement === 'Temp') {
                     outputValue = outputValue * 9 / 5 + 32;
-                  } else if (instrument === 'WS') {
+                  } else if (measurement === 'WS') {
                     outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
                   }
                   obj[label] = outputValue.toFixed(3);
@@ -108,6 +109,74 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, format) {
         obj.QCstatus_value = 99000;
         dataObject.data.push(obj);
       });
+      break;
+    case 'tceq':
+      const site = LiveSites.findOne({AQSID: `${aqsid}`});
+      const channels = site.Channels;
+      const activeChannels = [];
+      _.each(channels, (channel) => {
+        if (channel.Status === 'Active') {
+          activeChannels.push(channel.Name);
+        }
+      });
+      if (aggregatData.length !== 0) {
+        dataObject.data = [];
+      }
+      _.each(aggregatData, (e) => {
+        const obj = {};
+        const siteID = e.site.substring(e.site.length - 4, e.site.length);
+        if (siteID.startsWith('0')) {
+          obj.siteID = e.site.substring(e.site.length - 3, e.site.length);
+        } else {
+          obj.siteID = e.site.substring(e.site.length - 4, e.site.length);
+        }
+        obj.dateGMT = moment.utc(moment.unix(e.epoch)).format('YY/MM/DD');
+        obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
+        obj.status = 0;
+
+        for (const instrument in e.subTypes) {
+          if (e.subTypes.hasOwnProperty(instrument)) {
+            const measurements = e.subTypes[instrument];
+            for (const measurement in measurements) {
+              if (measurements.hasOwnProperty(measurement)) {
+                if (activeChannels.includes(measurement)) { // check wheather measurement is an active channel
+                  let label = `${instrument}_${measurement}_channel`;
+                  obj[label] = channelHash[instrument + '_' + measurement]; // channel
+                  const data = measurements[measurement];
+
+                  label = `${instrument}_${measurement}_flag`;
+                  obj[label] = flagsHash[_.last(data).val].label; // Flag
+                  label = `${instrument}_${measurement}_value`;
+                  // taking care of flag Q (span)
+                  if (flagsHash[_.last(data).val].label === 'Q') {
+                    obj[label] = 0; // set value to 0
+                  } else {
+                    let outputValue = data[1].val; // avg
+                    // Unit conversion for Temp from C to F
+                    if (measurement === 'Temp') {
+                      outputValue = outputValue * 9 / 5 + 32;
+                    } else if (measurement === 'WS') {
+                      outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
+                    }
+                    obj[label] = outputValue.toFixed(3);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        obj.QCref_channel = 50;
+        obj.QCref_flag = 'K';
+        obj.QCref_value = 0;
+        obj.QCstatus_channel = 51;
+        obj.QCstatus_flag = 'K';
+        obj.QCstatus_value = 99000;
+        dataObject.data.push(obj);
+      });
+      break;
+    default:
+      throw new Meteor.Error('Unexpected switch clause', 'exception in switch statement for export file format');
   }
   return dataObject;
 }
@@ -136,7 +205,7 @@ function pushTCEQData(aqsid, data) {
   const n = csvComplete.indexOf('\n');
   const csv = csvComplete.substring(n + 1);
 
-  fs.writeFile(outputFile, csv, Meteor.bindEnvironment(function (err) {
+  fs.writeFile(outputFile, csv, Meteor.bindEnvironment(function(err) {
     if (err) {
       return logger.error(`Could not write TCEQ push file. Error: ${err}`);
     } else {
@@ -151,7 +220,7 @@ function pushTCEQData(aqsid, data) {
       // the following function creates its own scoped context
       ftps.cd('UH/c696').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
         logger.info(`Pushed ${outputFile}`);
-      }, function (pusherr) {
+      }, function(pusherr) {
         return logger.error('Error during push file:', (pusherr));
       }));
     }
@@ -177,8 +246,8 @@ Meteor.methods({
 
     return fileData;
   },
-  exportData(aqsid, startEpoch, endEpoch) {
-    const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
+  exportData(aqsid, startEpoch, endEpoch, fileFormat) {
+    const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat);
 
     if (Object.keys(data).length === 0 && data.constructor === Object) {
       throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
@@ -187,7 +256,7 @@ Meteor.methods({
     return data;
   },
   pushData(aqsid, startEpoch, endEpoch) {
-    const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
+    const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, 'tceq');
 
     if (Object.keys(data).length === 0 && data.constructor === Object) {
       throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
@@ -209,7 +278,7 @@ Meteor.methods({
   pushEdits(aqsid, pushPointsEpochs) {
     const startEpoch = pushPointsEpochs[0];
     const endEpoch = _.last(pushPointsEpochs);
-    const data = exportDataAsCSV(aqsid, pushPointsEpochs, null);
+    const data = exportDataAsCSV(aqsid, pushPointsEpochs, null, 'tceq');
 
     if (data === undefined) {
       throw new Meteor.Error('Could not find data for selected period.');

@@ -90,14 +90,11 @@ Meteor.setInterval(() => {
   lastReportTime = 0;
 
   // Create directory for outgoing files for tomorrow
-  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function(err) {
+  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function (err) {
     if (err) {
       logger.error(err);
     }
-
-    console.log("successel create for tomorrow!")
   });
-
 }, 24 * 3600 * 1000);
 
 // 5 mins check for site down

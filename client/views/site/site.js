@@ -454,6 +454,6 @@ Template.site.events({
   },
   'click #downloadCurrent' () {
     // call export and download
-    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix(), false);
   }
 });
