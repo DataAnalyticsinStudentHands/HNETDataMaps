@@ -5,26 +5,37 @@ import junk from 'junk';
 let lastReportTime = 0;
 // structure to hold current/before status information
 const statusObject = {};
-// list of receipients
-let mailList = '';
 
-function sendEmail(reportType, reportString) {
-  const transporter = Nodemailer.createTransport();
-  let mailOptions = {
-    from: 'HNET Site Watcher <dashadmin@uh.edu>',
-    to: mailList,
-    subject: reportType,
-    text: reportString
-  };
-
-  transporter.sendMail(mailOptions, function(error, info) {
-    if (error) {
-      logger.info('Can not send email. Error: ', error);
-    } else {
-      logger.info('Message sent: ', info);
-    }
-  });
-}
+// const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
+//
+// 	// Find all users that have subscribed to receive status emails and update the mailList
+//   const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
+//
+// 	// list of receipients
+// 	let mailList = '';
+//
+//   listSubscribers.forEach(function(user) {
+//     if (user.receiveSiteStatusEmail) {
+//       mailList = `${user.emails[0].address},${mailList}`;
+//     }
+//   });
+//
+//   const transporter = Nodemailer.createTransport();
+//   let mailOptions = {
+//     from: 'HNET Site Watcher <dashadmin@uh.edu>',
+//     to: mailList,
+//     subject: reportType,
+//     text: reportString
+//   };
+//
+//   transporter.sendMail(mailOptions, function(error, info) {
+//     if (error) {
+//       logger.info('Can not send email. Error: ', error);
+//     } else {
+//       logger.info('Message sent: ', info);
+//     }
+//   });
+// });
 
 // every 10 mins push data
 // Meteor.setInterval(() => {
@@ -78,26 +89,12 @@ Meteor.setInterval(() => {
   // reset to trigger daily report
   lastReportTime = 0;
 
-  // Find all users that have subscribed to receive status emails and update the mailList
-  const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
-
-  mailList = '';
-
-  listSubscribers.forEach(function(user) {
-    if (user.receiveSiteStatusEmail) {
-      mailList = `${user.emails[0].address},${mailList}`;
-    }
-  });
-
   // Create directory for outgoing files for tomorrow
-  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function(err) {
+  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function (err) {
     if (err) {
       logger.error(err);
     }
-
-    console.log("successel create for tomorrow!")
   });
-
 }, 24 * 3600 * 1000);
 
 // 5 mins check for site down
@@ -145,7 +142,8 @@ Meteor.setInterval(() => {
     for (const site in statusObject) {
       if (statusObject.hasOwnProperty(site)) {
         if (statusObject[site].sendUpdateReport) {
-          sendEmail(`${site} ${statusObject[site].current}`, reportString);
+          //sendEmail(`${site} ${statusObject[site].current}`, reportString);
+					logger.info(`Email Report for ${require('os').hostname()}: ${reportString}`);
         }
       }
     }

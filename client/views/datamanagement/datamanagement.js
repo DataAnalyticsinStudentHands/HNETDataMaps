@@ -52,8 +52,18 @@ Template.datamanagement.events = {
     const start = target.$('form.management input[name=start]').val();
     const end = target.$('form.management input[name=end]').val();
 
-    // call export and download
-    DataExporter.getDataTCEQ(site.AQSID, start, end);
+    // call export for active data and download
+    DataExporter.getDataTCEQ(site.AQSID, start, end, false);
+  },
+	'click #downloadActiveData' (event, target) {
+    event.preventDefault();
+    const site = LiveSites.findOne({siteName: $('#selectedSite').val()});
+
+    const start = target.$('form.management input[name=start]').val();
+    const end = target.$('form.management input[name=end]').val();
+
+    // call export for all data and download
+    DataExporter.getDataTCEQ(site.AQSID, start, end, true);
   },
   'click #pushData' (event, target) {
     event.preventDefault();

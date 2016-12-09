@@ -1,8 +1,10 @@
+// JSLint options:
+/*global Highcharts, document */
 import Highcharts from 'highcharts/highstock';
 
 // 3 days
 const startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
-var selectedFlag = new ReactiveVar(null);
+const selectedFlag = new ReactiveVar(null);
 var note = new ReactiveVar(null);
 
 Meteor.subscribe('liveSites');
@@ -11,17 +13,7 @@ Highcharts.setOptions({
   global: {
     useUTC: false
   },
-  colors: [
-    '#058DC7',
-    '#50B432',
-    '#ED561B',
-    '#DDDF00',
-    '#24CBE5',
-    '#64E572',
-    '#FF9655',
-    '#FFF263',
-    '#6AF9C4'
-  ]
+  colors: ['#4F525C', '#DDDF00', '#24CBE5', '#64E572', '#FF9655']
 });
 
 // placeholder for EditPoints in modal
@@ -48,6 +40,7 @@ function selectPointsByDrag(e) {
 
   // Fire a custom event
   Highcharts.fireEvent(this, 'selectedpoints', {points: this.getSelectedPoints()});
+
   return false; // Don't zoom
 }
 
@@ -58,6 +51,7 @@ function selectedPoints(e) {
   // reset variables
   EditPoints.remove({});
   selectedFlag.set(null);
+  note.set(null);
 
   _.each(e.points, function(point) {
     if (point.series.name !== 'Navigator') {
@@ -66,7 +60,7 @@ function selectedPoints(e) {
       selectedPoint.y = point.y;
       selectedPoint.flag = flagsHash[point.name];
       selectedPoint.site = Router.current().params._id;
-      selectedPoint.instrument = point.series.chart.title.textStr;
+      selectedPoint.instrument = point.series.chart.title.textStr.split(/(\s+)/)[0];
       selectedPoint.measurement = point.series.name.split(/[_]+/)[0];
       selectedPoint.id = `${point.series.chart.title.textStr}_${point.series.name.split(/[_]+/)[0]}_${point.x}`;
       point.id = selectedPoint.id;
@@ -75,7 +69,6 @@ function selectedPoints(e) {
   });
 
   // Show the Edit Points modal
-  //$('#editPointsModal').modal({}).modal('show');
   Modal.show("editPoints");
 
   $('#editPointsModal table tr .fa').click(function(event) {
@@ -121,7 +114,7 @@ function unselectByClick() {
  * Create highstock based chart.
  */
 function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
-  const mychart = new Highcharts.StockChart({
+  return new Highcharts.StockChart({
     exporting: {
       enabled: true
     },
@@ -132,7 +125,10 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
         click: unselectByClick
       },
       zoomType: 'xy',
-      renderTo: chartName
+      renderTo: chartName,
+      marginLeft: 100, // Keep all charts left aligned
+      spacingTop: 20,
+      spacingBottom: 20
     },
     title: {
       text: titleText
@@ -142,7 +138,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       title: {
         text: 'Local Time'
       },
-			ordinal: false,
+      ordinal: false,
       minRange: 3600
     },
     navigator: {
@@ -184,7 +180,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       align: 'right',
       layout: 'vertical',
       verticalAlign: 'top',
-      y: 100
+      y: 200
     },
     rangeSelector: {
       inputEnabled: false,
@@ -231,63 +227,93 @@ Template.site.onRendered(function() {
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
 
+          let chartId = '';
+          if (subType === '42i') {
+            chartId = `${subType}`;
+          } else {
+            chartId = `${subType}_${metric}`;
+          }
+
           // store yAxis options in separate variable
           const yAxisOptions = seriesData.yAxis;
+          yAxisOptions.startOnTick = false;
+          yAxisOptions.endOnTick = false;
           delete seriesData.yAxis;
 
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
-            _id: subType
+            _id: chartId
           }, {reactive: false})) {
+
             Charts.insert({
-              _id: subType,
-              yAxis: [{
-                  metric
-                }]
+              _id: chartId,
+              // yAxis: [{
+              //     metric
+              //   }]
             });
 
             const seriesOptions = [];
             seriesOptions.push(seriesData);
             yAxisOptions.id = metric;
-            createChart(`container-chart-${subType}`, subType, seriesOptions, yAxisOptions);
+            const chart = createChart(`container-chart-${chartId}`, `${subType} ${metric}`, seriesOptions, yAxisOptions);
+
+            // Set text value for min/max form element
+            const yAxis = chart.get(metric);
+            const extremes = yAxis.getExtremes();
+
+            Charts.update({
+              _id: chartId
+            }, {
+              min: Math.floor(extremes.min),
+              max: Math.floor(extremes.max)
+            });
+
+            // add another static legend to show flag colors
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 50, 2).attr({fill: 'red'}).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Valid (K)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 47).add();
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 38, 2).attr({fill: 'orange'}).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Span (Q)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 35).add();
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 26, 2).attr({fill: 'black'}).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Offline (N)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 23).add();
+
           } else {
-            // put axis for each series
-            const chart = $(`#container-chart-${subType}`).highcharts();
-
-            // Add another axis if not yet existent
-            let axisExist = false;
-
-            Charts.findOne({_id: subType}).yAxis.forEach(function(axis) {
-              if (axis.metric === metric) {
-                axisExist = true;
-              }
-            });
-
-            if (!axisExist) {
-              yAxisOptions.opposite = true;
-              yAxisOptions.id = metric;
-              chart.addAxis(yAxisOptions);
-              Charts.update(subType, {
-                $push: {
-                  yAxis: {
-                    metric
-                  }
-                }
-              });
-            }
-
-            // Now just find the right axis index and assign it to the seriesData
-            let axisIndex = 0;
-            Charts.findOne({_id: subType}).yAxis.forEach(function(axis, i) {
-              if (axis.metric === metric) {
-                if (i === 0) { // navigator axis will be at index 1
-                  axisIndex = 0;
-                } else {
-                  axisIndex = i + 1;
-                }
-              }
-            });
-            seriesData.yAxis = axisIndex;
+            // add other series that belongs to this chart
+            const chart = $(`#container-chart-${chartId}`).highcharts();
+            //
+            //   // Add another axis if not yet existent
+            //   let axisExist = false;
+            //
+            //   Charts.findOne({_id: subType}).yAxis.forEach(function(axis) {
+            //     if (axis.metric === metric) {
+            //       axisExist = true;
+            //     }
+            //   });
+            //
+            //   if (!axisExist) {
+            //     yAxisOptions.opposite = true;
+            //     yAxisOptions.id = metric;
+            //     chart.addAxis(yAxisOptions);
+            //     Charts.update(subType, {
+            //       $push: {
+            //         yAxis: {
+            //           metric
+            //         }
+            //       }
+            //     });
+            //   }
+            //
+            //   // Now just find the right axis index and assign it to the seriesData
+            //   let axisIndex = 0;
+            //   Charts.findOne({_id: subType}).yAxis.forEach(function(axis, i) {
+            //     if (axis.metric === metric) {
+            //       if (i === 0) { // navigator axis will be at index 1
+            //         axisIndex = 0;
+            //       } else {
+            //         axisIndex = i + 1;
+            //       }
+            //     }
+            //   });
+            //   seriesData.yAxis = axisIndex;
             chart.addSeries(seriesData);
           }
         }
@@ -299,16 +325,16 @@ Template.site.onRendered(function() {
 }); // end of onRendered
 
 Template.editPoints.events({
-  'click .dropdown-menu li a'(event) {
+  'click .dropdown-menu li a' (event) {
     event.preventDefault();
     selectedFlag.set(parseInt($(event.currentTarget).attr('data-value'), 10));
   },
-  'click button#btnCancel'(event) {
+  'click button#btnCancel' (event) {
     event.preventDefault();
     selectedFlag.set(null);
   },
   // Handle the button "Push" event
-  'click button#btnPush'(event) {
+  'click button#btnPush' (event) {
     event.preventDefault();
     // Push Edited points in TCEQ format
     const pushPoints = EditPoints.find({});
@@ -329,13 +355,13 @@ Template.editPoints.events({
     });
   },
   // Handle the note filed change event (update note)
-  'change .js-editNote'(event) {
+  'change .js-editNote' (event) {
     // Get value from editNote element
     const text = event.currentTarget.value;
     note.set(text);
   },
   // Handle the button "Change Flag" event
-  'click .js-change'(event) {
+  'click .js-change' (event) {
     event.preventDefault();
 
     const updatedPoints = EditPoints.find({}).fetch();
@@ -385,7 +411,7 @@ Template.editPoints.helpers({
     return val.toFixed(3);
   },
   isValid() {
-    var validFlagSet = _.pluck(_.where(flagsHash, {selectable: true}), 'val');
+    const validFlagSet = _.pluck(_.where(flagsHash, {selectable: true}), 'val');
     return _.contains(validFlagSet, selectedFlag.get());
   }
 });
@@ -409,12 +435,25 @@ Template.site.helpers({
 });
 
 Template.site.events({
-  'change #datepicker'(event) {
-		// update reactive var whith selected date
+  // set y-axis min/max from form
+  'submit .adjust' (event) {
+
+    // Prevent default browser form submit
+    event.preventDefault();
+    // find axis of graph
+    const target = event.target;
+    const chart = $(`#container-chart-${target.id}`).highcharts();
+    const metric = chart.title.textStr.split(/[ ]+/)[1]; // measurement
+    const yAxis = chart.get(metric);
+    // Set value from form element
+    yAxis.setExtremes(target.min.value, target.max.value);
+  },
+  'change #datepicker' (event) {
+    // update reactive var whith selected date
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'click #downloadCurrent'() {
+  'click #downloadCurrent' () {
     // call export and download
-    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix(), false);
   }
 });

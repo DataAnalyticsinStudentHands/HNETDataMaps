@@ -1,5 +1,5 @@
 <template name="site">
-
+ <div class="container-fluid">
 	<div class="panel panel-default">
 		<div class="panel-heading">
 			<h3 class="panel-title">Site: {{sitename}}</h3>
@@ -7,7 +7,8 @@
 		<div class="panel-body">
 			<h5>Select Date:</h5>
 			<input type="date" value="{{selectedDate}}" id="datepicker">
-			<button class="btn btn-primary" id="downloadCurrent">
+			<button class="btn btn-primary btn-sm" id="downloadCurrent"
+			data-toggle="tooltip" data-placement="bottom" title="All channels TCEQ format">
 				Download Current Data
 			</button>
 		</div>
@@ -15,11 +16,23 @@
 
 	<!-- container for charts -->
 	{{#each charts}}
-	<div id="container-chart-{{_id}}" style="width: 100%"></div>
-	<!-- placeholder for editPoints modal -->
+	<form class="adjust" id="{{_id}}">
+  <div id="container-chart-{{_id}}" style="min-width: 310px; height: 500px; margin: 0 auto"></div>
+  <div class="input-group pull-right" style="margin-top:-450px;">
+    <input type="text" name="min" placeholder="min" value={{min}} style="margin-right: 5px;" />
+
+    <input type="text" name="max" placeholder="max" value={{max}} style="margin-right: 5px;" />
+
+    <input class="btn btn-default btn-xs" type="submit" value="Adjust min/max y-Axis" />
+  </div>
+</form>
 	{{else}}
-    <p >Found no data for the selected date.</p>
-	{{/each}} {{> editPoints}}
+	<div class="alert alert-info" role="alert">Found no data for the selected date.</div>
+
+	{{/each}}
+<!-- placeholder for editPoints modal -->
+	{{> editPoints}}
+</div>
 </template>
 
 <!-- Modal for editing points -->
@@ -76,14 +89,19 @@
 
 				</div>
 				<div class="modal-footer">
+					<form id=editForm>
 					<div class="form-group">
 					<label for="editNote">Note</label>
-					<input type="text" class="form-control js-editNote" name="editNote" placeholder="Type to note for edit" />
+					<input type="text" class="form-control js-editNote" name="editNote" placeholder="Type to note for edit" required/>
 				</div>
 					Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.
 					<button type="button" class="btn btn-default" aria-label="Close" data-dismiss="modal" id="btnCancel"><i class="fa fa-times"></i> Cancel</button>
+					{{#if isInRole 'admin' }}
 					<button type="button" class="btn btn-primary active {{#if isValid}} disabled{{/if}}" data-dismiss="modal" id="btnPush"><i class="fa fa-check"></i> Push Data Points</button>
+					{{/if}}
 					<button type="button" class="btn btn-primary active {{#unless isValid}} disabled{{/unless}} js-change" data-dismiss="modal"><i class="fa fa-check"></i> Change Flag</button>
+
+</form>
 				</div>
 			</div>
 		</div>
