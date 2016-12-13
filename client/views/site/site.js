@@ -167,7 +167,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       },
       formatter() {
         let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
-        s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
+        s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>' + '<br/>' + this.x;
         return s;
       },
       shared: false
