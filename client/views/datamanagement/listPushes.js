@@ -31,15 +31,19 @@ Template.dataFile.helpers({
 
 Template.viewDataCell.helpers({
   pushed() {
-    if (this.item.fileName === '') {
-      return 'red';
+    if (this.item.fileName !== undefined) {
+      if (this.item.fileName !== '') {
+        return 'green';
+      }
     }
-    return 'green';
+    return 'red';
   },
   isPushed() {
-    if (this.item.fileName === '') {
-      return false;
+    if (this.item.fileName !== undefined) {
+      if (this.item.fileName !== '') {
+        return true;
+      }
     }
-    return true;
+    return false;
   }
 });
