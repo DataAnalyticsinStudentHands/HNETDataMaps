@@ -288,17 +288,17 @@ var makeObj = function(keys, previousObject) {
     if (obj.subTypes.hasOwnProperty(subType)) {
       // automatic flagging of 03 values to be flagged with 9(N)
       if (subType === 'O3' || subType === '49i') {
-				// condition: O3 value above 250
+        // condition: O3 value above 250
         if (obj.subTypes[subType][1].val > 250) {
           obj.subTypes[subType][0].val = 9;
         }
-				// if a O3 value changes for more than 30 ppb from previous value
-				if (previousObject) {
-					const diff = obj.subTypes[subType][1].val - previousObject.subTypes[subType][1].val;
-					if (diff >= 30) {
-						obj.subTypes[subType][0].val = 9;
-					}
-				}
+        // if a O3 value changes for more than 30 ppb from previous value
+        if (previousObject) {
+          const diff = obj.subTypes[subType][1].val - previousObject.subTypes[subType][1].val;
+          if (diff >= 30) {
+            obj.subTypes[subType][0].val = 9;
+          }
+        }
       }
     }
   }
@@ -330,14 +330,14 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
 
     // create objects from parsed lines
     const allObjects = [];
-		let previousObject = {};
+    let previousObject = {};
     for (let k = 0; k < parsedLines.length; k++) {
       let singleObj = {};
-			if (k === 0) {
-				singleObj = makeObj(parsedLines[k]);
-			} else {
-				singleObj= makeObj(parsedLines[k], previousObject);
-			}
+      if (k === 0) {
+        singleObj = makeObj(parsedLines[k]);
+      } else {
+        singleObj = makeObj(parsedLines[k], previousObject);
+      }
       let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + (6 * 3600);
       epoch = epoch - (epoch % 1); // rounding down
       singleObj.epoch = epoch;
@@ -347,7 +347,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
       singleObj.file = pathArray[pathArray.length - 1];
       singleObj._id = `${site.AQSID}_${epoch}`;
       allObjects.push(singleObj);
-			previousObject = singleObj;
+      previousObject = singleObj;
     }
 
     // using bulkCollectionUpdate
@@ -364,22 +364,32 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
 });
 
 const readFile = Meteor.bindEnvironment(function(path) {
-  fs.readFile(path, 'utf-8', (err, output) => {
-    let secondIteration = false;
-    Papa.parse(output, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete(results) {
-        if (!secondIteration) {
-          batchLiveDataUpsert(results.data, path);
-          secondIteration = true;
-        } else {
-          return;
+  // test whether the siteId in the file name matches the directory
+  const pathArray = path.split(pathModule.sep);
+  const fileName = pathArray[pathArray.length - 1];
+  const siteId = fileName.split(/[_]+/)[1];
+  const parentDir = pathArray[pathArray.length - 2];
+  const test = parentDir.substring(parentDir.lastIndexOf('UH') + 2, parentDir.lastIndexOf('_'));
+  if (siteId === test) {
+    fs.readFile(path, 'utf-8', (err, output) => {
+      let secondIteration = false;
+      Papa.parse(output, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete(results) {
+          if (!secondIteration) {
+            batchLiveDataUpsert(results.data, path);
+            secondIteration = true;
+          } else {
+            return;
+          }
         }
-      }
+      });
     });
-  });
+  } else {
+    logger.error('File has been added in not matching directory.');
+  }
 });
 
 Meteor.methods({

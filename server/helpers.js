@@ -89,7 +89,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                 } else {
                   let outputValue = data[1].val; // avg
                   // Unit conversion for Temp from C to F
-                  if (measurement === 'Temp') {
+                  if (measurement === 'Temp' || measurement === 'AmbTemp') {
                     outputValue = outputValue * 9 / 5 + 32;
                   } else if (measurement === 'WS') {
                     outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
