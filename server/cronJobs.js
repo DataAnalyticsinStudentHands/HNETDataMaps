@@ -6,36 +6,36 @@ let lastReportTime = 0;
 // structure to hold current/before status information
 const statusObject = {};
 
-// const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
-//
-// 	// Find all users that have subscribed to receive status emails and update the mailList
-//   const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
-//
-// 	// list of receipients
-// 	let mailList = '';
-//
-//   listSubscribers.forEach(function(user) {
-//     if (user.receiveSiteStatusEmail) {
-//       mailList = `${user.emails[0].address},${mailList}`;
-//     }
-//   });
-//
-//   const transporter = Nodemailer.createTransport();
-//   let mailOptions = {
-//     from: 'HNET Site Watcher <dashadmin@uh.edu>',
-//     to: mailList,
-//     subject: reportType,
-//     text: reportString
-//   };
-//
-//   transporter.sendMail(mailOptions, function(error, info) {
-//     if (error) {
-//       logger.info('Can not send email. Error: ', error);
-//     } else {
-//       logger.info('Message sent: ', info);
-//     }
-//   });
-// });
+const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
+
+	// Find all users that have subscribed to receive status emails and update the mailList
+  const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
+
+	// list of receipients
+	let mailList = '';
+
+  listSubscribers.forEach(function(user) {
+    if (user.receiveSiteStatusEmail) {
+      mailList = `${user.emails[0].address},${mailList}`;
+    }
+  });
+
+  const transporter = Nodemailer.createTransport();
+  let mailOptions = {
+    from: 'HNET Site Watcher <dashadmin@uh.edu>',
+    to: mailList,
+    subject: reportType,
+    text: reportString
+  };
+
+  transporter.sendMail(mailOptions, function(error, info) {
+    if (error) {
+      logger.info('Can not send email. Error: ', error);
+    } else {
+      logger.info('Message sent: ', info);
+    }
+  });
+});
 
 // every 10 mins push data
 // Meteor.setInterval(() => {
@@ -142,7 +142,7 @@ Meteor.setInterval(() => {
     for (const site in statusObject) {
       if (statusObject.hasOwnProperty(site)) {
         if (statusObject[site].sendUpdateReport) {
-          //sendEmail(`${site} ${statusObject[site].current}`, reportString);
+          sendEmail(`${site} ${statusObject[site].current}`, reportString);
 					logger.info(`Email Report for ${require('os').hostname()}: ${reportString}`);
         }
       }
@@ -150,7 +150,7 @@ Meteor.setInterval(() => {
 
     if (lastReportTime === 0) {
       // Daily report
-      // sendEmail('Daily Report', reportString);
+      sendEmail('Daily Report', reportString);
       logger.info(`Daily Report for ${require('os').hostname()}: ${reportString}`);
       lastReportTime = moment.unix();
     }
