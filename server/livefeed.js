@@ -70,15 +70,19 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               // get windDir and windSpd
               let windDir;
               let windSpd;
+              let windDirUnit;
+              let windSpdUnit;
               for (let j = 1; j < data.length; j++) {
                 if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
                   numValid = 0;
                 }
                 if (data[j].metric === 'WD') {
                   windDir = data[j].val;
+                  windDirUnit = data[j].unit;
                 }
                 if (data[j].metric === 'WS') {
                   windSpd = data[j].val;
+                  windSpdUnit = data[j].unit;
                 }
               }
 
@@ -104,7 +108,9 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
                   avgWindEast: windEast,
                   numValid: numValid,
                   totalCounter: 1, // initial total counter
-                  flagstore: [flag] // store all incoming flags in case we need to evaluate
+                  flagstore: [flag], // store all incoming flags in case we need to evaluate
+                  WDunit: windDirUnit, // use units from last data point in the aggregation
+                  WSunit: windSpdUnit // use units from last data point in the aggregation
                 };
               } else {
                 if (numValid !== 0) { // taking care of empty data values
@@ -125,15 +131,16 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
                   numValid = 0;
                 }
 
-                let flag = data[0].val;
+                const flag = data[0].val;
 
                 if (!aggrSubTypes[newkey]) {
                   aggrSubTypes[newkey] = {
-                    'sum': Number(data[j].val),
+                    sum: Number(data[j].val),
                     'avg': Number(data[j].val),
                     'numValid': numValid,
                     'totalCounter': 1, // initial total counter
                     'flagstore': [flag], // store all incoming flags in case we need to evaluate
+                    unit: data[j].unit // use unit from first data point in aggregation
                   };
                 } else {
                   if (numValid !== 0) { // keep aggregating only if numValid
@@ -192,15 +199,17 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             const windDirAvg = (Math.atan2(obj.avgWindEast, obj.avgWindNord) / Math.PI * 180 + 360) % 360;
             const windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
 
-            newaggr[instrument].WD.push({metric: 'sum', val: 'Nan'});
-            newaggr[instrument].WD.push({metric: 'avg', val: windDirAvg});
-            newaggr[instrument].WD.push({metric: 'numValid', val: obj.numValid});
-            newaggr[instrument].WD.push({metric: 'Flag', val: obj.Flag});
+            newaggr[instrument].WD.push({ metric: 'sum', val: 'Nan' });
+            newaggr[instrument].WD.push({ metric: 'avg', val: windDirAvg });
+            newaggr[instrument].WD.push({ metric: 'numValid', val: obj.numValid });
+            newaggr[instrument].WD.push({ metric: 'unit', val: obj.WDunit });
+            newaggr[instrument].WD.push({ metric: 'Flag', val: obj.Flag });
 
-            newaggr[instrument].WS.push({metric: 'sum', val: 'Nan'});
-            newaggr[instrument].WS.push({metric: 'avg', val: windSpdAvg});
-            newaggr[instrument].WS.push({metric: 'numValid', val: obj.numValid});
-            newaggr[instrument].WS.push({metric: 'Flag', val: obj.Flag});
+            newaggr[instrument].WS.push({ metric: 'sum', val: 'Nan' });
+            newaggr[instrument].WS.push({ metric: 'avg', val: windSpdAvg });
+            newaggr[instrument].WS.push({ metric: 'numValid', val: obj.numValid });
+            newaggr[instrument].WS.push({ metric: 'unit', val: obj.WSunit });
+            newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag });
           } else { // all other measurements
             if (!newaggr[instrument][measurement]) {
               newaggr[instrument][measurement] = [];
@@ -213,10 +222,11 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               }
             }
 
-            newaggr[instrument][measurement].push({metric: 'sum', val: obj.sum});
-            newaggr[instrument][measurement].push({metric: 'avg', val: obj.avg});
-            newaggr[instrument][measurement].push({metric: 'numValid', val: obj.numValid});
-            newaggr[instrument][measurement].push({metric: 'Flag', val: obj.Flag});
+            newaggr[instrument][measurement].push({ metric: 'sum', val: obj.sum });
+            newaggr[instrument][measurement].push({ metric: 'avg', val: obj.avg });
+            newaggr[instrument][measurement].push({ metric: 'numValid', val: obj.numValid });
+            newaggr[instrument][measurement].push({ metric: 'unit', val: obj.unit });
+            newaggr[instrument][measurement].push({ metric: 'Flag', val: obj.Flag });
           }
         }
       }
@@ -233,18 +243,18 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               $set['subTypes.' + instrument + '.' + measurement + '.1'] = newaggr[instrument][measurement][1];
               $set['subTypes.' + instrument + '.' + measurement + '.2'] = newaggr[instrument][measurement][2];
               $set['subTypes.' + instrument + '.' + measurement + '.3'] = newaggr[instrument][measurement][3];
+              $set['subTypes.' + instrument + '.' + measurement + '.4'] = newaggr[instrument][measurement][4];
               AggrData.update({
                 _id: subObj._id
               }, {
                 $set: $set
-              }, {upsert: true});
+              }, { upsert: true });
             }
           }
         }
       });
-
     });
-  }, function(error) {
+  }, function (error) {
     throw new Meteor.Error(`error during aggregation: ${JSON.stringify(error)}`);
   }));
 }
@@ -265,19 +275,24 @@ var makeObj = function(keys, previousObject) {
         metron = subKeys[2]; // instrument i.e. Wind, Ozone etc.
         const measurement = subKeys[3]; // measurement conc, temp, etc.
         const value = keys[key];
+        let unitType = 'NA';
+        if (subKeys[4] !== undefined) {
+          unitType = subKeys[4]; // unit
+        }
 
         if (!obj.subTypes[metron]) {
           obj.subTypes[metron] = [
             {
               metric: measurement,
-              val: value
+              val: value,
+              unit: unitType
             }
           ];
         } else {
           if (measurement === 'Flag') { // Flag should be always first
-            obj.subTypes[metron].unshift({metric: measurement, val: value});
+            obj.subTypes[metron].unshift({ metric: measurement, val: value });
           } else {
-            obj.subTypes[metron].push({metric: measurement, val: value});
+            obj.subTypes[metron].push({ metric: measurement, val: value, unit: unitType });
           }
         }
       }

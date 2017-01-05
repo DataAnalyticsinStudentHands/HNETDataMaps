@@ -42,6 +42,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
     if (result.length > 0) {
 
       var lines = result[0].series;
+
       _.each(lines, function(line) {
         var epoch = line.epoch;
         _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
@@ -51,6 +52,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
           _.each(subKey, function(sub, key) { // sub is the array with metric/val pairs as subarrays
             if (!poll5Data[subType][key]) { // create placeholder if not exists
               poll5Data[subType][key] = [];
+              poll5Data[subType][key].unit = sub[3]; // unit
             }
             if (_.last(sub).metric.indexOf('Flag') >= 0) { // get all measurements
               var datapoint = {
@@ -67,7 +69,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
 
       for (var pubKey in poll5Data) { // pubKey equals instrument
         if (poll5Data.hasOwnProperty(pubKey)) {
-          for (var key in poll5Data[pubKey]) { //key equals measurement
+          for (var key in poll5Data[pubKey]) { // key equals measurement
             // skip loop if the property is from prototype
             if (!poll5Data[pubKey].hasOwnProperty(key))
               continue;
@@ -81,7 +83,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                   format: '{value:.0f}'
                 },
                 title: {
-                  text: `${key}[${unitsHash[key]}]`
+                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
                 },
                 opposite: false,
                 floor: 0,
@@ -102,7 +104,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                   format: '{value:.0f}'
                 },
                 title: {
-                  text: `${key}[${unitsHash[key]}]`
+                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
                 },
                 opposite: false,
                 min: 0,
@@ -115,7 +117,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                   format: '{value:.0f}'
                 },
                 title: {
-                  text: `${key}[${unitsHash[key]}]`
+                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
                 },
                 opposite: false,
                 min: 0
@@ -183,6 +185,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
           if (sub.metric !== 'Flag') {
             if (!pollData[subType][sub.metric]) {
               pollData[subType][sub.metric] = [];
+              pollData[subType][sub.metric].unit = sub.unit; // unit
             }
             var xy = [
               epoch * 1000,
@@ -233,7 +236,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                 format: '{value:.0f}'
               },
               title: {
-                text: `${key}[${unitsHash[key]}]`
+                text: `${key}[${pollData[pubKey][key].unit}]`
               },
               opposite: false,
               floor: 0,
@@ -255,7 +258,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                 format: '{value:.0f} '
               },
               title: {
-                text: `${key}[${unitsHash[key]}]`
+                text: `${key}[${pollData[pubKey][key].unit}]`
               },
               opposite: false,
               min: 0,
@@ -268,7 +271,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                 format: '{value:.0f}'
               },
               title: {
-                text: `${key}[${unitsHash[key]}]`
+                text: `${key}[${pollData[pubKey][key].unit}]`
               },
               opposite: false,
               min: 0
