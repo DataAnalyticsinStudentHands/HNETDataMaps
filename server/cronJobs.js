@@ -142,16 +142,14 @@ Meteor.setInterval(() => {
     for (const site in statusObject) {
       if (statusObject.hasOwnProperty(site)) {
         if (statusObject[site].sendUpdateReport) {
-          sendEmail(`${site} ${statusObject[site].current}`, reportString);
-					logger.info(`Email Report for ${require('os').hostname()}: ${reportString}`);
+          sendEmail(`${require('os').hostname()} ${statusObject[site].current}`, reportString);
         }
       }
     }
 
     if (lastReportTime === 0) {
       // Daily report
-      sendEmail('Daily Report', reportString);
-      logger.info(`Daily Report for ${require('os').hostname()}: ${reportString}`);
+      sendEmail(`Daily Report for ${require('os').hostname()}`, reportString);
       lastReportTime = moment.unix();
     }
   });
