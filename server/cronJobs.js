@@ -53,8 +53,8 @@ Meteor.setInterval(() => {
     if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
       const startEpoch = site.lastPushEpoch;
       const endEpoch = moment(end).unix();
-      const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-hh-mm-ss');
-      const endTime = moment.unix(endEpoch).format('YYYY-MM-DD-hh-mm-ss');
+      const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-HH-mm-ss');
+      const endTime = moment.unix(endEpoch).format('YYYY-MM-DD-HH-mm-ss');
       logger.info(`calling push from cronJobs for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endEpoch: ${endTime}`);
       // call push data to TCEQ
       Meteor.call('pushData', site.AQSID, startEpoch, endEpoch, (err) => {

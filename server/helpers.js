@@ -34,16 +34,24 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
     }).fetch();
   } else {
     aggregatData = AggrData.find({
+      site: `${aqsid}`,
       $and: [
         {
-          epoch: {
-            $gte: parseInt(startEpoch, 10),
-            $lte: parseInt(endEpoch, 10)
-          }
-        }, {
-          site: `${aqsid}`
+            epoch: {
+                $gte: parseInt(startEpoch, 10)
+            }
         }
-      ]
+        ,
+        {
+            $and: [
+                {
+                    epoch: {
+                        $lte: parseInt(endEpoch, 10)
+                    }
+                }
+            ]
+        }
+    ]
     }, {
       sort: {
         epoch: 1
