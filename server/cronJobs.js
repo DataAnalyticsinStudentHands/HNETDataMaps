@@ -55,10 +55,10 @@ Meteor.setInterval(() => {
       const endEpoch = moment(end).unix();
       const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-hh-mm-ss');
       const endTime = moment.unix(endEpoch).format('YYYY-MM-DD-hh-mm-ss');
-      console.log(`calling push from cronJobs for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endEpoch: ${endTime}`);
-			// call push data to TCEQ
-      // Meteor.call('pushData', site.AQSID, startEpoch, endEpoch, (err) => {
-      //   if (!err) {
+      logger.info(`calling push from cronJobs for AQSID: ${site.AQSID}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endEpoch: ${endTime}`);
+      // call push data to TCEQ
+      Meteor.call('pushData', site.AQSID, startEpoch, endEpoch, (err) => {
+        if (!err) {
           LiveSites.update({
             _id: site._id
           }, {
@@ -66,8 +66,8 @@ Meteor.setInterval(() => {
               lastPushEpoch: endEpoch
             }
           }, { validate: false });
-      //   }
-      // });
+        }
+      });
     }
   });
 }, 10 * 60 * 1000); // run every 10 min, to push new data
