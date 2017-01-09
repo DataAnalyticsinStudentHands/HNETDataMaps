@@ -228,7 +228,8 @@ Template.site.onRendered(function() {
           const metric = series.split(/[_]+/)[1];
 
           let chartId = '';
-          if (subType === '42i') {
+					// HNET channels for NOx instrument should be shown in one graph
+          if (subType === 'NOx') {
             chartId = `${subType}`;
           } else {
             chartId = `${subType}_${metric}`;
