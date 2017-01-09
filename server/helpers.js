@@ -37,26 +37,24 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
       site: `${aqsid}`,
       $and: [
         {
-            epoch: {
-                $gte: parseInt(startEpoch, 10)
-            }
-        }
-        ,
+          epoch: {
+            $gte: parseInt(startEpoch, 10)
+          }
+        },
         {
-            $and: [
-                {
-                    epoch: {
-                        $lte: parseInt(endEpoch, 10)
-                    }
-                }
-            ]
+          $and: [
+            {
+              epoch: {
+                $lte: parseInt(endEpoch, 10)
+              }
+            }
+          ]
         }
-    ]
-    }, {
-      sort: {
-        epoch: 1
-      }
-    }).fetch();
+      ] }, {
+        sort: {
+          epoch: 1
+        }
+      }).fetch();
   }
 
   switch (fileFormat) {
@@ -217,7 +215,6 @@ function pushTCEQData(aqsid, data) {
     if (err) {
       return logger.error(`Could not write TCEQ push file. Error: ${err}`);
     } else {
-
       const ftps = new FTPS({
         host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
         // protocol is added on beginning of host, ex : sftp://domain.com in this case
@@ -227,8 +224,9 @@ function pushTCEQData(aqsid, data) {
 
       // the following function creates its own scoped context
       ftps.cd('UH/c696').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
+				console.log(res);
         logger.info(`Pushed ${outputFile}`);
-      }, function(pusherr) {
+      }, function (pusherr) {
         return logger.error('Error during push file:', (pusherr));
       }));
     }
@@ -270,14 +268,20 @@ Meteor.methods({
       throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
     }
 
+    const startTimeStamp = `${data.data[0].dateGMT} ${data.data[0].timeGMT}`;
+    const endTimeStamp = `${_.last(data.data).dateGMT} ${_.last(data.data).timeGMT}`;
+
+		console.log(moment(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix());
+		console.log(moment(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix());
+
     const outputFileName = pushTCEQData(aqsid, data);
     // insert a timestamp for the pushed data
     Exports.insert({
       _id: `${aqsid}_${moment().unix()}`,
       pushEpoch: moment().unix(),
       site: aqsid,
-      startEpoch: startEpoch,
-      endEpoch: endEpoch,
+      startEpoch: moment(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
+      endEpoch: moment(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
       fileName: outputFileName
     });
 
@@ -291,6 +295,7 @@ Meteor.methods({
     if (data === undefined) {
       throw new Meteor.Error('Could not find data for selected period.');
     }
+
     const fileName = pushTCEQData(aqsid, data);
     // update edit data points with push date
     var points = AggrEdits.find({

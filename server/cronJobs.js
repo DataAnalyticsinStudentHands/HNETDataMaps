@@ -9,11 +9,11 @@ const statusObject = {};
 // helper function to send emails using nodemailer
 const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
 
-	// Find all users that have subscribed to receive status emails and update the mailList
-  const listSubscribers = Meteor.users.find({receiveSiteStatusEmail: true});
+  // Find all users that have subscribed to receive status emails and update the mailList
+  const listSubscribers = Meteor.users.find({ receiveSiteStatusEmail: true });
 
-	// list of receipients
-	let mailList = '';
+  // list of receipients
+  let mailList = '';
 
   listSubscribers.forEach(function(user) {
     if (user.receiveSiteStatusEmail) {
@@ -22,14 +22,14 @@ const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
   });
 
   const transporter = Nodemailer.createTransport();
-  let mailOptions = {
+  const mailOptions = {
     from: 'HNET Site Watcher <dashadmin@uh.edu>',
     to: mailList,
     subject: reportType,
     text: reportString
   };
 
-  transporter.sendMail(mailOptions, function(error, info) {
+  transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       logger.info('Can not send email. Error: ', error);
     } else {
@@ -47,7 +47,7 @@ Meteor.setInterval(() => {
     // get closest 5 min intervall
     const ROUNDING = 5 * 60 * 1000;/* ms */
     let end = moment();
-    end = moment(Math.floor((+ end) / ROUNDING) * ROUNDING);
+    end = moment(Math.floor((+end) / ROUNDING) * ROUNDING);
 
     // check last push not older than 24 hours
     if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
@@ -103,7 +103,7 @@ Meteor.setInterval(() => {
         statusObject[afolder] = {};
       }
 
-      if (timeDiff > 15 * 60 * 1000) {
+      if (timeDiff > 30 * 60 * 1000) {
         statusObject[afolder].current = `\n${afolder}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
       } else {
         statusObject[afolder].current = `\n${afolder}: Operational`;
@@ -127,7 +127,7 @@ Meteor.setInterval(() => {
       statusObject[afolder].before = statusObject[afolder].current;
     });
 
-    for (const site in statusObject) {
+    for(const site in statusObject) {
       if (statusObject.hasOwnProperty(site)) {
         if (statusObject[site].sendUpdateReport) {
           sendEmail(`${require('os').hostname()} ${statusObject[site].current}`, reportString);
