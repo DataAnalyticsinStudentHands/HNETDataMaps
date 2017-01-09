@@ -292,16 +292,17 @@ Meteor.methods({
       throw new Meteor.Error('Could not find data for selected period.');
     }
 
-    const fileName = pushTCEQData(aqsid, data);
+    const pushFileName = pushTCEQData(aqsid, data);
+
     // update edit data points with push date
     var points = AggrEdits.find({
       "startEpoch": {
-        $gt: startEpoch
+        $gte: startEpoch
       },
       $and: [
         {
           "endEpoch": {
-            $lt: endEpoch
+            $lte: endEpoch
           }
         }
       ]
@@ -312,7 +313,7 @@ Meteor.methods({
         _id: point._id
       }, {
         $set: {
-          pushed: fileName
+          fileName: pushFileName
         }
       });
     });
