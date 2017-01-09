@@ -224,7 +224,6 @@ function pushTCEQData(aqsid, data) {
 
       // the following function creates its own scoped context
       ftps.cd('UH/c696').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
-				console.log(res);
         logger.info(`Pushed ${outputFile}`);
       }, function (pusherr) {
         return logger.error('Error during push file:', (pusherr));
@@ -271,17 +270,14 @@ Meteor.methods({
     const startTimeStamp = `${data.data[0].dateGMT} ${data.data[0].timeGMT}`;
     const endTimeStamp = `${_.last(data.data).dateGMT} ${_.last(data.data).timeGMT}`;
 
-		console.log(moment(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix());
-		console.log(moment(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix());
-
     const outputFileName = pushTCEQData(aqsid, data);
     // insert a timestamp for the pushed data
     Exports.insert({
       _id: `${aqsid}_${moment().unix()}`,
       pushEpoch: moment().unix(),
       site: aqsid,
-      startEpoch: moment(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
-      endEpoch: moment(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
+      startEpoch: moment.utc(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
+      endEpoch: moment.utc(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
       fileName: outputFileName
     });
 
