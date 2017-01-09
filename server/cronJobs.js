@@ -92,53 +92,90 @@ Meteor.setInterval(() => {
   // report
   let reportString = `H-NET Site Status as of ${moment().format('YYYY/MM/DD, HH:mm:ss')} \n`;
 
-  fs.readdir(watchedPath, function(err, folders) {
-    folders.filter(junk.not).forEach(function(afolder) {
-      const stats = fs.statSync(watchedPath + afolder);
+  // get sites
+  const allSites = LiveSites.find({ });
 
-      const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments
-      const timeDiff = moment() - currentSiteMoment;
+  allSites.forEach((site) => {
+    const siteName = site.incoming;
+    const stats = fs.statSync(watchedPath + siteName);
 
-      if (!statusObject[afolder]) {
-        statusObject[afolder] = {};
-      }
+    const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments
+    const timeDiff = moment() - currentSiteMoment;
 
-      if (timeDiff > 30 * 60 * 1000) {
-        statusObject[afolder].current = `\n${afolder}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
-      } else {
-        statusObject[afolder].current = `\n${afolder}: Operational`;
-      }
-
-      // initialize before status in first run
-      if (!statusObject[afolder].before) {
-        statusObject[afolder].before = statusObject[afolder].current;
-      }
-
-      // initialize sendUpdateReport
-      statusObject[afolder].sendUpdateReport = false;
-
-      // Adding info for each site to the report
-      reportString = `${reportString}${statusObject[afolder].current}\n`;
-
-      if (statusObject[afolder].current !== statusObject[afolder].before) {
-        statusObject[afolder].sendUpdateReport = true;
-      }
-
-      statusObject[afolder].before = statusObject[afolder].current;
-    });
-
-    for(const site in statusObject) {
-      if (statusObject.hasOwnProperty(site)) {
-        if (statusObject[site].sendUpdateReport) {
-          sendEmail(`${require('os').hostname()} ${statusObject[site].current}`, reportString);
-        }
-      }
+    if (!statusObject[siteName]) {
+      statusObject[siteName] = {};
     }
 
-    if (lastReportTime === 0) {
-      // Daily report
-      sendEmail(`Daily Report for ${require('os').hostname()}`, reportString);
-      lastReportTime = moment.unix();
+    if (timeDiff > site.statusCheckInterval * 60 * 1000) {
+      statusObject[siteName].current = `\n${siteName}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
+    } else {
+      statusObject[siteName].current = `\n${siteName}: Operational`;
     }
+
+    // initialize before status in first run
+    if (!statusObject[siteName].before) {
+      statusObject[siteName].before = statusObject[siteName].current;
+    }
+
+    // initialize sendUpdateReport
+    statusObject[siteName].sendUpdateReport = false;
+
+    // Adding info for each site to the report
+    reportString = `${reportString}${statusObject[siteName].current}\n`;
+
+    if (statusObject[siteName].current !== statusObject[siteName].before) {
+      statusObject[siteName].sendUpdateReport = true;
+    }
+
+    statusObject[siteName].before = statusObject[siteName].current;
+
+  // fs.readdir(watchedPath, function(err, folders) {
+  //   folders.filter(junk.not).forEach(function(afolder) {
+  //     const stats = fs.statSync(watchedPath + afolder);
+	//
+  //     const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments
+  //     const timeDiff = moment() - currentSiteMoment;
+	//
+  //     if (!statusObject[afolder]) {
+  //       statusObject[afolder] = {};
+  //     }
+	//
+  //     if (timeDiff > 30 * 60 * 1000) {
+  //       statusObject[afolder].current = `\n${afolder}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
+  //     } else {
+  //       statusObject[afolder].current = `\n${afolder}: Operational`;
+  //     }
+	//
+  //     // initialize before status in first run
+  //     if (!statusObject[afolder].before) {
+  //       statusObject[afolder].before = statusObject[afolder].current;
+  //     }
+	//
+  //     // initialize sendUpdateReport
+  //     statusObject[afolder].sendUpdateReport = false;
+	//
+  //     // Adding info for each site to the report
+  //     reportString = `${reportString}${statusObject[afolder].current}\n`;
+	//
+  //     if (statusObject[afolder].current !== statusObject[afolder].before) {
+  //       statusObject[afolder].sendUpdateReport = true;
+  //     }
+	//
+  //     statusObject[afolder].before = statusObject[afolder].current;
+  //   });
   });
+
+  for(const site in statusObject) {
+    if (statusObject.hasOwnProperty(site)) {
+      if (statusObject[site].sendUpdateReport) {
+        sendEmail(`${require('os').hostname()} ${statusObject[site].current}`, reportString);
+      }
+    }
+  }
+
+  if (lastReportTime === 0) {
+    // Daily report
+    sendEmail(`Daily Report for ${require('os').hostname()}`, reportString);
+    lastReportTime = moment.unix();
+  }
 }, 5 * 60 * 1000); // run every 5 min, to report a site is down immidiately
