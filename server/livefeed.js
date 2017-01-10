@@ -259,7 +259,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   }));
 }
 
-var makeObj = function(keys, previousObject) {
+var makeObj = function(keys, startIndex, previousObject) {
   const obj = {};
   obj.subTypes = {};
   let metron = [];
@@ -271,7 +271,7 @@ var makeObj = function(keys, previousObject) {
         newKey = key.replace('_Wind', '');
       }
       const subKeys = newKey.split('_'); // split each column header
-      if (subKeys.length > 1) { // skipping 'TheTime'
+      if (subKeys.length > startIndex) { // skipping e.g. 'TheTime'
         metron = subKeys[2]; // instrument i.e. Wind, Ozone etc.
         const measurement = subKeys[3]; // measurement conc, temp, etc.
         const value = keys[key];
@@ -349,9 +349,9 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
     for (let k = 0; k < parsedLines.length; k++) {
       let singleObj = {};
       if (k === 0) {
-        singleObj = makeObj(parsedLines[k]);
+        singleObj = makeObj(parsedLines[k], 1);
       } else {
-        singleObj = makeObj(parsedLines[k], previousObject);
+        singleObj = makeObj(parsedLines[k], 1, previousObject);
       }
       let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + (6 * 3600);
       epoch = epoch - (epoch % 1); // rounding down
@@ -378,29 +378,142 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
   }
 });
 
+var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
+  // find the site information using the location of the file that is being read
+  const pathArray = path.split(pathModule.sep);
+  const parentDir = pathArray[pathArray.length - 2];
+  const site = LiveSites.findOne({ incoming: parentDir });
+
+  if (site.AQSID) {
+    // update the timestamp for the last update for the site
+    const stats = fs.statSync(path);
+    const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
+    if (site.lastUpdateEpoch < fileModified) {
+      LiveSites.update({
+        // Selector
+        AQSID: `${site.AQSID}`
+      }, {
+        // Modifier
+        $set: {
+          lastUpdateEpoch: fileModified
+        }
+      }, { validate: false });
+    }
+
+    // create objects from parsed lines
+    const allObjects = [];
+    for (let k = 0; k < parsedLines.length; k++) {
+      const singleObj = {};
+      singleObj.subTypes = {};
+      singleObj.subTypes.TRH = [];
+      singleObj.subTypes.Baro = [];
+      singleObj.subTypes.RMY = [];
+      singleObj.subTypes.Rain = [];
+
+      singleObj.subTypes.TRH[0] = {};
+      singleObj.subTypes.TRH[0].metric = 'Flag';
+      singleObj.subTypes.TRH[0].val = 1;
+      singleObj.subTypes.TRH[1] = {};
+      singleObj.subTypes.TRH[1].metric = 'Temp';
+      singleObj.subTypes.TRH[1].val = parsedLines[k][2];
+      singleObj.subTypes.TRH[1].unit = 'C';
+      singleObj.subTypes.TRH[2] = {};
+      singleObj.subTypes.TRH[2].metric = 'RH';
+      singleObj.subTypes.TRH[2].val = parsedLines[k][3];
+      singleObj.subTypes.TRH[2].unit = 'pct';
+      singleObj.subTypes.Baro[0] = {};
+      singleObj.subTypes.Baro[0].metric = 'Flag';
+      singleObj.subTypes.Baro[0].val = 1;
+      singleObj.subTypes.Baro[1] = {};
+      singleObj.subTypes.Baro[1].metric = 'Press';
+      singleObj.subTypes.Baro[1].val = parsedLines[k][4];
+      singleObj.subTypes.Baro[1].unit = 'mbar';
+      singleObj.subTypes.RMY[0] = {};
+      singleObj.subTypes.RMY[0].metric = 'Flag';
+      singleObj.subTypes.RMY[0].val = 1;
+      singleObj.subTypes.RMY[1] = {};
+      singleObj.subTypes.RMY[1].metric = 'WS';
+      singleObj.subTypes.RMY[1].val = parsedLines[k][6];
+      singleObj.subTypes.RMY[1].unit = 'ms';
+      singleObj.subTypes.RMY[2] = {};
+      singleObj.subTypes.RMY[2].metric = 'WD';
+      singleObj.subTypes.RMY[2].val = parsedLines[k][7];
+      singleObj.subTypes.RMY[2].unit = 'deg';
+      singleObj.subTypes.Rain[0] = {};
+      singleObj.subTypes.Rain[0].metric = 'Flag';
+      singleObj.subTypes.Rain[0].val = 1;
+      singleObj.subTypes.Rain[1] = {};
+      singleObj.subTypes.Rain[1].metric = 'Precip';
+      singleObj.subTypes.Rain[1].val = parsedLines[k][8];
+      singleObj.subTypes.Rain[1].unit = 'inch';
+
+      let epoch = moment(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').unix();
+      epoch = epoch - (epoch % 1); // rounding down
+      singleObj.epoch = epoch;
+      singleObj.epoch5min = epoch - (epoch % 300);
+      singleObj.TimeStamp = parsedLines[k][0];
+      singleObj.site = site.AQSID;
+      singleObj.file = pathArray[pathArray.length - 1];
+      singleObj._id = `${site.AQSID}_${epoch}_met`;
+      allObjects.push(singleObj);
+    }
+
+    // using bulkCollectionUpdate
+    bulkCollectionUpdate(LiveData, allObjects, {
+      callback: function() {
+        const nowEpoch = moment().unix();
+        const agoEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
+
+        logger.info(`LiveData updated for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
+        perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
+      }
+    });
+  }
+});
+
 const readFile = Meteor.bindEnvironment(function(path) {
   // test whether the siteId in the file name matches the directory
   const pathArray = path.split(pathModule.sep);
   const fileName = pathArray[pathArray.length - 1];
   const siteId = fileName.split(/[_]+/)[1];
+	const fileType = fileName.split(/[_]+/)[2];
   const parentDir = pathArray[pathArray.length - 2];
   const test = parentDir.substring(parentDir.lastIndexOf('UH') + 2, parentDir.lastIndexOf('_'));
   if (siteId === test) {
     fs.readFile(path, 'utf-8', (err, output) => {
       let secondIteration = false;
-      Papa.parse(output, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete(results) {
-          if (!secondIteration) {
-            batchLiveDataUpsert(results.data, path);
-            secondIteration = true;
-          } else {
-            return;
+      // HNET special treatment of data files from Loggernet (met data)
+      if (fileType.endsWith('met')) {
+        Papa.parse(output, {
+          header: false,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete(results) {
+            // remove the first 4 lines - headers
+            results.data.splice(0, 4);
+            if (!secondIteration) {
+              batchMetDataUpsert(results.data, path);
+              secondIteration = true;
+            } else {
+              return;
+            }
           }
-        }
-      });
+        });
+      } else {
+        Papa.parse(output, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete(results) {
+            if (!secondIteration) {
+              batchLiveDataUpsert(results.data, path);
+              secondIteration = true;
+            } else {
+              return;
+            }
+          }
+        });
+      }
     });
   } else {
     logger.error('File has been added in not matching directory.');
