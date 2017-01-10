@@ -244,13 +244,9 @@ Template.site.onRendered(function() {
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
             _id: chartId
-          }, {reactive: false})) {
-
+          }, { reactive: false })) {
             Charts.insert({
-              _id: chartId,
-              // yAxis: [{
-              //     metric
-              //   }]
+              _id: chartId
             });
 
             const seriesOptions = [];
