@@ -66,7 +66,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               numValid = 0;
             }
 
-            if (subType.indexOf('RMY') >= 0) { // special calculation for wind data
+            if (subType.indexOf('RMY') >= 0) { // HNET special calculation for wind data
               // get windDir and windSpd
               let windDir;
               let windSpd;

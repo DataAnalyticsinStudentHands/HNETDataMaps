@@ -92,7 +92,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               };
 
               if (key === 'WS') {
-                // NOTE: there are some misreads with the sensor, and so
+                // HNET: there are some misreads with the sensor, and so
                 // it occasionally reports wind speeds upwards of 250mph.
                 yAxis.ceiling = 20;
                 yAxis.tickInterval = 5;
@@ -109,6 +109,33 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
                 opposite: false,
                 min: 0,
                 max: 250
+              };
+            } else if (pubKey.indexOf('Rain') >= 0) {
+              // HNET setting for Rain instrument
+              yAxis = {
+                allowDecimals: true,
+                labels: {
+                  format: '{value}'
+                },
+                title: {
+                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
+                },
+                opposite: false,
+                min: 0
+              };
+            } else if (pubKey.indexOf('Baro') >= 0) {
+              // HNET setting for Baro instrument
+              yAxis = {
+                allowDecimals: false,
+                labels: {
+                  format: '{value:.0f}'
+                },
+                title: {
+                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
+                },
+                opposite: false,
+                min: 995,
+                max: 1035
               };
             } else {
               yAxis = {
@@ -263,6 +290,33 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               opposite: false,
               min: 0,
               max: 250
+            };
+          } else if (pubKey.indexOf('Rain') >= 0) {
+            // HNET setting for Rain instrument
+            yAxis = {
+              allowDecimals: true,
+              labels: {
+                format: '{value}'
+              },
+              title: {
+                text: `${key}[${pollData[pubKey][key].unit.val}]`
+              },
+              opposite: false,
+              min: 0
+            };
+          } else if (pubKey.indexOf('Baro') >= 0) {
+            // HNET setting for Baro instrument
+            yAxis = {
+              allowDecimals: false,
+              labels: {
+                format: '{value:.0f}'
+              },
+              title: {
+                text: `${key}[${pollData[pubKey][key].unit.val}]`
+              },
+              opposite: false,
+              min: 995,
+              max: 1035
             };
           } else {
             yAxis = {
