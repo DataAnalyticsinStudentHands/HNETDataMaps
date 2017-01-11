@@ -13,7 +13,7 @@ Highcharts.setOptions({
   global: {
     useUTC: false
   },
-  colors: ['#4F525C', '#DDDF00', '#24CBE5', '#64E572', '#FF9655']
+  colors: ['#DDDF00', '#4F525C', '#24CBE5', '#64E572', '#FF9655']
 });
 
 // placeholder for EditPoints in modal
