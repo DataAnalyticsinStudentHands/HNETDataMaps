@@ -80,5 +80,21 @@ Template.datamanagement.events = {
       }
       sAlert.success(`Pushed file\n ${response} successfull!`);
     });
-  }
+  },
+'click #deleteAggregates' (event, target) {
+  event.preventDefault();
+  const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
+
+  const start = target.$('form.management input[name=start]').val();
+  const end = target.$('form.management input[name=end]').val();
+
+  // call to delete aggreagtes
+  Meteor.call('deleteAggregates', site.AQSID, start, end, (err, response) => {
+    if (err) {
+      sAlert.error(`Error:\n ${err.reason}`);
+      return;
+    }
+    sAlert.success(`Deleted:\n ${response} aggregated data points`);
+  });
+}
 };

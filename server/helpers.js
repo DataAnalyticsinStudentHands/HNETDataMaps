@@ -260,6 +260,27 @@ Meteor.methods({
 
     return data;
   },
+  deleteAggregates(aqsid, startEpoch, endEpoch) {
+    return AggrData.remove({
+      site: `${aqsid}`,
+      $and: [
+        {
+          epoch: {
+            $gte: parseInt(startEpoch, 10)
+          }
+        },
+        {
+          $and: [
+            {
+              epoch: {
+                $lte: parseInt(endEpoch, 10)
+              }
+            }
+          ]
+        }
+      ]
+    });
+  },
   pushData(aqsid, startEpoch, endEpoch) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, 'tceq');
 
