@@ -2,7 +2,6 @@
 import fs from 'fs-extra';
 import junk from 'junk';
 
-let lastReportTime = 0;
 // structure to hold current/before status information
 const statusObject = {};
 
@@ -74,8 +73,6 @@ Meteor.setInterval(() => {
 
 // daily reset of values for reports
 Meteor.setInterval(() => {
-  // reset to trigger daily report
-  lastReportTime = 0;
 
   // Create directory for outgoing files for tomorrow
   fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function (err) {
@@ -171,11 +168,5 @@ Meteor.setInterval(() => {
         sendEmail(`${require('os').hostname()} ${statusObject[site].current}`, reportString);
       }
     }
-  }
-
-  if (lastReportTime === 0) {
-    // Daily report
-    sendEmail(`Daily Report for ${require('os').hostname()}`, reportString);
-    lastReportTime = moment.unix();
   }
 }, 5 * 60 * 1000); // run every 5 min, to report a site is down immidiately
