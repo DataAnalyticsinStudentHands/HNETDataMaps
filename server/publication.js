@@ -54,6 +54,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               poll5Data[subType][key] = [];
               poll5Data[subType][key].unit = sub[3]; // unit
             }
+						//console.log(epoch, sub);
             if (_.last(sub).metric.indexOf('Flag') >= 0) { // get all measurements
               var datapoint = {
                 x: epoch * 1000,
@@ -169,8 +170,10 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
         }
       }
     }
-  }, function(error) {
-    Meteor._debug('error during 5min publication aggregation: ' + error);
+  }, (err) => {
+    if (err) {
+      throw new Meteor.Error('5min aggregation error', `error during 5min publication aggregation:  ${err}`);
+    }
   });
 
   var aggPipe = [
