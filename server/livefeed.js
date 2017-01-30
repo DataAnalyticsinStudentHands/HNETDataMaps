@@ -236,21 +236,79 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
       AggrData.insert(subObj, function(error, result) {
         // only update aggregated values if object already exists to avoid loosing edited data flags
         if (result === false) {
-          for (var instrument in newaggr) {
-            for (var measurement in newaggr[instrument]) {
-              const $set = {};
-              $set['subTypes.' + instrument + '.' + measurement + '.0'] = newaggr[instrument][measurement][0];
-              $set['subTypes.' + instrument + '.' + measurement + '.1'] = newaggr[instrument][measurement][1];
-              $set['subTypes.' + instrument + '.' + measurement + '.2'] = newaggr[instrument][measurement][2];
-              $set['subTypes.' + instrument + '.' + measurement + '.3'] = newaggr[instrument][measurement][3];
-              $set['subTypes.' + instrument + '.' + measurement + '.4'] = newaggr[instrument][measurement][4];
-              AggrData.update({
-                _id: subObj._id
-              }, {
-                $set: $set
-              }, { upsert: true });
-            }
-          }
+          const $set = {};
+          Object.keys(newaggr).forEach(function(newInstrument) {
+            Object.keys(newaggr[newInstrument]).forEach(function(newMeasurement) {
+              // test whether aggregates for this instrument/measurement already exists
+              const qry = {};
+              qry._id = subObj._id;
+              qry[`subTypes.${newInstrument}.${newMeasurement}`] = { $exists: true };
+
+              // add aggregates for new instrument/mesaurements
+              if (!AggrData.find(qry, { limit: 1 })) {
+                const newSet = [];
+                newSet[0] = newaggr[newInstrument][newMeasurement][0];
+                newSet[1] = newaggr[newInstrument][newMeasurement][1];
+                newSet[2] = newaggr[newInstrument][newMeasurement][2];
+                newSet[3] = newaggr[newInstrument][newMeasurement][3];
+                newSet[4] = newaggr[newInstrument][newMeasurement][4];
+                $set['subTypes.' + newInstrument + '.' + newMeasurement] = newSet;
+
+                AggrData.findAndModify({
+                  query: qry,
+                  update: { $set: $set },
+                  upsert: true,
+                  new: true
+                });
+              } else {
+                const query0 = {};
+                query0._id = subObj._id;
+                query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
+                const $set0 = {};
+                $set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
+                AggrData.update(
+                  query0,
+                  { $set: $set0 }
+                );
+                const query1 = {};
+                query1._id = subObj._id;
+                query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
+                const $set1 = {};
+                $set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
+                AggrData.update(
+                  query1,
+                  { $set: $set1 }
+                );
+                const query2 = {};
+                query2._id = subObj._id;
+                query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
+                const $set2 = {};
+                $set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
+                AggrData.update(
+                  query2,
+                  { $set: $set2 }
+                );
+                const query3 = {};
+                query3._id = subObj._id;
+                query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
+                const $set3 = {};
+                $set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
+                AggrData.update(
+                  query3,
+                  { $set: $set3 }
+                );
+                const query4 = {};
+                query4._id = subObj._id;
+                query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
+                const $set4 = {};
+                $set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
+                AggrData.update(
+                  query4,
+                  { $set: $set4 }
+                );
+              }
+            });
+          });
         }
       });
     });
