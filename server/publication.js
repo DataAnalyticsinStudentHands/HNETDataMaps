@@ -54,14 +54,25 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               poll5Data[subType][key] = [];
               poll5Data[subType][key].unit = sub[3]; // unit
             }
-						//console.log(epoch, sub);
+						// console.log(epoch, sub);
             if (_.last(sub).metric.indexOf('Flag') >= 0) { // get all measurements
-              var datapoint = {
-                x: epoch * 1000,
-                y: sub[1].val, // average
-                color: flagsHash[_.last(sub).val].color, // the last element contains the latest flag
-                name: _.last(sub).val // will use the name of the point to hold the flag value
-              }; // milliseconds
+              let datapoint = {};
+              // HNET special treatment for precipitation
+              if (key.indexOf('Precip') >= 0) {
+                datapoint = {
+                  x: epoch * 1000, // milliseconds
+                  y: sub[0].val, // sum
+                  color: flagsHash[_.last(sub).val].color, // the last element contains the latest flag
+                  name: _.last(sub).val // will use the name of the point to hold the flag value
+                };
+              } else {
+                datapoint = {
+                  x: epoch * 1000, // milliseconds
+                  y: sub[1].val, // average
+                  color: flagsHash[_.last(sub).val].color, // the last element contains the latest flag
+                  name: _.last(sub).val // will use the name of the point to hold the flag value
+                };
+              }
               poll5Data[subType][key].push(datapoint);
             }
           });
