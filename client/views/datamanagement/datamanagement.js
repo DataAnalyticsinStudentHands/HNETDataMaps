@@ -73,7 +73,7 @@ Template.datamanagement.events = {
     const end = target.$('form.management input[name=end]').val();
 
     // call push data to TCEQ
-    Meteor.call('pushData', site.AQSID, start, end, (err, response) => {
+    Meteor.call('pushData', site.AQSID, start, end, true, (err, response) => {
       if (err) {
         sAlert.error(`Error:\n ${err.reason}`);
         return;

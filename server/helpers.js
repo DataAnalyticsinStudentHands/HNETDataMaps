@@ -94,7 +94,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                   obj[label] = 0; // set value to 0
                 } else {
                   let outputValue = data[1].val; // avg
-                  // Unit conversion for Temp from C to F
+                  // HNET Unit conversion for Temp from C to F
                   if (measurement === 'Temp' || measurement === 'AmbTemp') {
                     outputValue = outputValue * 9 / 5 + 32;
                   } else if (measurement === 'WS') {
@@ -281,7 +281,7 @@ Meteor.methods({
       ]
     });
   },
-  pushData(aqsid, startEpoch, endEpoch) {
+  pushData(aqsid, startEpoch, endEpoch, manual) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, 'tceq');
 
     if (Object.keys(data).length === 0 && data.constructor === Object) {
@@ -299,7 +299,8 @@ Meteor.methods({
       site: aqsid,
       startEpoch: moment.utc(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
       endEpoch: moment.utc(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
-      fileName: outputFileName
+      fileName: outputFileName,
+      manualPush: manual
     });
 
     return outputFileName;

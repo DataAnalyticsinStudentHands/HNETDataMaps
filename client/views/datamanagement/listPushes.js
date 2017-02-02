@@ -1,6 +1,12 @@
 const dataToShow = new ReactiveVar();
 const dataFilePath = new ReactiveVar();
 
+Template.listPushes.helpers({
+  selector() {
+    return {manual: true}; // this could be pulled from a Session var or something that is reactive
+  }
+});
+
 Template.viewDataCell.events({
   'click .js-view-data': function(event) {
     const dataTable = $(event.target).closest('table').DataTable();
