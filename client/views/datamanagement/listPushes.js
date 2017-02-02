@@ -1,10 +1,12 @@
 const dataToShow = new ReactiveVar();
 const dataFilePath = new ReactiveVar();
+Session.set('ToggleSelector', true);
 
 Template.listPushes.helpers({
   selector() {
-    return {manual: true}; // this could be pulled from a Session var or something that is reactive
-  }
+    return { manual: Session.get('ToggleSelector') };
+  },
+  toggle_selector_options() { }
 });
 
 Template.viewDataCell.events({
