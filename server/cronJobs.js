@@ -71,17 +71,6 @@ Meteor.setInterval(() => {
   });
 }, 10 * 60 * 1000); // run every 10 min, to push new data
 
-// daily reset of values for reports
-Meteor.setInterval(() => {
-
-  // Create directory for outgoing files for tomorrow
-  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function (err) {
-    if (err) {
-      logger.error(err);
-    }
-  });
-}, 24 * 3600 * 1000);
-
 // 5 mins check for site down
 Meteor.setInterval(() => {
   const watchedPath = '/hnet/incoming/current/';

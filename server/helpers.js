@@ -1,8 +1,8 @@
 // required packages
-const fs = Npm.require('fs');
-const Future = Npm.require('fibers/future');
-
+import fs from 'fs-extra';
 import FTPS from 'ftps';
+
+const Future = Npm.require('fibers/future');
 
 // reading ftps password from environment
 const hnetsftp = process.env.hnetsftp;
@@ -204,34 +204,40 @@ function pushTCEQData(aqsid, data) {
   const siteName = (site.incoming.match(new RegExp('UH' +
   '(.*)' +
   '_')))[1].slice(-2);
+  // ensure whether output dir exists
+  const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
+  fs.ensureDirSync(outputDir, function (err) {
+    logger.error(err); // => null
+    // outputdir has now been created, including the directory it is to be placed in
+  });
   // create csv file and store in outgoing folder
-  const outputFile = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
+  const outputFile = `${outputDir}/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
+
   const csvComplete = Papa.unparse(data);
   // removing header from csv string
   const n = csvComplete.indexOf('\n');
   const csv = csvComplete.substring(n + 1);
 
   fs.writeFile(outputFile, csv, Meteor.bindEnvironment(function(err) {
-    if (err) {
-      return logger.error(`Could not write TCEQ push file. Error: ${err}`);
-    } else {
+    if (!err) {
       const ftps = new FTPS({
         host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
         // protocol is added on beginning of host, ex : sftp://domain.com in this case
-        port: 990, // optional
+        port: 990 // optional
         // port is added to the end of the host, ex: sftp://domain.com:22 in this case
       });
 
       // the following function creates its own scoped context
       ftps.cd('UH/c696').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
         logger.info(`Pushed ${outputFile}`);
+        return outputFile;
       }, function (pusherr) {
         return logger.error('Error during push file:', (pusherr));
       }));
+    } else {
+      return logger.error(`Could not write TCEQ push file. Error: ${err}`);
     }
   }));
-
-  return outputFile;
 }
 
 Meteor.methods({
