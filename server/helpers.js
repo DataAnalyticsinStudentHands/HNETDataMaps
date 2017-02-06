@@ -287,7 +287,7 @@ Meteor.methods({
       ]
     });
   },
-  pushData(aqsid, startEpoch, endEpoch, manual) {
+  pushData(aqsid, startEpoch, endEpoch, manualPush) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, 'tceq');
 
     if (Object.keys(data).length === 0 && data.constructor === Object) {
@@ -306,7 +306,7 @@ Meteor.methods({
       startEpoch: moment.utc(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
       endEpoch: moment.utc(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
       fileName: outputFileName,
-      manualPush: manual
+      manual: manualPush
     });
 
     return outputFileName;
