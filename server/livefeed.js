@@ -3,6 +3,10 @@ const fs = Npm.require('fs');
 const pathModule = Npm.require('path');
 
 function perform5minAggregat(siteId, startEpoch, endEpoch) {
+  // create temp collection as placeholder for aggreagation results
+  const aggrResultsName = `aggr${moment().valueOf()}`;
+  const AggrResults = new Meteor.Collection(aggrResultsName);
+
   // gather all data, group by 5min epoch
   const pipeline = [
     {
@@ -18,11 +22,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           }
         ]
       }
-    },
-    //        {
-    //            $limit: 5 //testing only!
-    //        },
-    {
+    }, {
       $project: {
         epoch5min: 1,
         epoch: 1,
@@ -39,282 +39,279 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           $push: '$subTypes'
         }
       }
+    }, {
+      $out: aggrResultsName
     }
   ];
 
-  LiveData.aggregate(pipeline, Meteor.bindEnvironment(function(err, result) {
-    _.each(result, function(e) {
-      const subObj = {};
-      subObj._id = `${e.site}_${e._id}`;
-      subObj.site = e.site;
-      subObj.epoch = e._id;
-      const subTypes = e.subTypes;
-      const aggrSubTypes = {}; // hold aggregated data
+  LiveData.aggregate(pipeline, { allowDiskUse: true });
 
-      for (let i = 0; i < subTypes.length; i++) {
-        for (var subType in subTypes[i]) {
-          if (subTypes[i].hasOwnProperty(subType)) {
-            var data = subTypes[i][subType];
-            var numValid = 1;
-            var newkey;
+  // create new structure for data series to be used for charts
+  AggrResults.find({}).forEach(function(e) {
+    const subObj = {};
+    subObj._id = `${e.site}_${e._id}`;
+    subObj.site = e.site;
+    subObj.epoch = e._id;
+    const subTypes = e.subTypes;
+    const aggrSubTypes = {}; // hold aggregated data
 
-            // if flag is not existing, put 1 as default, need to ask Jim?
-            if (data[0].val === '') {
-              data[0].val = 1;
-            }
-            if (data[0].val !== 1) { // if flag is not 1 (valid) don't increase numValid
-              numValid = 0;
-            }
+    for (let i = 0; i < subTypes.length; i++) {
+      for (var subType in subTypes[i]) {
+        if (subTypes[i].hasOwnProperty(subType)) {
+          var data = subTypes[i][subType];
+          var numValid = 1;
+          var newkey;
 
-            if (subType.indexOf('RMY') >= 0) { // HNET special calculation for wind data
-              // get windDir and windSpd
-              let windDir;
-              let windSpd;
-              let windDirUnit;
-              let windSpdUnit;
-              for (let j = 1; j < data.length; j++) {
-                if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
-                  numValid = 0;
-                }
-                if (data[j].metric === 'WD') {
-                  windDir = data[j].val;
-                  windDirUnit = data[j].unit;
-                }
-                if (data[j].metric === 'WS') {
-                  windSpd = data[j].val;
-                  windSpdUnit = data[j].unit;
-                }
-              }
+          // if flag is not existing, put 1 as default, need to ask Jim?
+          if (data[0].val === '') {
+            data[0].val = 1;
+          }
+          if (data[0].val !== 1) { // if flag is not 1 (valid) don't increase numValid
+            numValid = 0;
+          }
 
-              // Convert wind speed and wind direction waves into wind north and east component vectors
-              var windNord = Math.cos(windDir / 180 * Math.PI) * windSpd;
-              var windEast = Math.sin(windDir / 180 * Math.PI) * windSpd;
-
-              let flag = data[0].val;
-
-              // automatic flagging of high wind speed values/flag with 9(N)
-              if (windSpd >= 35) {
+          if (subType.indexOf('RMY') >= 0) { // HNET special calculation for wind data
+            // get windDir and windSpd
+            let windDir;
+            let windSpd;
+            let windDirUnit;
+            let windSpdUnit;
+            for (let j = 1; j < data.length; j++) {
+              if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
                 numValid = 0;
-                flag = 9;
+              }
+              if (data[j].metric === 'WD') {
+                windDir = data[j].val;
+                windDirUnit = data[j].unit;
+              }
+              if (data[j].metric === 'WS') {
+                windSpd = data[j].val;
+                windSpdUnit = data[j].unit;
+              }
+            }
+
+            // Convert wind speed and wind direction waves into wind north and east component vectors
+            var windNord = Math.cos(windDir / 180 * Math.PI) * windSpd;
+            var windEast = Math.sin(windDir / 180 * Math.PI) * windSpd;
+
+            let flag = data[0].val;
+
+            // automatic flagging of high wind speed values/flag with 9(N)
+            if (windSpd >= 35) {
+              numValid = 0;
+              flag = 9;
+            }
+
+            // Aggregate data points
+            newkey = subType + '_' + 'RMY';
+            if (!aggrSubTypes[newkey]) {
+              aggrSubTypes[newkey] = {
+                sumWindNord: windNord,
+                sumWindEast: windEast,
+                avgWindNord: windNord,
+                avgWindEast: windEast,
+                numValid: numValid,
+                totalCounter: 1, // initial total counter
+                flagstore: [flag], // store all incoming flags in case we need to evaluate
+                WDunit: windDirUnit, // use units from last data point in the aggregation
+                WSunit: windSpdUnit // use units from last data point in the aggregation
+              };
+            } else {
+              if (numValid !== 0) { // taking care of empty data values
+                aggrSubTypes[newkey].numValid += numValid;
+                aggrSubTypes[newkey].sumWindNord += windNord; // holds sum until end
+                aggrSubTypes[newkey].sumWindEast += windEast;
+                aggrSubTypes[newkey].avgWindNord = aggrSubTypes[newkey].sumWindNord / aggrSubTypes[newkey].numValid;
+                aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
+              }
+              aggrSubTypes[newkey].totalCounter += 1; // increase counter
+              aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
+            }
+          } else { // normal aggreagation for all other subTypes
+            for (let j = 1; j < data.length; j++) {
+              newkey = subType + '_' + data[j].metric;
+
+              if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
+                numValid = 0;
               }
 
-              // Aggregate data points
-              newkey = subType + '_' + 'RMY';
+              const flag = data[0].val;
+
               if (!aggrSubTypes[newkey]) {
+                if (numValid === 0) {
+                  data[j].val = 0;
+                }
+
                 aggrSubTypes[newkey] = {
-                  sumWindNord: windNord,
-                  sumWindEast: windEast,
-                  avgWindNord: windNord,
-                  avgWindEast: windEast,
-                  numValid: numValid,
-                  totalCounter: 1, // initial total counter
-                  flagstore: [flag], // store all incoming flags in case we need to evaluate
-                  WDunit: windDirUnit, // use units from last data point in the aggregation
-                  WSunit: windSpdUnit // use units from last data point in the aggregation
+                  sum: Number(data[j].val),
+                  'avg': Number(data[j].val),
+                  'numValid': numValid,
+                  'totalCounter': 1, // initial total counter
+                  'flagstore': [flag], // store all incoming flags in case we need to evaluate
+                  unit: data[j].unit // use unit from first data point in aggregation
                 };
               } else {
-                if (numValid !== 0) { // taking care of empty data values
+                if (numValid !== 0) { // keep aggregating only if numValid
                   aggrSubTypes[newkey].numValid += numValid;
-                  aggrSubTypes[newkey].sumWindNord += windNord; // holds sum until end
-                  aggrSubTypes[newkey].sumWindEast += windEast;
-                  aggrSubTypes[newkey].avgWindNord = aggrSubTypes[newkey].sumWindNord / aggrSubTypes[newkey].numValid;
-                  aggrSubTypes[newkey].avgWindEast = aggrSubTypes[newkey].sumWindEast / aggrSubTypes[newkey].numValid;
+                  aggrSubTypes[newkey].sum += Number(data[j].val); // holds sum until end
+                  if (aggrSubTypes[newkey].numValid !== 0) {
+                    aggrSubTypes[newkey].avg = aggrSubTypes[newkey].sum / aggrSubTypes[newkey].numValid;
+                  }
                 }
                 aggrSubTypes[newkey].totalCounter += 1; // increase counter
-                aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
+                aggrSubTypes[newkey].flagstore.push(flag); // /store incoming flag
               }
-            } else { // normal aggreagation for all other subTypes
-              for (let j = 1; j < data.length; j++) {
-                newkey = subType + '_' + data[j].metric;
-
-                if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
-                  numValid = 0;
-                }
-
-                const flag = data[0].val;
-
-                if (!aggrSubTypes[newkey]) {
-                  aggrSubTypes[newkey] = {
-                    sum: Number(data[j].val),
-                    'avg': Number(data[j].val),
-                    'numValid': numValid,
-                    'totalCounter': 1, // initial total counter
-                    'flagstore': [flag], // store all incoming flags in case we need to evaluate
-                    unit: data[j].unit // use unit from first data point in aggregation
-                  };
-                } else {
-                  if (numValid !== 0) { // keep aggregating only if numValid
-                    aggrSubTypes[newkey].numValid += numValid;
-                    aggrSubTypes[newkey].sum += Number(data[j].val); // holds sum until end
-                    if (aggrSubTypes[newkey].numValid !== 0) {
-                      aggrSubTypes[newkey].avg = aggrSubTypes[newkey].sum / aggrSubTypes[newkey].numValid;
-                    }
-                  }
-                  aggrSubTypes[newkey].totalCounter += 1; // increase counter
-                  aggrSubTypes[newkey].flagstore.push(flag); // /store incoming flag
-                }
-                numValid = 1; // reset numvalid
-              }
+              numValid = 1; // reset numvalid
             }
           }
         }
       }
+    }
 
-      // transform aggregated data to generic data format using subtypes etc.
-      var newaggr = {};
-      for (var aggr in aggrSubTypes) {
-        if (aggrSubTypes.hasOwnProperty(aggr)) {
-          var split = aggr.lastIndexOf('_');
-          var instrument = aggr.substr(0, split);
-          var measurement = aggr.substr(split + 1);
-          if (!newaggr[instrument]) {
-            newaggr[instrument] = {};
+    // transform aggregated data to generic data format using subtypes etc.
+    var newaggr = {};
+    for (var aggr in aggrSubTypes) {
+      if (aggrSubTypes.hasOwnProperty(aggr)) {
+        var split = aggr.lastIndexOf('_');
+        var instrument = aggr.substr(0, split);
+        var measurement = aggr.substr(split + 1);
+        if (!newaggr[instrument]) {
+          newaggr[instrument] = {};
+        }
+
+        const obj = aggrSubTypes[aggr]; // makes it a little bit easier
+
+        // dealing with flags
+        if ((obj.numValid / obj.totalCounter) >= 0.75) {
+          obj.Flag = 1; // valid
+        } else {
+          // find out which flag was majority
+          const counts = {};
+          for (let k = 0; k < obj.flagstore.length; k++) {
+            counts[obj.flagstore[k]] = 1 + (counts[obj.flagstore[k]] || 0);
+          }
+          const maxObj = _.max(counts, function(obj) {
+            return obj;
+          });
+          const majorityFlag = (_.invert(counts))[maxObj];
+          obj.Flag = majorityFlag;
+        }
+
+        if (measurement === 'RMY') { // special treatment for wind measurements
+          if (!newaggr[instrument].WD) {
+            newaggr[instrument].WD = [];
+          }
+          if (!newaggr[instrument].WS) {
+            newaggr[instrument].WS = [];
+          }
+          const windDirAvg = (Math.atan2(obj.avgWindEast, obj.avgWindNord) / Math.PI * 180 + 360) % 360;
+          const windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
+
+          newaggr[instrument].WD.push({ metric: 'sum', val: 'Nan' });
+          newaggr[instrument].WD.push({ metric: 'avg', val: windDirAvg });
+          newaggr[instrument].WD.push({ metric: 'numValid', val: obj.numValid });
+          newaggr[instrument].WD.push({ metric: 'unit', val: obj.WDunit });
+          newaggr[instrument].WD.push({ metric: 'Flag', val: obj.Flag });
+
+          newaggr[instrument].WS.push({ metric: 'sum', val: 'Nan' });
+          newaggr[instrument].WS.push({ metric: 'avg', val: windSpdAvg });
+          newaggr[instrument].WS.push({ metric: 'numValid', val: obj.numValid });
+          newaggr[instrument].WS.push({ metric: 'unit', val: obj.WSunit });
+          newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag });
+        } else { // all other measurements
+          if (!newaggr[instrument][measurement]) {
+            newaggr[instrument][measurement] = [];
           }
 
-          const obj = aggrSubTypes[aggr]; // makes it a little bit easier
-
-          // dealing with flags
-          if ((obj.numValid / obj.totalCounter) >= 0.75) {
-            obj.Flag = 1; // valid
-          } else {
-            // find out which flag was majority
-            const counts = {};
-            for (let k = 0; k < obj.flagstore.length; k++) {
-              counts[obj.flagstore[k]] = 1 + (counts[obj.flagstore[k]] || 0);
+          // automatic flagging of aggregated values that are out of range for NO2 to be flagged with 9(N)
+          if (instrument === '42i') {
+            if (obj.avg < -0.5) {
+              obj.Flag = 9;
             }
-            const maxObj = _.max(counts, function(obj) {
-              return obj;
-            });
-            const majorityFlag = (_.invert(counts))[maxObj];
-            obj.Flag = majorityFlag;
           }
 
-          if (measurement === 'RMY') { // special treatment for wind measurements
-            if (!newaggr[instrument].WD) {
-              newaggr[instrument].WD = [];
-            }
-            if (!newaggr[instrument].WS) {
-              newaggr[instrument].WS = [];
-            }
-            const windDirAvg = (Math.atan2(obj.avgWindEast, obj.avgWindNord) / Math.PI * 180 + 360) % 360;
-            const windSpdAvg = Math.sqrt((obj.avgWindNord * obj.avgWindNord) + (obj.avgWindEast * obj.avgWindEast));
-
-            newaggr[instrument].WD.push({ metric: 'sum', val: 'Nan' });
-            newaggr[instrument].WD.push({ metric: 'avg', val: windDirAvg });
-            newaggr[instrument].WD.push({ metric: 'numValid', val: obj.numValid });
-            newaggr[instrument].WD.push({ metric: 'unit', val: obj.WDunit });
-            newaggr[instrument].WD.push({ metric: 'Flag', val: obj.Flag });
-
-            newaggr[instrument].WS.push({ metric: 'sum', val: 'Nan' });
-            newaggr[instrument].WS.push({ metric: 'avg', val: windSpdAvg });
-            newaggr[instrument].WS.push({ metric: 'numValid', val: obj.numValid });
-            newaggr[instrument].WS.push({ metric: 'unit', val: obj.WSunit });
-            newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag });
-          } else { // all other measurements
-            if (!newaggr[instrument][measurement]) {
-              newaggr[instrument][measurement] = [];
-            }
-
-            // automatic flagging of aggregated values that are out of range for NO2 to be flagged with 9(N)
-            if (instrument === '42i') {
-              if (obj.avg < -0.5) {
-                obj.Flag = 9;
-              }
-            }
-
-            newaggr[instrument][measurement].push({ metric: 'sum', val: obj.sum });
-            newaggr[instrument][measurement].push({ metric: 'avg', val: obj.avg });
-            newaggr[instrument][measurement].push({ metric: 'numValid', val: obj.numValid });
-            newaggr[instrument][measurement].push({ metric: 'unit', val: obj.unit });
-            newaggr[instrument][measurement].push({ metric: 'Flag', val: obj.Flag });
-          }
+          newaggr[instrument][measurement].push({ metric: 'sum', val: obj.sum });
+          newaggr[instrument][measurement].push({ metric: 'avg', val: obj.avg });
+          newaggr[instrument][measurement].push({ metric: 'numValid', val: obj.numValid });
+          newaggr[instrument][measurement].push({ metric: 'unit', val: obj.unit });
+          newaggr[instrument][measurement].push({ metric: 'Flag', val: obj.Flag });
         }
       }
+    }
 
-      subObj.subTypes = newaggr;
+    subObj.subTypes = newaggr;
 
-      AggrData.insert(subObj, function(error, result) {
-        // only update aggregated values if object already exists to avoid loosing edited data flags
-        if (result === false) {
-          const $set = {};
-          Object.keys(newaggr).forEach(function(newInstrument) {
-            Object.keys(newaggr[newInstrument]).forEach(function(newMeasurement) {
-              // test whether aggregates for this instrument/measurement already exists
-              const qry = {};
-              qry._id = subObj._id;
-              qry[`subTypes.${newInstrument}.${newMeasurement}`] = { $exists: true };
+    AggrData.insert(subObj, function(error, result) {
+      // only update aggregated values if object already exists to avoid loosing edited data flags
+      if (result === false) {
+        Object.keys(newaggr).forEach(function(newInstrument) {
+          Object.keys(newaggr[newInstrument]).forEach(function(newMeasurement) {
+            // test whether aggregates for this instrument/measurement already exists
+            const qry = {};
+            qry._id = subObj._id;
+            qry[`subTypes.${newInstrument}.${newMeasurement}`] = { $exists: true };
+
+            if (AggrData.findOne(qry) === undefined) {
+              const newQuery = {};
+              newQuery.epoch = subObj.epoch;
+              newQuery.site = subObj.site;
+              const $set = {};
+              const newSet = [];
+              newSet[0] = newaggr[newInstrument][newMeasurement][0];
+              newSet[1] = newaggr[newInstrument][newMeasurement][1];
+              newSet[2] = newaggr[newInstrument][newMeasurement][2];
+              newSet[3] = newaggr[newInstrument][newMeasurement][3];
+              newSet[4] = newaggr[newInstrument][newMeasurement][4];
+              $set['subTypes.' + newInstrument + '.' + newMeasurement] = newSet;
 
               // add aggregates for new instrument/mesaurements
-              if (!AggrData.find(qry, { limit: 1 })) {
-                const newSet = [];
-                newSet[0] = newaggr[newInstrument][newMeasurement][0];
-                newSet[1] = newaggr[newInstrument][newMeasurement][1];
-                newSet[2] = newaggr[newInstrument][newMeasurement][2];
-                newSet[3] = newaggr[newInstrument][newMeasurement][3];
-                newSet[4] = newaggr[newInstrument][newMeasurement][4];
-                $set['subTypes.' + newInstrument + '.' + newMeasurement] = newSet;
-
-                AggrData.findAndModify({
-                  query: qry,
-                  update: { $set: $set },
-                  upsert: true,
-                  new: true
-                });
-              } else {
-                const query0 = {};
-                query0._id = subObj._id;
-                query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
-                const $set0 = {};
-                $set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
-                AggrData.update(
-                  query0,
-                  { $set: $set0 }
-                );
-                const query1 = {};
-                query1._id = subObj._id;
-                query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
-                const $set1 = {};
-                $set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
-                AggrData.update(
-                  query1,
-                  { $set: $set1 }
-                );
-                const query2 = {};
-                query2._id = subObj._id;
-                query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
-                const $set2 = {};
-                $set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
-                AggrData.update(
-                  query2,
-                  { $set: $set2 }
-                );
-                const query3 = {};
-                query3._id = subObj._id;
-                query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
-                const $set3 = {};
-                $set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
-                AggrData.update(
-                  query3,
-                  { $set: $set3 }
-                );
-                const query4 = {};
-                query4._id = subObj._id;
-                query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
-                const $set4 = {};
-                $set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
-                AggrData.update(
-                  query4,
-                  { $set: $set4 }
-                );
-              }
-            });
+              AggrData.findAndModify({
+                query: newQuery,
+                update: {
+                  $set: $set
+                },
+                upsert: false,
+                new: true
+              });
+            } else {
+              const query0 = {};
+              query0._id = subObj._id;
+              query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
+              const $set0 = {};
+              $set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
+              AggrData.update(query0, { $set: $set0 });
+              const query1 = {};
+              query1._id = subObj._id;
+              query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
+              const $set1 = {};
+              $set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
+              AggrData.update(query1, { $set: $set1 });
+              const query2 = {};
+              query2._id = subObj._id;
+              query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
+              const $set2 = {};
+              $set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
+              AggrData.update(query2, { $set: $set2 });
+              const query3 = {};
+              query3._id = subObj._id;
+              query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
+              const $set3 = {};
+              $set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
+              AggrData.update(query3, { $set: $set3 });
+              const query4 = {};
+              query4._id = subObj._id;
+              query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
+              const $set4 = {};
+              $set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
+              AggrData.update(query4, { $set: $set4 });
+            }
           });
-        }
-      });
+        });
+      }
     });
-  }, function (error) {
-    throw new Meteor.Error(`error during aggregation: ${JSON.stringify(error)}`);
-  }));
+  });
+  // drop temp collection that was placeholder for aggreagation results
+  AggrResults.rawCollection().drop();
 }
 
 var makeObj = function(keys, startIndex, previousObject) {
@@ -383,7 +380,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
   // find the site information using the location of the file that is being read
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
-  const site = LiveSites.findOne({incoming: parentDir});
+  const site = LiveSites.findOne({ incoming: parentDir });
 
   if (site.AQSID) {
     // update the timestamp for the last update for the site
@@ -398,7 +395,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
         $set: {
           lastUpdateEpoch: fileModified
         }
-      }, {validate: false});
+      }, { validate: false });
     }
 
     // create objects from parsed lines
@@ -429,7 +426,7 @@ var batchLiveDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
         const nowEpoch = moment().unix();
         const agoEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
 
-        logger.info(`LiveData updated for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
+        logger.info(`LiveData updated from: ${path} for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
         perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
       }
     });
@@ -522,7 +519,7 @@ var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
         const nowEpoch = moment().unix();
         const agoEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
 
-        logger.info(`LiveData updated for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
+        logger.info(`LiveData met updated from: ${path} for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
         perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
       }
     });
