@@ -2,50 +2,19 @@
 Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
 
   var subscription = this;
-  var pollData = {},
-    poll5Data = {};
+  const pollData = {};
+  const poll5Data = {};
 
-  var agg5Pipe = [
-    {
-      $match: {
-        $and: [
-          {
-            site: siteName
-          }, {
-            epoch: {
-              $gt: parseInt(startEpoch, 10),
-              $lt: parseInt(endEpoch, 10)
-            }
-          }
-        ]
+  AggrData.find({ $and: [
+    { site: siteName }, {
+      epoch: {
+        $gt: parseInt(startEpoch, 10),
+        $lt: parseInt(endEpoch, 10)
       }
-    }, {
-      $sort: {
-        epoch: 1
-      }
-    }, {
-      $group: {
-        _id: '$siteName',
-
-        series: {
-          $push: {
-            'subTypes': '$subTypes',
-            'epoch': '$epoch'
-          }
-        }
-      }
-    }
-  ];
-
-  AggrData.aggregate(agg5Pipe, function(err, result) {
-    // create new structure for data series to be used for charts
-    if (result.length > 0) {
-
-      var lines = result[0].series;
-
-      _.each(lines, function(line) {
-        var epoch = line.epoch;
-        _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
+    }] }, { fields: { epoch: 1, subTypes: 1 } }, { sort: { epoch: 1 } }).forEach(function (test) {
+      // reorganize aggregated data for plot
+      const epoch = test.epoch;
+      _.each(test.subTypes, function(subKey, subType) { // subType is O3, etc.
           if (!poll5Data[subType]) {
             poll5Data[subType] = {};
           }
@@ -54,7 +23,6 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               poll5Data[subType][key] = [];
               poll5Data[subType][key].unit = sub[3]; // unit
             }
-						// console.log(epoch, sub);
             if (_.last(sub).metric.indexOf('Flag') >= 0) { // get all measurements
               let datapoint = {};
               // HNET special treatment for precipitation
@@ -76,296 +44,266 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               poll5Data[subType][key].push(datapoint);
             }
           });
-        });
-      });
-
-      for (var pubKey in poll5Data) { // pubKey equals instrument
-        if (poll5Data.hasOwnProperty(pubKey)) {
-          for (var key in poll5Data[pubKey]) { // key equals measurement
-            // skip loop if the property is from prototype
-            if (!poll5Data[pubKey].hasOwnProperty(key))
-              continue;
-
-            // create yAxis object
-            let yAxis = {};
-            if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
-              yAxis = {
-                allowDecimals: false,
-                labels: {
-                  format: '{value:.0f}'
-                },
-                title: {
-                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
-                },
-                opposite: false,
-                floor: 0,
-                ceiling: 360,
-                tickInterval: 90
-              };
-
-              if (key === 'WS') {
-                // HNET: there are some misreads with the sensor, and so
-                // it occasionally reports wind speeds upwards of 250mph.
-                yAxis.ceiling = 20;
-                yAxis.tickInterval = 5;
-              }
-            } else if (pubKey.indexOf('49i') >= 0) {
-              yAxis = {
-                allowDecimals: false,
-                labels: {
-                  format: '{value:.0f}'
-                },
-                title: {
-                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
-                },
-                opposite: false,
-                min: 0,
-                max: 250
-              };
-            } else if (pubKey.indexOf('Rain') >= 0) {
-              // HNET setting for Rain instrument
-              yAxis = {
-                allowDecimals: true,
-                labels: {
-                  format: '{value}'
-                },
-                title: {
-                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
-                },
-                opposite: false,
-                min: 0
-              };
-            } else if (pubKey.indexOf('Baro') >= 0) {
-              // HNET setting for Baro instrument
-              yAxis = {
-                allowDecimals: false,
-                labels: {
-                  format: '{value:.0f}'
-                },
-                title: {
-                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
-                },
-                opposite: false,
-                min: 995,
-                max: 1035
-              };
-            } else {
-              yAxis = {
-                allowDecimals: false,
-                labels: {
-                  format: '{value:.0f}'
-                },
-                title: {
-                  text: `${key}[${poll5Data[pubKey][key].unit.val}]`
-                },
-                opposite: false,
-                min: 0
-              };
-            }
-
-            subscription.added('dataSeries', `${pubKey}_${key}_5m_${poll5Data[pubKey][key][0].x}`, {
-              name: key + '_5m',
-              type: 'scatter',
-              marker: {
-                enabled: true,
-                radius: 2,
-                symbol: 'circle'
-              },
-              lineWidth: 0,
-              allowPointSelect: 'true',
-              data: poll5Data[pubKey][key],
-              zIndex: 2,
-              yAxis: yAxis
-            });
-          }
-        }
-      }
-    }
-  }, (err) => {
-    if (err) {
-      throw new Meteor.Error('5min aggregation error', `error during 5min publication aggregation:  ${err}`);
-    }
-  });
-
-  var aggPipe = [
-    {
-      $match: {
-        $and: [
-          {
-            site: siteName
-          }, {
-            epoch: {
-              $gt: parseInt(startEpoch, 10),
-              $lt: parseInt(endEpoch, 10)
-            }
-          }
-        ]
-      }
-    }, {
-      $sort: {
-        epoch: 1
-      }
-    }, {
-      $project: {
-        epoch: 1,
-        subTypes: 1,
-        _id: 0
-      }
-    }
-  ];
-
-  LiveData.aggregate(aggPipe, function(err, results) {
-    // create new structure for data series to be used for charts
-    _.each(results, function(line) {
-      var epoch = line.epoch;
-      _.each(line.subTypes, function(subKey, subType) { // subType is O3, etc.
-        if (!pollData[subType]) {
-          pollData[subType] = {};
-        }
-        _.each(subKey, function(sub) { // sub is the array with metric/val pairs as subarrays
-          if (sub.metric !== 'Flag') {
-            if (!pollData[subType][sub.metric]) {
-              pollData[subType][sub.metric] = [];
-              pollData[subType][sub.metric].unit = sub.unit; // unit
-            }
-            var xy = [
-              epoch * 1000,
-              sub.val
-            ]; // milliseconds
-            if (isNaN(sub.val) || sub.val === '') {
-              xy = [
-                epoch * 1000,
-                null
-              ];
-            }
-            pollData[subType][sub.metric].push(xy);
-          }
-        });
       });
     });
 
-    for (var pubKey in pollData) {
-      // skip loop if the property is from prototype
-      if (pollData.hasOwnProperty(pubKey)) {
-        let chartType = 'line';
-        let lineWidth = 1;
-        let marker = {
-          enabled: false
-        };
-        // wind data should never be shown as line
-        if (pubKey.indexOf('RMY') >= 0) {
-          chartType = 'scatter';
-          lineWidth = 0;
-          marker = {
+  for (var pubKey in poll5Data) { // pubKey equals instrument
+    if (poll5Data.hasOwnProperty(pubKey)) {
+      for (var key in poll5Data[pubKey]) { // key equals measurement
+        // skip loop if the property is from prototype
+        if (!poll5Data[pubKey].hasOwnProperty(key))
+           continue;
+
+        // create yAxis object
+        let yAxis = {};
+        if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
+          yAxis = {
+            allowDecimals: false,
+            labels: {
+              format: '{value:.0f}'
+            },
+            title: {
+              text: `${key}[${poll5Data[pubKey][key].unit.val}]`
+            },
+            opposite: false,
+            floor: 0,
+            ceiling: 360,
+            tickInterval: 90
+          };
+
+          if (key === 'WS') {
+            // HNET: there are some misreads with the sensor, and so
+            // it occasionally reports wind speeds upwards of 250mph.
+            yAxis.ceiling = 20;
+            yAxis.tickInterval = 5;
+          }
+        } else if (pubKey.indexOf('49i') >= 0) {
+          yAxis = {
+            allowDecimals: false,
+            labels: {
+              format: '{value:.0f}'
+            },
+            title: {
+              text: `${key}[${poll5Data[pubKey][key].unit.val}]`
+            },
+            opposite: false,
+            min: 0,
+            max: 250
+          };
+        } else if (pubKey.indexOf('Rain') >= 0) {
+          // HNET setting for Rain instrument
+          yAxis = {
+            allowDecimals: true,
+            labels: {
+              format: '{value}'
+            },
+            title: {
+              text: `${key}[${poll5Data[pubKey][key].unit.val}]`
+            },
+              opposite: false,
+              min: 0
+          };
+        } else if (pubKey.indexOf('Baro') >= 0) {
+          // HNET setting for Baro instrument
+          yAxis = {
+            allowDecimals: false,
+            labels: {
+              format: '{value:.0f}'
+            },
+            title: {
+              text: `${key}[${poll5Data[pubKey][key].unit.val}]`
+            },
+            opposite: false,
+            min: 995,
+            max: 1035
+          };
+        } else {
+          yAxis = {
+            allowDecimals: false,
+            labels: {
+              format: '{value:.0f}'
+            },
+            title: {
+              text: `${key}[${poll5Data[pubKey][key].unit.val}]`
+            },
+            opposite: false,
+            min: 0
+          };
+        }
+        subscription.added('dataSeries', `${pubKey}_${key}_5m_${poll5Data[pubKey][key][0].x}`, {
+          name: key + '_5m',
+          type: 'scatter',
+          marker: {
             enabled: true,
-            radius: 1,
+            radius: 2,
             symbol: 'circle'
+          },
+          lineWidth: 0,
+          allowPointSelect: 'true',
+          data: poll5Data[pubKey][key],
+          zIndex: 2,
+          yAxis: yAxis
+        });
+      }
+    }
+  }
+
+  LiveData.find({ $and: [{ site: siteName }, {
+    epoch: {
+      $gt: parseInt(startEpoch, 10),
+      $lt: parseInt(endEpoch, 10)
+    }
+  }] }, { fields: { epoch: 1, subTypes: 1 } }, { sort: { epoch: 1 } }).forEach( function (test) {
+    // reorganize live data for plot
+    const epoch = test.epoch;
+    _.each(test.subTypes, function(subKey, subType) { // subType is O3, etc.
+      if (!pollData[subType]) {
+        pollData[subType] = {};
+      }
+      _.each(subKey, function(sub) { // sub is the array with metric/val pairs as subarrays
+        if (sub.metric !== 'Flag') {
+          if (!pollData[subType][sub.metric]) {
+            pollData[subType][sub.metric] = [];
+            pollData[subType][sub.metric].unit = sub.unit; // unit
+          }
+          let xy = [
+            epoch * 1000, // milliseconds
+            sub.val
+          ];
+          if (isNaN(sub.val) || sub.val === '') {
+            xy = [
+              epoch * 1000,
+              null
+            ];
+          }
+          pollData[subType][sub.metric].push(xy);
+        }
+      });
+    });
+  });
+
+  for (var pubKey in pollData) {
+    // skip loop if the property is from prototype
+    if (pollData.hasOwnProperty(pubKey)) {
+
+      let chartType = 'line';
+      let lineWidth = 1;
+      let marker = {
+        enabled: false
+      };
+      // wind data should never be shown as line
+      if (pubKey.indexOf('RMY') >= 0) {
+        chartType = 'scatter';
+        lineWidth = 0;
+        marker = {
+          enabled: true,
+          radius: 1,
+          symbol: 'circle'
+        };
+      }
+
+      for (var key in pollData[pubKey]) {
+        // skip loop if the property is from prototype
+        if (!pollData[pubKey].hasOwnProperty(key))
+          continue;
+
+        // create yAxis object
+        let yAxis = {};
+        if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
+          yAxis = {
+            allowDecimals: false,
+            labels: {
+              format: '{value:.0f}'
+            },
+            title: {
+              text: `${key}[${pollData[pubKey][key].unit}]`
+            },
+            opposite: false,
+            floor: 0,
+            ceiling: 360,
+            tickInterval: 90
+          };
+
+          if (key === 'WS') {
+            // NOTE: there are some misreads with the sensor, and so
+            // it occasionally reports wind speeds upwards of 250mph.
+            yAxis.ceiling = 20;
+            yAxis.tickInterval = 5;
+            yAxis.rotation = 90;
+          }
+        } else if (pubKey.indexOf('49i') >= 0) {
+          yAxis = {
+            allowDecimals: false,
+            labels: {
+              format: '{value:.0f} '
+            },
+            title: {
+              text: `${key}[${pollData[pubKey][key].unit}]`
+            },
+            opposite: false,
+            min: 0,
+            max: 250
+          };
+        } else if (pubKey.indexOf('Rain') >= 0) {
+          // HNET setting for Rain instrument
+          yAxis = {
+            allowDecimals: true,
+            labels: {
+              format: '{value}'
+            },
+            title: {
+              text: `${key}[${pollData[pubKey][key].unit.val}]`
+            },
+            opposite: false,
+            min: 0
+          };
+        } else if (pubKey.indexOf('Baro') >= 0) {
+          // HNET setting for Baro instrument
+          yAxis = {
+            allowDecimals: false,
+            labels: {
+              format: '{value:.0f}'
+            },
+            title: {
+              text: `${key}[${pollData[pubKey][key].unit.val}]`
+            },
+            opposite: false,
+            min: 995,
+            max: 1035
+          };
+        } else {
+          yAxis = {
+            allowDecimals: false,
+            labels: {
+              format: '{value:.0f}'
+            },
+            title: {
+              text: `${key}[${pollData[pubKey][key].unit}]`
+            },
+            opposite: false,
+            min: 0
           };
         }
 
-        for (var key in pollData[pubKey]) {
-          // skip loop if the property is from prototype
-          if (!pollData[pubKey].hasOwnProperty(key))
-            continue;
-
-          // create yAxis object
-          let yAxis = {};
-          if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
-            yAxis = {
-              allowDecimals: false,
-              labels: {
-                format: '{value:.0f}'
-              },
-              title: {
-                text: `${key}[${pollData[pubKey][key].unit}]`
-              },
-              opposite: false,
-              floor: 0,
-              ceiling: 360,
-              tickInterval: 90
-            };
-
-            if (key === 'WS') {
-              // NOTE: there are some misreads with the sensor, and so
-              // it occasionally reports wind speeds upwards of 250mph.
-              yAxis.ceiling = 20;
-              yAxis.tickInterval = 5;
-              yAxis.rotation = 90;
-            }
-          } else if (pubKey.indexOf('49i') >= 0) {
-            yAxis = {
-              allowDecimals: false,
-              labels: {
-                format: '{value:.0f} '
-              },
-              title: {
-                text: `${key}[${pollData[pubKey][key].unit}]`
-              },
-              opposite: false,
-              min: 0,
-              max: 250
-            };
-          } else if (pubKey.indexOf('Rain') >= 0) {
-            // HNET setting for Rain instrument
-            yAxis = {
-              allowDecimals: true,
-              labels: {
-                format: '{value}'
-              },
-              title: {
-                text: `${key}[${pollData[pubKey][key].unit.val}]`
-              },
-              opposite: false,
-              min: 0
-            };
-          } else if (pubKey.indexOf('Baro') >= 0) {
-            // HNET setting for Baro instrument
-            yAxis = {
-              allowDecimals: false,
-              labels: {
-                format: '{value:.0f}'
-              },
-              title: {
-                text: `${key}[${pollData[pubKey][key].unit.val}]`
-              },
-              opposite: false,
-              min: 995,
-              max: 1035
-            };
-          } else {
-            yAxis = {
-              allowDecimals: false,
-              labels: {
-                format: '{value:.0f}'
-              },
-              title: {
-                text: `${key}[${pollData[pubKey][key].unit}]`
-              },
-              opposite: false,
-              min: 0
-            };
-          }
-
-          // add to subscription
-          if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
-          } else {
-            subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
-              name: key + '_10s',
-              type: chartType,
-              marker: marker,
-              lineWidth: lineWidth,
-              allowPointSelect: 'false',
-              data: pollData[pubKey][key],
-              zIndex: 1,
-              yAxis: yAxis
-            });
-          }
+        // add to subscription
+        if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
+        } else {
+          subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
+            name: key + '_10s',
+            type: chartType,
+            marker: marker,
+            lineWidth: lineWidth,
+            allowPointSelect: 'false',
+            data: pollData[pubKey][key],
+            zIndex: 1,
+            yAxis: yAxis
+          });
         }
       }
     }
-  }, function(error) {
-    Meteor._debug('error during livedata publication aggregation: ' + error);
-  });
+  }
+
+  subscription.ready();
 });
 
 // aggregation of aggregated data to be plotted with highstock for composites
