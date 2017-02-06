@@ -25,7 +25,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             }
             if (_.last(sub).metric.indexOf('Flag') >= 0) { // get all measurements
               let datapoint = {};
-              // HNET special treatment for precipitation
+              // HNET special treatment for precipitation using sum instead of avg
               if (key.indexOf('Precip') >= 0) {
                 datapoint = {
                   x: epoch * 1000, // milliseconds
@@ -154,6 +154,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
       $lt: parseInt(endEpoch, 10)
     }
   }] }, { fields: { epoch: 1, subTypes: 1 } }, { sort: { epoch: 1 } }).forEach( function (test) {
+
     // reorganize live data for plot
     const epoch = test.epoch;
     _.each(test.subTypes, function(subKey, subType) { // subType is O3, etc.
@@ -288,6 +289,9 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
         // add to subscription
         if (pubKey.indexOf('RMY') >= 0) { // special treatment for wind instruments
         } else {
+					console.log(pubKey, key, JSON.stringify(pollData[pubKey][key][10]));
+					console.log(pubKey, key, JSON.stringify(pollData[pubKey][key][11]));
+					console.log(pubKey, key, JSON.stringify(pollData[pubKey][key][12]));
           subscription.added('dataSeries', `${pubKey}_${key}_10s`, {
             name: key + '_10s',
             type: chartType,

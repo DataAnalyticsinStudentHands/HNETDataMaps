@@ -229,7 +229,7 @@ Template.site.onCreated(function() {
     Charts.remove({});
 
     DataSeries.find().observeChanges({
-      added(series, seriesData) {
+      added: function (series, seriesData) {
         if (!initializing) { // true only when we first start
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
@@ -285,6 +285,9 @@ Template.site.onCreated(function() {
           } else {
             // add other series that belongs to this chart
             const chart = $(`#container-chart-${chartId}`).highcharts();
+						console.log(seriesData.name, JSON.stringify(seriesData.data[10]))
+						console.log(seriesData.name, JSON.stringify(seriesData.data[11]))
+						console.log(seriesData.name, JSON.stringify(seriesData.data[12]))
             chart.addSeries(seriesData);
           }
         }
