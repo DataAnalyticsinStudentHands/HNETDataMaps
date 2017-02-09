@@ -373,7 +373,7 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
             return obj1.x - obj2.x;
           });
 
-          const selectedSite = LiveSites.findOne({AQSID: site});
+          const selectedSite = LiveSites.findOne({ AQSID: site });
 
           subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
             name: selectedSite.siteName,
@@ -381,7 +381,8 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
             marker: {
               enabled: true,
               radius: 2,
-              symbol: 'circle'
+              symbol: 'circle',
+              fillColor: `${selectedSite.compositeColor}`
             },
             lineWidth: 0,
             data: dataSorted,

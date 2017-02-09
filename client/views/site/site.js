@@ -1,5 +1,5 @@
 // JSLint options:
-/*global Highcharts, document */
+/* global Highcharts, document */
 import Highcharts from 'highcharts/highstock';
 
 // 3 days
@@ -285,9 +285,6 @@ Template.site.onCreated(function() {
           } else {
             // add other series that belongs to this chart
             const chart = $(`#container-chart-${chartId}`).highcharts();
-						console.log(seriesData.name, JSON.stringify(seriesData.data[10]))
-						console.log(seriesData.name, JSON.stringify(seriesData.data[11]))
-						console.log(seriesData.name, JSON.stringify(seriesData.data[12]))
             chart.addSeries(seriesData);
           }
         }
