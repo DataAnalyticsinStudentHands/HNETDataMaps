@@ -349,11 +349,22 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
             }
 
             pollCompData[measurement]
-            if (_.last(points).metric.indexOf('Flag') >= 0) { // get all measurements
-              var datapoint = {
-                x: epoch * 1000,
-                y: points[1].val, // average
-              }; // milliseconds
+            if (_.last(points).metric.indexOf('Flag') == 1) { // get all measurements with flag == 1
+
+              let datapoint = {};
+              // HNET special treatment for precipitation using sum instead of avg
+              if (measurement.indexOf('Precip') >= 0) {
+                datapoint = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[0].val // sum
+                };
+              } else {
+                datapoint = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[1].val // average
+                };
+              }
+
               pollCompData[measurement][site].push(datapoint);
             }
           });
