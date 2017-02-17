@@ -1,6 +1,9 @@
 // required packages
+import chokidar from 'chokidar';
+
 const fs = Npm.require('fs');
 const pathModule = Npm.require('path');
+
 
 function perform5minAggregat(siteId, startEpoch, endEpoch) {
   // create temp collection as placeholder for aggreagation results
