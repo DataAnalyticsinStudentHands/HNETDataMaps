@@ -27,7 +27,19 @@ Template.home.onRendered(function() {
   ], 9);
 
   L.tileLayer.provider('OpenStreetMap.DE').addTo(AQmap);
+});
 
+Template.pushStatusCell.helpers({
+  pushTimeStamp() {
+    return moment.unix(this.item.lastPushEpoch).format('YYYY/MM/DD HH:mm');
+  },
+  isActualPush() {
+    const checkEpoch = moment().subtract(1, 'days').unix();
+    if (this.item.lastPushEpoch > checkEpoch) {
+      return true;
+    }
+    return false;
+  }
 });
 
 function onClick(e) {

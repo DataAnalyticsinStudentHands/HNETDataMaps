@@ -15,3 +15,12 @@
 	</div>
 </div>
 </template>
+
+<template name="pushStatusCell">
+	{{pushTimeStamp}}
+	{{#if isActualPush}}
+   <i class="fa fa-check" style="color:green"></i>
+  {{else}}
+    <i class="fa fa-exclamation" style="color:red"></i>
+  {{/if}}
+</template>
