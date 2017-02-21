@@ -315,13 +315,12 @@ Template.editPoints.events({
       listPushPoints.push(point.x / 1000);
     });
 
-    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, function(error, data) {
-
+    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, (error, result) => {
       if (error) {
-        sAlert.error(error);
+        sAlert.error('Error during push.', error);
       }
-      if (data) {
-        sAlert.success('Push successful!');
+      if (result) {
+        sAlert.success(`Pushed file ${result} successful!`);
       }
     });
   },
