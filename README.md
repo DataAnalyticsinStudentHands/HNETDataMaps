@@ -27,7 +27,9 @@ You may have to run the following:
 * `meteor npm install --save highcharts`
 * `meteor npm install --save ftps`
 * `meteor npm install --save junk`
+* `meteor npm install --save fs-extra`
 * `meteor npm install --save chokidar`
+
 
 ## Testing in local development environment
 
