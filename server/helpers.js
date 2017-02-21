@@ -1,8 +1,9 @@
 // required packages
-const fs = Npm.require('fs');
-const Future = Npm.require('fibers/future');
-
+import fs from 'fs-extra';
 import FTPS from 'ftps';
+import pathModule from 'path';
+
+const Future = Npm.require('fibers/future');
 
 // reading ftps password from environment
 const hnetsftp = process.env.hnetsftp;
@@ -11,7 +12,6 @@ const hnetsftp = process.env.hnetsftp;
  * Export csv data file in defined format, default: TCEQ format
  */
 function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
-
   const dataObject = {};
 
   let aggregatData;
@@ -34,21 +34,27 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
     }).fetch();
   } else {
     aggregatData = AggrData.find({
+      site: `${aqsid}`,
       $and: [
         {
           epoch: {
-            $gte: parseInt(startEpoch, 10),
-            $lte: parseInt(endEpoch, 10)
+            $gte: parseInt(startEpoch, 10)
           }
-        }, {
-          site: `${aqsid}`
+        },
+        {
+          $and: [
+            {
+              epoch: {
+                $lte: parseInt(endEpoch, 10)
+              }
+            }
+          ]
         }
-      ]
-    }, {
-      sort: {
-        epoch: 1
-      }
-    }).fetch();
+      ] }, {
+        sort: {
+          epoch: 1
+        }
+      }).fetch();
   }
 
   switch (fileFormat) {
@@ -88,7 +94,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                   obj[label] = 0; // set value to 0
                 } else {
                   let outputValue = data[1].val; // avg
-                  // Unit conversion for Temp from C to F
+                  // HNET Unit conversion for Temp from C to F
                   if (measurement === 'Temp' || measurement === 'AmbTemp') {
                     outputValue = outputValue * 9 / 5 + 32;
                   } else if (measurement === 'WS') {
@@ -153,7 +159,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                   } else {
                     let outputValue = data[1].val; // avg
                     // Unit conversion for Temp from C to F
-                    if (measurement === 'Temp') {
+                    if (measurement === 'Temp' || measurement === 'AmbTemp') {
                       outputValue = outputValue * 9 / 5 + 32;
                     } else if (measurement === 'WS') {
                       outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
@@ -181,14 +187,13 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
   return dataObject;
 }
 
-function pushTCEQData(aqsid, data) {
-
-  if (typeof(hnetsftp) === 'undefined') {
+function createTCEQData(aqsid, data) {
+  if (typeof (hnetsftp) === 'undefined') {
     // hnetsftp environment variable doesn't exists
     return logger.error('No password found for hnet sftp.');
   }
 
-  const site = LiveSites.find({AQSID: `${aqsid}`}).fetch()[0];
+  const site = LiveSites.find({ AQSID: `${aqsid}` }).fetch()[0];
 
   if (site === undefined) {
     return logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
@@ -198,35 +203,27 @@ function pushTCEQData(aqsid, data) {
   const siteName = (site.incoming.match(new RegExp('UH' +
   '(.*)' +
   '_')))[1].slice(-2);
+  // ensure whether output dir exists
+  const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
+  fs.ensureDirSync(outputDir, function (err) {
+    return logger.error(err); // => null
+    // outputdir has now been created, including the directory it is to be placed in
+  });
   // create csv file and store in outgoing folder
-  const outputFile = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
+  const outputFile = `${outputDir}/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
+
   const csvComplete = Papa.unparse(data);
   // removing header from csv string
   const n = csvComplete.indexOf('\n');
   const csv = csvComplete.substring(n + 1);
 
-  fs.writeFile(outputFile, csv, Meteor.bindEnvironment(function(err) {
-    if (err) {
-      return logger.error(`Could not write TCEQ push file. Error: ${err}`);
-    } else {
-
-      const ftps = new FTPS({
-        host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps',
-        // protocol is added on beginning of host, ex : sftp://domain.com in this case
-        port: 990, // optional
-        // port is added to the end of the host, ex: sftp://domain.com:22 in this case
-      });
-
-      // the following function creates its own scoped context
-      ftps.cd('UH/c696').addFile(outputFile).exec(null, Meteor.bindEnvironment(function(res) {
-        logger.info(`Pushed ${outputFile}`);
-      }, function(pusherr) {
-        return logger.error('Error during push file:', (pusherr));
-      }));
-    }
-  }));
-
-  return outputFile;
+  try {
+    fs.writeFileSync(outputFile, csv);
+    return outputFile;
+  } catch (error) {
+    logger.error('Could not write TCEQ push file.', `Could not write TCEQ push file. Error: ${error}`);
+    throw new Meteor.Error('Could not write TCEQ push file.', `Could not write TCEQ push file. Error: ${error}`);
+  }
 }
 
 Meteor.methods({
@@ -238,7 +235,7 @@ Meteor.methods({
         logger.error(err);
         fut.throw(err);
       } else {
-        fut.return (data);
+        fut.return(data);
       }
     });
 
@@ -255,25 +252,77 @@ Meteor.methods({
 
     return data;
   },
-  pushData(aqsid, startEpoch, endEpoch) {
+  deleteAggregates(aqsid, startEpoch, endEpoch) {
+    return AggrData.remove({
+      site: `${aqsid}`,
+      $and: [
+        {
+          epoch: {
+            $gte: parseInt(startEpoch, 10)
+          }
+        },
+        {
+          $and: [
+            {
+              epoch: {
+                $lte: parseInt(endEpoch, 10)
+              }
+            }
+          ]
+        }
+      ]
+    });
+  },
+  pushData(aqsid, startEpoch, endEpoch, manualPush) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, 'tceq');
 
     if (Object.keys(data).length === 0 && data.constructor === Object) {
       throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
     }
 
-    const outputFileName = pushTCEQData(aqsid, data);
-    // insert a timestamp for the pushed data
-    Exports.insert({
-      _id: `${aqsid}_${moment().unix()}`,
-      pushEpoch: moment().unix(),
-      site: aqsid,
-      startEpoch: startEpoch,
-      endEpoch: endEpoch,
-      fileName: outputFileName
+    const startTimeStamp = `${data.data[0].dateGMT} ${data.data[0].timeGMT}`;
+    const endTimeStamp = `${_.last(data.data).dateGMT} ${_.last(data.data).timeGMT}`;
+
+    const outputFile = createTCEQData(aqsid, data);
+
+    const ftps = new FTPS({
+      host: 'ftps.tceq.texas.gov',
+      username: 'jhflynn@central.uh.edu',
+      password: hnetsftp,
+      protocol: 'ftps',
+      port: 990
     });
 
-    return outputFileName;
+    // Set up a future
+    const fut = new Future();
+    // call ftps async method
+    ftps.cd('UH/c696').addFile(outputFile).exec((err, res) => {
+      if (res.error) {
+        logger.error('Error during push file:', res.error);
+        fut.throw(`Error during push file: ${res.error}`);
+      } else {
+        logger.info(`Pushed ${outputFile} ${JSON.stringify(res)}`);
+        // Return the results
+        fut.return(`${outputFile}`);
+      }
+    });
+
+    try {
+      const result = fut.wait();
+      // insert a timestamp for the pushed data
+      Exports.insert({
+        _id: `${aqsid}_${moment().unix()}`,
+        pushEpoch: moment().unix(),
+        site: aqsid,
+        startEpoch: moment.utc(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
+        endEpoch: moment.utc(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
+        fileName: result,
+        manual: manualPush
+      });
+      return pathModule.basename(result);
+    } catch (err) {
+      throw new Meteor.Error('Error during push file', err);
+    }
   },
   pushEdits(aqsid, pushPointsEpochs) {
     const startEpoch = pushPointsEpochs[0];
@@ -283,30 +332,60 @@ Meteor.methods({
     if (data === undefined) {
       throw new Meteor.Error('Could not find data for selected period.');
     }
-    const fileName = pushTCEQData(aqsid, data);
-    // update edit data points with push date
-    var points = AggrEdits.find({
-      "startEpoch": {
-        $gt: startEpoch
-      },
-      $and: [
-        {
-          "endEpoch": {
-            $lt: endEpoch
-          }
-        }
-      ]
+
+    const pushFile = createTCEQData(aqsid, data);
+
+    const ftps = new FTPS({
+      host: 'ftps.tceq.texas.gov',
+      username: 'jhflynn@central.uh.edu',
+      password: hnetsftp,
+      protocol: 'ftps',
+      port: 990
     });
 
-    points.forEach(function(point) {
-      AggrEdits.update({
-        _id: point._id
-      }, {
-        $set: {
-          pushed: fileName
-        }
-      });
+    // Set up a future
+    const fut = new Future();
+    // call ftps async method
+    ftps.cd('UH/696').addFile(pushFile).exec((err, res) => {
+      if (res.error) {
+        logger.error('Error during push edits file:', res.error);
+        fut.throw(`Error during push edits file: ${res.error}`);
+      } else {
+        logger.info(`Pushed Edit ${pushFile} ${JSON.stringify(res)}`);
+        // Return the results
+        fut.return(`${pushFile}`);
+      }
     });
+
+    try {
+      const result = fut.wait();
+      // update edit data points with push date
+      const points = AggrEdits.find({
+        "startEpoch": {
+          $gte: startEpoch
+        },
+        $and: [
+          {
+            "endEpoch": {
+              $lte: endEpoch
+	          }
+          }
+        ]
+      });
+
+      points.forEach((point) => {
+        AggrEdits.update({
+          _id: point._id
+        }, {
+          $set: {
+            fileName: pushFile
+          }
+        });
+      });
+      return pathModule.basename(result);
+    } catch (err) {
+      throw new Meteor.Error('Error during push file', err);
+    }
   },
   insertUpdateFlag(siteId, epoch, instrument, measurement, flag, note) {
     // id that will receive the update

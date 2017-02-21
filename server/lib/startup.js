@@ -13,8 +13,8 @@ Meteor.startup(function() {
     });
   }
 
-  // create a folder to store outgoing files
-  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`, (err) => {
+  // Create directory for outgoing files for tomorrow
+  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function (err) {
     if (err) {
       logger.error(err);
     }

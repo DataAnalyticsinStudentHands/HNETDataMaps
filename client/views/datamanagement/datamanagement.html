@@ -49,13 +49,7 @@
 			</div>
 			<br>
 
-			<div class="row">
-				<div class="col-xs-2">
-					<button type="submit" class="btn btn-primary" id="createAggregates"
-						data-toggle="tooltip" data-placement="bottom" title="Generate 5 min aggregates in database">
-						Create Aggregates
-					</button>
-				</div>
+			<div class="row extra-bottom-padding">
 				<div class="col-xs-2">
 					<button type="submit" class="btn btn-primary" id="downloadData"
 					data-toggle="tooltip" data-placement="bottom" title="Download Data in TCEQ Format (UTC) all channels">
@@ -73,6 +67,23 @@
 					<button type="submit" class="btn btn-primary" id="pushData"
 					data-toggle="tooltip" data-placement="bottom" title="Push Data to TCEQ">
 						Push Data to TCEQ
+					</button>
+					{{/if}}
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-2">
+					<button type="submit" class="btn btn-primary" id="createAggregates"
+						data-toggle="tooltip" data-placement="bottom" title="Generate 5 min aggreate data in database">
+						Create Aggregates
+					</button>
+				</div>
+				<div class="col-xs-2">
+          {{#if isInRole 'admin' }}
+					<button type="submit" class="btn btn-primary" id="deleteAggregates"
+					data-toggle="tooltip" data-placement="bottom" title="Delete 5 min aggreate data from database">
+						Delete Aggregates
 					</button>
 					{{/if}}
 				</div>

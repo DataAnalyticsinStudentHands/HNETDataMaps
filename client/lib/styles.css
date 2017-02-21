@@ -46,3 +46,8 @@ code {
 .label-as-badge {
     border-radius: 1em;
 }
+
+/* bottom row padding for bootstrap grids */
+.row.extra-bottom-padding{
+   margin-bottom: 20px;
+}

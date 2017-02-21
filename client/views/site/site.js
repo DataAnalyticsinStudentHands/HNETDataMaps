@@ -1,5 +1,5 @@
 // JSLint options:
-/*global Highcharts, document */
+/* global Highcharts, document */
 import Highcharts from 'highcharts/highstock';
 
 // 3 days
@@ -13,7 +13,7 @@ Highcharts.setOptions({
   global: {
     useUTC: false
   },
-  colors: ['#4F525C', '#DDDF00', '#24CBE5', '#64E572', '#FF9655']
+  colors: ['#DDDF00', '#4F525C', '#24CBE5', '#64E572', '#FF9655']
 });
 
 // placeholder for EditPoints in modal
@@ -208,27 +208,35 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   });
 }
 
-Template.site.onRendered(function() {
+Template.site.onCreated(function() {
   // use query parameter if enetering site through different route
   const controller = Iron.controller();
   startEpoch.set(controller.state.get('fromRouter'));
 
+  let mySub;
+
   // load based on date selection
   this.autorun(function() {
+
+    // take care of over-subscription
+    let initializing = true;
+    if (mySub !== undefined) {
+      mySub.stop();
+    }
     // Subscribe
-    Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
+    mySub = Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
+
     Charts.remove({});
 
-    let initializing = true;
-
     DataSeries.find().observeChanges({
-      added: function(series, seriesData) {
+      added: function (series, seriesData) {
         if (!initializing) { // true only when we first start
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
 
           let chartId = '';
-          if (subType === '42i') {
+          // HNET channels for NOx instrument should be shown in one graph
+          if (subType === 'NOx') {
             chartId = `${subType}`;
           } else {
             chartId = `${subType}_${metric}`;
@@ -243,13 +251,9 @@ Template.site.onRendered(function() {
           // insert object into Charts if not yet exists and create new chart
           if (!Charts.findOne({
             _id: chartId
-          }, {reactive: false})) {
-
+          }, { reactive: false })) {
             Charts.insert({
-              _id: chartId,
-              // yAxis: [{
-              //     metric
-              //   }]
+              _id: chartId
             });
 
             const seriesOptions = [];
@@ -269,51 +273,18 @@ Template.site.onRendered(function() {
             });
 
             // add another static legend to show flag colors
-            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 50, 2).attr({fill: 'red'}).add();
-            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Valid (K)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 47).add();
-            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 38, 2).attr({fill: 'orange'}).add();
-            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Span (Q)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 35).add();
-            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 26, 2).attr({fill: 'black'}).add();
-            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Offline (N)</text>', chart.legend.group.translateX + 25, chart.legend.group.translateY - 23).add();
-
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 50, 2).attr({ fill: 'red' }).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Valid (K)</text>',
+                 chart.legend.group.translateX + 25, chart.legend.group.translateY - 47).add();
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 38, 2).attr({ fill: 'orange' }).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Span (Q)</text>',
+                 chart.legend.group.translateX + 25, chart.legend.group.translateY - 35).add();
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 26, 2).attr({ fill: 'black' }).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Offline (N)</text>',
+                 chart.legend.group.translateX + 25, chart.legend.group.translateY - 23).add();
           } else {
             // add other series that belongs to this chart
             const chart = $(`#container-chart-${chartId}`).highcharts();
-            //
-            //   // Add another axis if not yet existent
-            //   let axisExist = false;
-            //
-            //   Charts.findOne({_id: subType}).yAxis.forEach(function(axis) {
-            //     if (axis.metric === metric) {
-            //       axisExist = true;
-            //     }
-            //   });
-            //
-            //   if (!axisExist) {
-            //     yAxisOptions.opposite = true;
-            //     yAxisOptions.id = metric;
-            //     chart.addAxis(yAxisOptions);
-            //     Charts.update(subType, {
-            //       $push: {
-            //         yAxis: {
-            //           metric
-            //         }
-            //       }
-            //     });
-            //   }
-            //
-            //   // Now just find the right axis index and assign it to the seriesData
-            //   let axisIndex = 0;
-            //   Charts.findOne({_id: subType}).yAxis.forEach(function(axis, i) {
-            //     if (axis.metric === metric) {
-            //       if (i === 0) { // navigator axis will be at index 1
-            //         axisIndex = 0;
-            //       } else {
-            //         axisIndex = i + 1;
-            //       }
-            //     }
-            //   });
-            //   seriesData.yAxis = axisIndex;
             chart.addSeries(seriesData);
           }
         }
@@ -322,19 +293,19 @@ Template.site.onRendered(function() {
     initializing = false;
   }); // end autorun
   Router.current().params.query.startEpoch = undefined;
-}); // end of onRendered
+}); // end of onCreated
 
 Template.editPoints.events({
-  'click .dropdown-menu li a' (event) {
+  'click .dropdown-menu li a'(event) {
     event.preventDefault();
     selectedFlag.set(parseInt($(event.currentTarget).attr('data-value'), 10));
   },
-  'click button#btnCancel' (event) {
+  'click button#btnCancel'(event) {
     event.preventDefault();
     selectedFlag.set(null);
   },
   // Handle the button "Push" event
-  'click button#btnPush' (event) {
+  'click button#btnPush'(event) {
     event.preventDefault();
     // Push Edited points in TCEQ format
     const pushPoints = EditPoints.find({});
@@ -344,13 +315,12 @@ Template.editPoints.events({
       listPushPoints.push(point.x / 1000);
     });
 
-    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, function(error, data) {
-
+    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, (error, result) => {
       if (error) {
-        sAlert.error(error);
+        sAlert.error('Error during push.', error);
       }
-      if (data) {
-        sAlert.success('Push successful!');
+      if (result) {
+        sAlert.success(`Pushed file ${result} successful!`);
       }
     });
   },

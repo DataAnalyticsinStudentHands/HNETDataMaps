@@ -1,5 +1,13 @@
 const dataToShow = new ReactiveVar();
 const dataFilePath = new ReactiveVar();
+Session.set('ToggleSelector', true);
+
+Template.listPushes.helpers({
+  selector() {
+    return { manual: Session.get('ToggleSelector') };
+  },
+  toggle_selector_options() { }
+});
 
 Template.viewDataCell.events({
   'click .js-view-data': function(event) {

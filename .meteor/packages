@@ -57,7 +57,6 @@ bevanhunt:leaflet               # Mapping
 # tools
 momentjs:moment                 # Time calculations
 harrison:papa-parse             # csv parsing used for push file generation
-velocity:chokidar               # chokidar - A neat wrapper around node.js fs.watch / fs.watchFile / fsevents
 
 # email
 email@1.1.17
@@ -71,3 +70,6 @@ shell-server
 
 meteorhacks:kadira
 johdirr:meteor-git-rev
+fongandrew:find-and-modify
+williamledoux:bootstrap-toggle
+reywood:publish-composite
