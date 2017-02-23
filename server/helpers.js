@@ -346,7 +346,7 @@ Meteor.methods({
     // Set up a future
     const fut = new Future();
     // call ftps async method
-    ftps.cd('UH/696').addFile(pushFile).exec((err, res) => {
+    ftps.cd('UH/c696').addFile(pushFile).exec((err, res) => {
       if (res.error) {
         logger.error('Error during push edits file:', res.error);
         fut.throw(`Error during push edits file: ${res.error}`);
