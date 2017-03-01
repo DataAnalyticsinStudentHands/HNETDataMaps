@@ -65,9 +65,9 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           var numValid = 1;
           var newkey;
 
-          // if flag is not existing, put 1 as default, need to ask Jim?
+          // if flag is not existing, put 9 as default, need to ask Jim?
           if (data[0].val === '') {
-            data[0].val = 1;
+            data[0].val = 9;
           }
           if (data[0].val !== 1) { // if flag is not 1 (valid) don't increase numValid
             numValid = 0;
