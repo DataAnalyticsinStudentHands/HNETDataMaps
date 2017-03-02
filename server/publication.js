@@ -348,9 +348,7 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
               pollCompData[measurement][site] = [];
             }
 
-            pollCompData[measurement]
-            if (_.last(points).metric.indexOf('Flag') == 1) { // get all measurements with flag == 1
-
+            if (_.last(points).val === 1) { // get all measurements where flag == 1
               let datapoint = {};
               // HNET special treatment for precipitation using sum instead of avg
               if (measurement.indexOf('Precip') >= 0) {
