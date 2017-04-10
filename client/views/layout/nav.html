@@ -29,13 +29,25 @@
 	<li class="{{ activeIfTemplateIs 'home' }}">
 		<a href="{{ pathFor 'home'}}">Data Maps</a>
 	</li>
-	{{#if currentUser}}
+
 	<li class="dropdown">
 		<a href="#" data-toggle="dropdown" class="dropdown-toggle">Sites <b class="caret"></b></a>
 		<ul class="dropdown-menu">
 			{{#each sites}}
 			  <li>
 			    <a href="{{ pathFor 'site' _id=AQSID }}"> {{siteName}} </a>
+			  </li>
+			{{/each}}
+		</ul>
+	</li>
+
+	{{#if currentUser}}
+	<li class="dropdown">
+		<a href="#" data-toggle="dropdown" class="dropdown-toggle">HNET Sites <b class="caret"></b></a>
+		<ul class="dropdown-menu">
+			{{#each sites}}
+			  <li>
+			    <a href="{{ pathFor 'hnetsite' _id=AQSID }}"> {{siteName}} </a>
 			  </li>
 			{{/each}}
 			<li class="divider"></li>
@@ -59,4 +71,17 @@
         <a href="/admin">Admin</a>
       </li>
 	{{/if}}
+
+	<li class="dropdown">
+		<a href="#" data-toggle="dropdown" class="dropdown-toggle">About <b class="caret"></b></a>
+		<ul class="dropdown-menu">
+			{{#each sites}}
+			  <li>
+			    <a href="{{ pathFor 'about' _id=AQSID }}"> {{siteName}} </a>
+			  </li>
+			{{/each}}
+			<li class="divider"></li>
+			<li><a href="#">Project Information</a></li>
+		</ul>
+	</li>
 </template>

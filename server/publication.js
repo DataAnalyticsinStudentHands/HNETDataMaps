@@ -412,6 +412,118 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
   });
 });
 
+// public aggregated data to be plotted with highstock
+Meteor.publish('publicDataSeries', function(startEpoch, endEpoch) {
+
+  var subscription = this;
+  var pollCompData = {};
+
+  var aggCompPipe = [
+    {
+      $match: {
+        epoch: {
+          $gt: parseInt(startEpoch, 10),
+          $lt: parseInt(endEpoch, 10)
+        }
+      }
+    }, {
+      $sort: {
+        epoch: -1
+      }
+    }, {
+      $group: {
+        _id: '$subTypes',
+        data: {
+          $push: {
+            site: '$site',
+            epoch: '$epoch'
+          }
+        }
+      }
+    }
+  ];
+
+	AggrData.aggregate(aggCompPipe, function(err, results) {
+
+	// create new structure for composite data series to be used for charts
+  if (results.length > 0) {
+		results.forEach(function(line) {
+			const epoch = line.data[0].epoch;
+			const site = line.data[0].site;
+			_.each(line._id, function(data, instrument) { // Instrument, HPM60 etc.
+				_.each(data, function(points, measurement) { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+					if (!pollCompData[measurement]) { // create placeholder for measurement
+						pollCompData[measurement] = {};
+					}
+					if (!pollCompData[measurement][site]) { // create placeholder for series if not exists
+						pollCompData[measurement][site] = [];
+					}
+
+					if (_.last(points).val === 1) { // get all measurements where flag == 1
+						let datapoint = {};
+						// HNET special treatment for precipitation using sum instead of avg
+						if (measurement.indexOf('Precip') >= 0) {
+							datapoint = {
+								x: epoch * 1000, // milliseconds
+								y: points[0].val // sum
+							};
+						} else {
+							datapoint = {
+								x: epoch * 1000, // milliseconds
+								y: points[1].val // average
+							};
+						}
+
+						pollCompData[measurement][site].push(datapoint);
+					}
+				});
+			});
+		});
+  }
+
+	for (var measurement in pollCompData) {
+		if (pollCompData.hasOwnProperty(measurement)) {
+			for (var site in pollCompData[measurement]) { //key equals measurement
+				// skip loop if the property is from prototype
+				if (!pollCompData[measurement].hasOwnProperty(site))
+					continue;
+
+				var dataSorted = pollCompData[measurement][site].sort(function(obj1, obj2) {
+					// Ascending: first age less than the previous
+					return obj1.x - obj2.x;
+				});
+
+				const selectedSite = LiveSites.findOne({ AQSID: site });
+
+				subscription.added('publicDataSeries', `${measurement}_${site}`, {
+					name: selectedSite.siteName,
+					type: 'scatter',
+					marker: {
+						enabled: true,
+						radius: 2,
+						symbol: 'circle',
+						//fillColor: `${selectedSite.compositeColor}`
+					},
+					lineWidth: 0,
+					data: dataSorted,
+					yAxis: {
+						allowDecimals: false,
+						title: {
+							text: unitsHash[measurement]
+						},
+						min: 0,
+						opposite: false
+					}
+				});
+			}
+		}
+	}
+}, function(error) {
+	Meteor._debug('error during composite publication aggregation: ' + error);
+});
+
+});
+
 // edited points
 Meteor.publish('aggregateEdits', function() {
   return AggrEdits.find({});

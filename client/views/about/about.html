@@ -1,0 +1,180 @@
+<template name="about">
+
+	<!-- Page Content -->
+    <div class="container">
+
+        <!-- Page Header -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h2 class="page-header">Site Information
+                    <small>{{sitename}}</small>
+										
+                </h2>
+            </div>
+        </div>
+
+
+				<!-- /.row -->
+
+				<div class="row equal-height-panels">
+
+					<div class="col-lg-4 col-md-4">
+
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<div class="row">
+									<div class="col-xs-3">
+										<i class="fa fa-flag-o fa-5x"></i>
+									</div>
+									<div class="col-xs-9 text-right">
+										<div class="huge">Location</div>
+										<div>State: {{state}}</div>
+                    <div>County: {{county}}</div>
+                    <div>City: {{city}}</div>
+									</div>
+								</div>
+							</div>
+
+					</div>
+				</div>
+
+					<div class="col-lg-4 col-md-4">
+
+						<div class="panel panel-green">
+							<div class="panel-heading">
+								<div class="row">
+									<div class="col-xs-3">
+										<i class="fa fa-support fa-5x"></i>
+									</div>
+								<div class="col-xs-9 text-right">
+									<div class="huge">Site coordinates</div>
+									<div>Latitude: {{loc.coordinates.[1]}}</div>
+                  <div>Longitude: {{loc.coordinates.[0]}}</div>
+                  <div>Elevation: {{elevation}}m ({{elevation}}ft)</div>
+
+
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+					<div class="col-lg-4 col-md-4">
+
+						<div class="panel panel-yellow">
+							<div class="panel-heading">
+								<div class="row">
+									<div class="col-xs-3">
+										<i class="fa fa-info fa-5x"></i>
+									</div>
+									<div class="col-xs-9 text-right">
+										<div class="huge">Maintained by</div>
+										<div>University of Houston</div>
+									</div>
+								</div>
+							</div>
+							<a href="http://txforestservice.tamu.edu/default.aspx">
+								<div class="panel-footer">
+									<span class="pull-left">Jones Forest</span>
+									<span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+									<div class="clearfix"></div>
+								</div>
+							</a>
+						</div>
+
+				</div>
+			</div>
+				<!-- /.row -->
+
+
+
+
+        <!-- /.row -->
+
+        <!-- Images Row -->
+        <div class="row">
+            <div class="col-md-4 portfolio-item">
+							  <h3>
+									 <small>Northwest</small>
+							  </h3>
+                <a href="#">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/Northwest.jpg" alt="">
+                </a>
+            </div>
+            <div class="col-md-4 portfolio-item">
+							  <h3>
+									  <small>North</small>
+							  </h3>
+                <a href="#">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/North.jpg" alt="">
+                </a>
+            </div>
+            <div class="col-md-4 portfolio-item">
+							  <h3>
+									  <small>Northeast</small>
+							  </h3>
+                <a href="#">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/Northeast.jpg" alt="">
+                </a>
+              </div>
+        </div>
+        <!-- /.row -->
+
+        <!-- Images Row -->
+        <div class="row">
+            <div class="col-md-4 portfolio-item">
+							  <h3>
+									  <small>Main</small>
+							  </h3>
+                <a href="#">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/West.jpg" alt="">
+                </a>
+            </div>
+            <div class="col-md-4 portfolio-item">
+                <a href="#">
+                    <img class="img-responsive" src="http://placehold.it/700x400" alt="">
+                </a>
+            </div>
+            <div class="col-md-4 portfolio-item">
+							  <h3>
+								  	<small>East</small>
+							  </h3>
+                <a href="#">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/East.jpg" alt="">
+                </a>
+            </div>
+        </div>
+
+        <!-- Projects Row -->
+        <div class="row">
+            <div class="col-md-4 portfolio-item">
+							  <h3>
+								  	<small>Southwest</small>
+							  </h3>
+                <a href="#">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/Southwest.jpg" alt="">
+                </a>
+            </div>
+            <div class="col-md-4 portfolio-item">
+							  <h3>
+									  <small>South</small>
+							  </h3>
+                <a href="#">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/South.jpg" alt="">
+                </a>
+            </div>
+            <div class="col-md-4 portfolio-item">
+							  <h3>
+									  <small>Southeast</small>
+							  </h3>
+                <a href="#">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/Southeast.jpg" alt="">
+                </a>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+    </div>
+    <!-- /.container -->
+</template>
