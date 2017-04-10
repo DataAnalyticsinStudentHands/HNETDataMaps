@@ -7,10 +7,11 @@
     "bcrypt": "^0.8.7",
     "chokidar": "^1.6.1",
     "eslint-plugin-import": "^2.0.1",
+    "fibers": "^1.0.15",
     "fs-extra": "^0.30.0",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "highcharts": "^4.2.7",
-    "junk": "^1.0.2"
+    "junk": "^1.0.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
