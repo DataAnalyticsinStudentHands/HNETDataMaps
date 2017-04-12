@@ -6,7 +6,8 @@ Template.home.onRendered(function() {
   var AQmap = L.map('displayMap', {doubleClickZoom: false});
 
   Meteor.subscribe('liveSites', [lngtude, latude]);
-  LiveSites.find().observeChanges({
+
+	LiveSites.find().observeChanges({
     added: function(id, line) {
       var marker = L.marker([
         line.loc.coordinates[1], line.loc.coordinates[0]
@@ -15,7 +16,6 @@ Template.home.onRendered(function() {
       var content = `${line.status}`;
       marker.bindPopup(content);
     } // end of added
-
   });
 
   $('#displayMap').css('height', window.innerHeight - 20);

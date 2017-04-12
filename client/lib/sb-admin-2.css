@@ -3,9 +3,9 @@
  * Copyright 2013-2016 Start Bootstrap
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap/blob/gh-pages/LICENSE)
  */
-body {
+/*body {
   background-color: #f8f8f8;
-}
+}*/
 #wrapper {
   width: 100%;
 }
@@ -67,7 +67,7 @@ body {
   right: 0;
   left: auto;
 }
-.sidebar .sidebar-nav.navbar-collapse {
+/*.sidebar .sidebar-nav.navbar-collapse {
   padding-left: 0;
   padding-right: 0;
 }
@@ -98,14 +98,14 @@ body {
 }
 .sidebar .nav-third-level li a {
   padding-left: 52px;
-}
+}*/
 @media (min-width: 768px) {
-  .sidebar {
+  /*.sidebar {
     z-index: 1;
     position: absolute;
     width: 250px;
     margin-top: 51px;
-  }
+  }*/
   .navbar-top-links .dropdown-messages,
   .navbar-top-links .dropdown-tasks,
   .navbar-top-links .dropdown-alerts {
