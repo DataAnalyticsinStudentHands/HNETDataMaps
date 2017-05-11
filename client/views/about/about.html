@@ -7,8 +7,7 @@
         <div class="row">
             <div class="col-lg-12">
                 <h2 class="page-header">Site Information
-                    <small>{{sitename}}</small>
-										
+                    <small>{{sitename}} <a href="{{ pathFor 'site' _id=AQSID }}"><i class="fa fa-line-chart" title="Current conditions"></i></a></small>
                 </h2>
             </div>
         </div>
@@ -73,9 +72,9 @@
 									</div>
 								</div>
 							</div>
-							<a href="http://txforestservice.tamu.edu/default.aspx">
+							<a href={{externalLink.href}}>
 								<div class="panel-footer">
-									<span class="pull-left">Jones Forest</span>
+									<span class="pull-left">{{externalLink.name}}</span>
 									<span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
 									<div class="clearfix"></div>
 								</div>
@@ -87,7 +86,7 @@
 				<!-- /.row -->
 
 
-
+      <hr>
 
         <!-- /.row -->
 
@@ -124,15 +123,18 @@
         <div class="row">
             <div class="col-md-4 portfolio-item">
 							  <h3>
-									  <small>Main</small>
+									  <small>West</small>
 							  </h3>
                 <a href="#">
                     <img class="img-responsive" src="/img/sites/{{AQSID}}/West.jpg" alt="">
                 </a>
             </div>
             <div class="col-md-4 portfolio-item">
+							<h3>
+									<small>Main</small>
+							</h3>
                 <a href="#">
-                    <img class="img-responsive" src="http://placehold.it/700x400" alt="">
+                    <img class="img-responsive" src="/img/sites/{{AQSID}}/Center.jpg" alt="">
                 </a>
             </div>
             <div class="col-md-4 portfolio-item">
