@@ -284,7 +284,8 @@ Template.site.onCreated(function() {
                  chart.legend.group.translateX + 25, chart.legend.group.translateY - 23).add();
           } else {
             // add other series that belongs to this chart
-            const chart = $(`#container-chart-${chartId}`).highcharts();
+            const index = $(`#container-chart-${chartId}`).data('highchartsChart');
+            const chart = Highcharts.charts[index];
             chart.addSeries(seriesData);
           }
         }
