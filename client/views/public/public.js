@@ -117,9 +117,9 @@ Template.public.onCreated(function() {
     if (mySub !== undefined) {
       mySub.stop();
     }
+
     // Subscribe
     mySub = Meteor.subscribe('publicDataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(1440, 'minutes').unix());
-
 
     Charts.remove({});
 
@@ -225,6 +225,6 @@ Template.public.events({
   },
   'click #downloadCurrent' () {
     // call export and download
-    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix(), false);
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(1440, 'minutes').unix(), false);
   }
 });

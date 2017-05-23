@@ -454,7 +454,9 @@ Meteor.publish('publicDataSeries', function(siteName, startEpoch, endEpoch) {
                   name: _.last(sub).val // will use the name of the point to hold the flag value
                 };
               }
-              poll5Data[subType][key].push(datapoint);
+              if (datapoint.color === flagsHash[1].color) { // we only want valid data points
+                poll5Data[subType][key].push(datapoint);
+              }
             }
           });
       });
