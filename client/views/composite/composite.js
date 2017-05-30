@@ -137,7 +137,8 @@ Template.composite.onRendered(function () {
             createChart(`container-chart-${measurement}`, measurement, seriesOptions, yAxisOptions);
           } else {
             // add series to existing chart
-            const chart = $(`#container-chart-${measurement}`).highcharts();
+            const index = $(`#container-chart-${measurement}`).data('highchartsChart');
+            const chart = Highcharts.charts[index];
             chart.addSeries(seriesData);
           }
         }
