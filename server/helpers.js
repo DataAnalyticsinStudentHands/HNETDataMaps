@@ -338,6 +338,84 @@ Meteor.methods({
       throw new Meteor.Error('Error during push file', err);
     }
   },
+  pushMultipleData() {
+    // placeholder for push files
+    let outputFiles = '';
+    // get sites
+    const activeSites = LiveSites.find({ status: 'Active' });
+
+    activeSites.forEach(function(site) {
+      // get closest 5 min intervall
+      const ROUNDING = 5 * 60 * 1000;/* ms */
+      let end = moment();
+      end = moment(Math.floor((+end) / ROUNDING) * ROUNDING);
+
+      // check last push not older than 24 hours
+      if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
+        const startEpoch = site.lastPushEpoch;
+        const endEpoch = moment(end).unix();
+
+logger.info(site.AQSID, startEpoch, endEpoch);
+        const data = exportDataAsCSV(site.AQSID, startEpoch, endEpoch, 'tceq');
+				logger.info(data);
+        site.data = data;
+        site.startTimeStamp = `${data.data[0].dateGMT} ${data.data[0].timeGMT}`;
+        site.endTimeStamp = `${_.last(data.data).dateGMT} ${_.last(data.data).timeGMT}`;
+
+		    site.outputFile = createTCEQData(aqsid, data);
+				outputFiles = outputFiles.concat(site.outputFile + ' ');
+      }
+    });
+
+    // setup for push data to TCEQ
+		const ftps = new FTPS({
+			host: 'ftps.tceq.texas.gov',
+			username: 'jhflynn@central.uh.edu',
+			password: hnetsftp,
+			protocol: 'ftps',
+			port: 990
+		});
+
+		logger.info(outputFiles)
+
+		//logger.info(`calling push from cronJobs for AQSID: ${site.AQSID} ${site.siteName}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endEpoch: ${endTime}`);
+
+
+
+		// Set up a future
+    // const fut = new Future();
+		//
+		// ftps.cd('UH/tmp').raw(`mput ${outputFiles}`).exec((err, res) => {
+    //   if (res.error) {
+    //     logger.error('Error during push file:', res.error);
+    //     fut.throw(`Error during push file: ${res.error}`);
+    //   } else {
+    //     logger.info(`Pushed ${outputFiles} ${JSON.stringify(res)}`);
+    //     // Return the results
+    //     fut.return(`${outputFiles}`);
+    //   }
+    // });
+		//
+		// try {
+    //   const result = fut.wait();
+    //   return pathModule.basename(result);
+    // } catch (err) {
+    //   throw new Meteor.Error('Error during push file', err);
+    // }
+
+		// Meteor.call('pushData', site.AQSID, startEpoch, endEpoch, false, (err) => {
+		// 	if (!err) {
+		// 		LiveSites.update({
+		// 			_id: site._id
+		// 		}, {
+		// 			$set: {
+		// 				lastPushEpoch: endEpoch
+		// 			}
+		// 		}, { validate: false });
+		// 	}
+		// });
+	// }
+  },
   pushEdits(aqsid, pushPointsEpochs) {
     const startEpoch = pushPointsEpochs[0];
     const endEpoch = _.last(pushPointsEpochs);

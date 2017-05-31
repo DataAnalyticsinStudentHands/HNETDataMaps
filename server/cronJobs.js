@@ -39,36 +39,7 @@ const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
 
 // every 10 mins push data
 Meteor.setInterval(() => {
-  // get sites
-  const activeSites = LiveSites.find({ status: 'Active' });
-
-  activeSites.forEach(function(site) {
-    // get closest 5 min intervall
-    const ROUNDING = 5 * 60 * 1000;/* ms */
-    let end = moment();
-    end = moment(Math.floor((+end) / ROUNDING) * ROUNDING);
-
-    // check last push not older than 24 hours
-    if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
-      const startEpoch = site.lastPushEpoch;
-      const endEpoch = moment(end).unix();
-      const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-HH-mm-ss');
-      const endTime = moment.unix(endEpoch).format('YYYY-MM-DD-HH-mm-ss');
-      logger.info(`calling push from cronJobs for AQSID: ${site.AQSID} ${site.siteName}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endEpoch: ${endTime}`);
-      // call push data to TCEQ
-      Meteor.call('pushData', site.AQSID, startEpoch, endEpoch, false, (err) => {
-        if (!err) {
-          LiveSites.update({
-            _id: site._id
-          }, {
-            $set: {
-              lastPushEpoch: endEpoch
-            }
-          }, { validate: false });
-        }
-      });
-    }
-  });
+  Meteor.call('pushMultipleData');
 }, 10 * 60 * 1000); // run every 10 min, to push new data
 
 // 5 mins check for site down

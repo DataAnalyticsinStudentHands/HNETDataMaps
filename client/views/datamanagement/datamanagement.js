@@ -81,6 +81,18 @@ Template.datamanagement.events = {
       sAlert.success(`Pushed file\n ${response} successfull!`);
     });
   },
+	'click #pushMultipleData' (event, target) {
+    event.preventDefault();
+
+    // call push data to TCEQ
+    Meteor.call('pushMultipleData', (err, response) => {
+      if (err) {
+        sAlert.error(`Error:\n ${err.reason}`);
+        return;
+      }
+      sAlert.success(`Pushed multiple files\n ${response} successfull!`);
+    });
+  },
 'click #deleteAggregates' (event, target) {
   event.preventDefault();
   const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
