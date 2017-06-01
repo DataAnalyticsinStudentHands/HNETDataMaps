@@ -58,7 +58,8 @@
         2,
         {
           "ignoreUrls": true,
-          "ignoreComments": false
+          "ignoreComments": false,
+					"ignoreTemplateLiterals": true
         }
       ],
       "arrow-body-style": [
@@ -77,7 +78,13 @@
       "comma-dangle": [
         "error",
         "never"
-      ]
+      ],
+			"no-param-reassign": [
+				2,
+				{
+					"props": false
+				}
+			]
     }
   },
   "repository": {
