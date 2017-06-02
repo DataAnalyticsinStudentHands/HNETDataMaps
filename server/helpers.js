@@ -350,7 +350,7 @@ Meteor.methods({
     end = moment(Math.floor((+end) / ROUNDING) * ROUNDING);
     const endEpoch = moment(end).unix();
 
-    const pushingSites = {};
+    const pushingSites = [];
 
     activeSites.forEach(function(site) {
       // check last push not older than 24 hours
@@ -360,16 +360,16 @@ Meteor.methods({
         const data = exportDataAsCSV(site.AQSID, startEpoch, endEpoch, 'tceq');
 
         if (Object.keys(data).length === 0 && data.constructor === Object) {
-          logger.error('No data.', `Could not find data for ${site.siteName}/${startEpoch}, ${endEpoch}.`);
+          logger.error('No data.', `Could not find data for automatic push ${site.siteName}/${startEpoch}, ${endEpoch}.`);
         } else {
           const outputFile = createTCEQData(site.AQSID, data);
-
-          const key = site.AQSID;
-          pushingSites[key] = {
+          // create entry for pushing site
+          pushingSites.push({
+            aqsid: site.AQSID,
             startTimeStamp: `${data.data[0].dateGMT} ${data.data[0].timeGMT}`,
             endTimeStamp: `${_.last(data.data).dateGMT} ${_.last(data.data).timeGMT}`,
             outputFile
-          };
+          });
           outputFiles = outputFiles.concat(`${outputFile} `);
 
           const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-HH-mm-ss');
@@ -379,39 +379,41 @@ Meteor.methods({
       }
     });
 
-    // setup for push data to TCEQ
-    const ftps = new FTPS({
-      host: 'ftps.tceq.texas.gov',
-      username: 'jhflynn@central.uh.edu',
-      password: hnetsftp,
-      retries: 2,
-      protocol: 'ftps',
-      port: 990
-    });
+    if (pushingSites.length !== 0) {
+      // setup for push data to TCEQ
+      const ftps = new FTPS({
+        host: 'ftps.tceq.texas.gov',
+        username: 'jhflynn@central.uh.edu',
+        password: hnetsftp,
+        retries: 2,
+        protocol: 'ftps',
+        port: 990
+      });
 
-    // Set up a future
-    const fut = new Future();
+      // Set up a future
+      const fut = new Future();
 
-    ftps.cd('UH/tmp').raw(`mput ${outputFiles}`).exec((err, res) => {
-      if (res.error) {
-        logger.error('Error during automatic push:', res.error);
-        fut.throw(`Error during push file: ${res.error}`);
-      } else {
-        const pushEpoch = moment().unix();
-        logger.info(`Pushed ${outputFiles} ${JSON.stringify(res)}`);
-        // Return the results
-        fut.return(pushEpoch);
-      }
-    });
+      ftps.cd('UH/tmp').raw(`mput ${outputFiles}`).exec((err, res) => {
+        if (res.error) {
+          logger.error('Error during automatic push:', res.error);
+          fut.throw(`Error during push file: ${res.error}`);
+        } else {
+          const pushEpoch = moment().unix();
+          logger.info(`Pushed multiple ${outputFiles} ${JSON.stringify(res)}`);
+          // Return the results
+          fut.return(pushEpoch);
+        }
+      });
 
-    try {
-      const result = fut.wait();
-      for (const site in pushingSites) {
-				console.log(site);
-        if ({}.hasOwnProperty.call(pushingSites, site)) {
+      try {
+        const result = fut.wait();
+
+        pushingSites.forEach(function (site) {
+          console.log(site)
+
           // update last push epoch for each site
           LiveSites.update({
-            _id: site._id
+            AQSID: site.aqsid
           }, {
             $set: {
               lastPushEpoch: result
@@ -420,18 +422,18 @@ Meteor.methods({
 
           // insert a timestamp for the pushed data
           Exports.insert({
-            _id: `${site.AQSID}_${moment().unix()}`,
-	          pushEpoch: result,
-            site: site.AQSID,
+            _id: `${site}_${moment().unix()}`,
+            pushEpoch: result,
+            site: site.aqsid,
             startEpoch: moment.utc(site.startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
             endEpoch: moment.utc(site.endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
             fileName: site.outputFile,
             manual: false
           });
-        }
+        });
+      } catch (err) {
+        throw new Meteor.Error('Error during push file', err);
       }
-    } catch (err) {
-      throw new Meteor.Error('Error during push file', err);
     }
   },
   pushEdits(aqsid, pushPointsEpochs) {
@@ -478,7 +480,7 @@ Meteor.methods({
           {
             "endEpoch": {
               $lte: endEpoch
-	          }
+            }
           }
         ]
       });
