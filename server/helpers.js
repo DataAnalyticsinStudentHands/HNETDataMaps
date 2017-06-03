@@ -353,14 +353,14 @@ Meteor.methods({
     const pushingSites = [];
 
     activeSites.forEach(function(site) {
-      // check last push not older than 24 hours
-      if (site.lastPushEpoch > moment().subtract(5, 'days').unix()) {
+      // check last push not older than 1 day (24 hours)
+      if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
         const startEpoch = site.lastPushEpoch;
 
         const data = exportDataAsCSV(site.AQSID, startEpoch, endEpoch, 'tceq');
 
         if (Object.keys(data).length === 0 && data.constructor === Object) {
-          logger.error('No data.', `Could not find data for automatic push ${site.siteName}/${startEpoch}, ${endEpoch}.`);
+          logger.error('No data.', `Could not find data for automatic push ${site.siteName} ${startEpoch}/${endEpoch}.`);
         } else {
           const outputFile = createTCEQData(site.AQSID, data);
           // create entry for pushing site
@@ -409,7 +409,6 @@ Meteor.methods({
         const result = fut.wait();
 
         pushingSites.forEach(function (site) {
-          console.log(site)
 
           // update last push epoch for each site
           LiveSites.update({
@@ -422,7 +421,7 @@ Meteor.methods({
 
           // insert a timestamp for the pushed data
           Exports.insert({
-            _id: `${site}_${moment().unix()}`,
+            _id: `${site.aqsid}_${moment().unix()}`,
             pushEpoch: result,
             site: site.aqsid,
             startEpoch: moment.utc(site.startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
