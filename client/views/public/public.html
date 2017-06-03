@@ -16,48 +16,33 @@
 					<div class="panel-body">
 						<h5>Select Date:</h5>
 						<input type="date" value="{{selectedDate}}" id="datepicker">
-						<p>{{currentData}}</p>
 					</div>
 				</div>
-
         <!-- /.row -->
 
-        <!-- Data Row -->
-				<!-- container for charts -->
+        <!-- container for charts -->
 				{{#each charts}}
-				<div class="row">
+        <div class="row">
             <div class="col-md-4 portfolio-item">
-                <a href="#">
-                    <img class="img-responsive" src="http://placehold.it/700x400" alt="">
-                </a>
                 <h3>
                     <a href="#">{{_channelHeader}}</a>
                 </h3>
+            </div>
+			  </div>
+			  <!-- /.row -->
+        <div class="row">
+            <div class="col-md-4 portfolio-item">
+                <div id="container-current-{{_id}}"></div>
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam viverra euismod odio, gravida pellentesque urna varius vitae.</p>
             </div>
 						<div class="col-md-8 portfolio-item">
-				<form class="adjust" id="{{_id}}">
-				<div id="container-chart-{{_id}}" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
-				<div class="input-group pull-right" style="margin-top:-420px;">
-					<input type="text" name="min" placeholder="min" value={{min}} style="margin-right: 5px;" />
+                <div id="container-chart-{{_id}}" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+           </div>
+			  </div>
+			  <!-- /.row -->
 
-					<input type="text" name="max" placeholder="max" value={{max}} style="margin-right: 5px;" />
-
-					<input class="btn btn-default btn-xs" type="submit" value="Adjust min/max y-Axis" />
-				</div>
-
-
-				</form>
-
-</div>
-
-			</div>
-			<!-- /.row -->
-			<hr>
-
+			  <hr>
 				{{/each}}
-
 </div>
-
 <!-- /.container -->
 </template>

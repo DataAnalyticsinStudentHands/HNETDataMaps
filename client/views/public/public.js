@@ -1,6 +1,11 @@
 // JSLint options:
 /* global Highcharts, document */
 import Highcharts from 'highcharts';
+// Load additional modules after Highcharts is loaded
+require('highcharts/modules/exporting')(Highcharts);
+require('highcharts/highcharts-more')(Highcharts);
+require('highcharts/modules/solid-gauge')(Highcharts);
+require('highcharts/modules/data.js')(Highcharts);
 
 // 1 day
 const startEpoch = new ReactiveVar(moment().subtract(1440, 'minutes').unix());
@@ -9,27 +14,190 @@ Highcharts.setOptions({
   global: {
     useUTC: false
   },
-  colors: ['#DDDF00', '#4F525C', '#24CBE5', '#64E572', '#FF9655']
+  colors: ['#FF9655']
 });
 
 // local collection for dynamic chart containers
 const Charts = new Meteor.Collection(null);
 
+// hash for chart type gauge/bar depending on channel
+const chartsHash = {
+  WS: 'gauge',
+  Temp: 'bar',
+  WD: 'rose'
+};
 
+// Create highcharts based wind rose
+function createRose(container, current) {
+  return new Highcharts.chart({
+    exporting: { enabled: false },
+    chart: {
+      renderTo: container,
+      type: 'gauge',
+      plotBackgroundColor: null,
+      plotBackgroundImage: null,
+      plotBorderWidth: 0,
+      plotShadow: false
+    },
+    title: {
+      text: null
+    },
+    pane: {
+      startAngle: 0,
+      endAngle: 360
+    },
+    tooltip: {
+      enabled: false
+    },
+    // the value axis
+    yAxis: {
+      min: 0,
+      max: 360,
+      tickWidth: 1,
+      tickPosition: 'outside',
+      tickLength: 20,
+      tickColor: '#999',
+      tickInterval: 45,
+      labels: {
+        rotation: 'auto',
+        formatter: function() {
+          if (this.value === 360) {
+            return 'N';
+          } else if (this.value === 45) {
+            return 'NE';
+          } else if (this.value === 90) {
+            return 'E';
+          } else if (this.value === 135) {
+            return 'SE';
+          } else if (this.value === 180) {
+            return 'S';
+          } else if (this.value === 225) {
+            return 'SW';
+          } else if (this.value === 270) {
+            return 'W';
+          } else if (this.value === 315) {
+            return 'NW';
+          }
+          return 0;
+        }
+      }
+    },
+    credits: {
+      enabled: false
+    },
+    series: [{
+      data: [current],
+      dataLabels: {
+        format: '<span style="font-size:25px;color:' +
+        ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}' + '°</span>',
+        borderWidth: 0,
+        y: 40
+      }
+    }]
+  });
+}
 
-/**
- * Create highstock based chart.
- */
+// Create highcharts based gauge
+function createGauge(container, current) {
+  return new Highcharts.chart({
+    exporting: { enabled: false },
+    chart: {
+      type: 'solidgauge',
+      renderTo: container,
+      height: 300
+    },
+    title: null,
+    pane: {
+      center: ['50%', '85%'],
+      size: '100%',
+      startAngle: -90,
+      endAngle: 90,
+      background: {
+        backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || '#EEE',
+        innerRadius: '60%',
+        outerRadius: '100%',
+        shape: 'arc'
+      }
+    },
+    tooltip: {
+      enabled: false
+    },
+    // the value axis
+    yAxis: {
+      stops: [
+        [0.1, '#55BF3B'], // green
+        [0.5, '#DDDF0D'], // yellow
+        [0.9, '#DF5353'] // red
+      ],
+      min: 0,
+      max: 50
+    },
+
+    plotOptions: {
+      solidgauge: {
+        dataLabels: {
+          y: 5,
+          borderWidth: 0,
+          useHTML: true
+        }
+      }
+    },
+    credits: {
+      enabled: false
+    },
+    series: [{
+      data: [current],
+      dataLabels: {
+        format: '<div style="text-align:center"><span style="font-size:25px;color:' +
+        ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span><br/>' +
+        '<span style="font-size:12px;color:silver">m/s</span></div>'
+      }
+    }]
+  });
+}
+
+// Create highcharts based bar chart.
+function createBar(chartName, current, unit) {
+  return new Highcharts.chart({
+    chart: {
+      type: 'column',
+      renderTo: chartName
+    },
+    exporting: {
+      enabled: false
+    },
+    tooltip: {
+      enabled: false
+    },
+    title: {
+      text: null // disbale chart title
+    },
+    yAxis: {
+      min: 0,
+      title: null
+    },
+    credits: {
+      enabled: false
+    },
+    series: [{
+      data: [current],
+      name: `<div style="text-align:center"><span style="font-size:25px;">${current}</span><span style="font-size:12px;color:silver"> ${unit}</span></div>`
+    }],
+    legend: {
+      symbolHeight: 0,
+      symbolWidth: 0,
+      symbolRadius: 0
+    }
+  });
+}
+
+// Create highstock based chart.
 function createChart(chartName, seriesOptions, yAxisOptions) {
   return new Highcharts.chart({
-    exporting: {
-      enabled: true
-    },
     chart: {
       zoomType: 'xy',
       renderTo: chartName,
       marginLeft: 100, // Keep all charts left aligned
-      spacingBottom: 20
     },
     title: {
       text: null // disbale chart title
@@ -57,7 +225,7 @@ function createChart(chartName, seriesOptions, yAxisOptions) {
           tooltipX = this.chart.plotLeft;
           tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
         }
-        return {x: tooltipX, y: tooltipY};
+        return { x: tooltipX, y: tooltipY };
       },
       formatter() {
         let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
@@ -70,34 +238,7 @@ function createChart(chartName, seriesOptions, yAxisOptions) {
       enabled: false
     },
     legend: {
-      enabled: false,
-      align: 'right',
-      layout: 'vertical',
-      verticalAlign: 'top',
-      y: 200
-    },
-    rangeSelector: {
-      inputEnabled: false,
-      allButtonsEnabled: true,
-      buttons: [
-        {
-          type: 'day',
-          count: 1,
-          text: '1 Day'
-        }, {
-          type: 'day',
-          count: 3,
-          text: '3 Days'
-        }, {
-          type: 'minute',
-          count: 60,
-          text: 'Hour'
-        }
-      ],
-      buttonTheme: {
-        width: 60
-      },
-      selected: 1
+      enabled: false
     }
   });
 }
@@ -111,7 +252,6 @@ Template.public.onCreated(function() {
 
   // load based on date selection
   this.autorun(function() {
-
     // take care of over-subscription
     let initializing = true;
     if (mySub !== undefined) {
@@ -125,12 +265,13 @@ Template.public.onCreated(function() {
 
     PublicDataSeries.find().observeChanges({
       added: function (series, seriesData) {
+
         if (!initializing) { // true only when we first start
           const subType = series.split(/[_]+/)[0];
           const metric = series.split(/[_]+/)[1];
 
           // load some data from site channels object
-          let channelHeader = 'dfd';
+          let channelHeader = '';
           _.each(Router.current().data().site.Channels, (channel) => {
             if (channel.Name === metric) {
               channelHeader = channel.Header;
@@ -159,28 +300,35 @@ Template.public.onCreated(function() {
               _id: chartId
             });
 
-						console.log(`${JSON.stringify(Router.current().data().currentData)}`)
-						console.log(Router.current().data().currentData.epoch)
-
             const seriesOptions = [];
             seriesOptions.push(seriesData);
             yAxisOptions.id = metric;
-            const chart = createChart(`container-chart-${chartId}`, seriesOptions, yAxisOptions);
+            createChart(`container-chart-${chartId}`, seriesOptions, yAxisOptions);
 
-            // Set text value for min/max form element
-            const yAxis = chart.get(metric);
-            const extremes = yAxis.getExtremes();
-
+            // add header
             Charts.update({
               _id: chartId
             }, {
-              min: Math.floor(extremes.min),
-              max: Math.floor(extremes.max),
               _channelHeader: channelHeader
             });
+
+            // create current data bar and gauge charts
+            console.log(Router.current().data().currentData.subTypes[subType][metric])
+            let current = Router.current().data().currentData.subTypes[subType][metric][1].val;
+            current = Math.round(current * 100) / 100;
+            const unit = Router.current().data().currentData.subTypes[subType][metric][3].val;
+
+            if (chartsHash[metric] === 'gauge') {
+              createGauge(`container-current-${chartId}`, current, unit);
+            } else if (chartsHash[metric] === 'rose') {
+              createRose(`container-current-${chartId}`, current, unit);
+            } else {
+              createBar(`container-current-${chartId}`, current, unit);
+            }
           } else {
             // add other series that belongs to this chart
-            const chart = $(`#container-chart-${chartId}`).highcharts();
+            const index = $(`#container-chart-${chartId}`).data('highchartsChart');
+            const chart = Highcharts.charts[index];
             chart.addSeries(seriesData);
           }
         }
@@ -206,25 +354,8 @@ Template.public.helpers({
 });
 
 Template.public.events({
-  // set y-axis min/max from form
-  'submit .adjust' (event) {
-
-    // Prevent default browser form submit
-    event.preventDefault();
-    // find axis of graph
-    const target = event.target;
-    const chart = $(`#container-chart-${target.id}`).highcharts();
-    const metric = chart.title.textStr.split(/[ ]+/)[1]; // measurement
-    const yAxis = chart.get(metric);
-    // Set value from form element
-    yAxis.setExtremes(target.min.value, target.max.value);
-  },
-  'change #datepicker' (event) {
+  'change #datepicker'(event) {
     // update reactive var whith selected date
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-  },
-  'click #downloadCurrent' () {
-    // call export and download
-    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(1440, 'minutes').unix(), false);
   }
 });
