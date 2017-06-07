@@ -8,7 +8,7 @@ Template.navItems.helpers({
       : '';
   },
   sites() {
-    return LiveSites.find({});
+    return LiveSites.find({ status: 'Active' });
   }
 });
 
