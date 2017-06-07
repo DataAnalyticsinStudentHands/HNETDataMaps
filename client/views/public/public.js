@@ -313,7 +313,6 @@ Template.public.onCreated(function() {
             });
 
             // create current data bar and gauge charts
-            console.log(Router.current().data().currentData.subTypes[subType][metric])
             let current = Router.current().data().currentData.subTypes[subType][metric][1].val;
             current = Math.round(current * 100) / 100;
             const unit = Router.current().data().currentData.subTypes[subType][metric][3].val;
