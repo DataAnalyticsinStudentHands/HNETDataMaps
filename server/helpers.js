@@ -393,7 +393,7 @@ Meteor.methods({
       // Set up a future
       const fut = new Future();
 
-      ftps.cd('UH/tmp').raw(`mput ${outputFiles}`).exec((err, res) => {
+      ftps.cd('UH/c696').raw(`mput ${outputFiles}`).exec((err, res) => {
         if (res.error) {
           logger.error('Error during automatic push:', res.error);
           fut.throw(`Error during push file: ${res.error}`);
