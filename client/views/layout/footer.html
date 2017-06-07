@@ -1,8 +1,17 @@
 <template name='footer'>
 	<div class="container">
-	  <div class="row">
-	    <div class="col-md-6 text-muted">Data Analytics in Student Hands &copy; 2016 University of Houston <br> {{siteSpecific}}</div><div class="col-md-6">
-				<span class="pull-right text-muted ">Version: {{gitRev 'tag'}}</span></div>
+
+	  <div class="row cols-middle">
+      <div class="col-md-1">
+        <img  src="/img/sites/{{site.AQSID}}/logo.png" alt="">
+      </div>
+
+	    <div class="col-md-6 text-muted">
+        {{siteSpecific}}<br/> <br/>Data Analytics in Student Hands &copy; 2016 University of Houston
+      </div>
+      <div class="col-md-4">
+				<span class="pull-right text-muted ">Version: {{gitRev 'tag'}}</span>
+      </div>
 	  </div>
 	</div>
 </template>

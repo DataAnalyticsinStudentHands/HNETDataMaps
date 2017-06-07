@@ -3,19 +3,12 @@ Template.home.onRendered(function() {
   const latude = 29.721; // Houston
   const lngtude = -95.3443;
 
-  var AQmap = L.map('displayMap', {doubleClickZoom: false});
+  var AQmap = L.map('displayMap', { doubleClickZoom: false });
 
-  Meteor.subscribe('liveSites', [lngtude, latude]);
-
-	LiveSites.find().observeChanges({
-    added: function(id, line) {
-      var marker = L.marker([
-        line.loc.coordinates[1], line.loc.coordinates[0]
-      ], {title: line.siteName}).addTo(AQmap).on('click', onClick);
-
-      var content = `${line.status}`;
-      marker.bindPopup(content);
-    } // end of added
+  Router.current().data().forEach((site) => {
+    const marker = L.marker([site.loc.coordinates[1], site.loc.coordinates[0]], { title: site.siteName });
+    marker.aqsid = site.AQSID;
+    marker.addTo(AQmap).on('click', onClick);
   });
 
   $('#displayMap').css('height', window.innerHeight - 20);
@@ -43,5 +36,5 @@ Template.pushStatusCell.helpers({
 });
 
 function onClick(e) {
-  Router.go(`/site/${this.AQSID}`);
+  Router.go(`/site/${e.target.aqsid}`);
 }

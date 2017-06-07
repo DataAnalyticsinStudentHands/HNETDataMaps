@@ -6,14 +6,32 @@ html {
 }
 body {
   /* Margin bottom by footer height */
-  margin-bottom: 60px;
+  margin-bottom: 100px;
 }
+
+[class*='cols-'].row > *{
+  float: none;
+  position: relative;
+  display: inline-block;
+  /* old ie fixes */
+  *zoom: 1;
+  *display: inline;
+}
+
+.row.cols-bottom > *{
+  vertical-align: bottom;
+}
+
+.row.cols-middle > *{
+  vertical-align: middle;
+}
+
 .footer {
   position: absolute;
   bottom: 0;
   width: 100%;
   /* Set the fixed height of the footer here */
-  height: 60px;
+  height: 100px;
   background-color: #f5f5f5;
 }
 
