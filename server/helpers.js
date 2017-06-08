@@ -64,6 +64,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
     case 'tceq_allchannels':
       if (aggregatData.length !== 0) {
         dataObject.data = [];
+        dataObject.fields = ['siteID', 'dateGMT', 'timeGMT', 'status']; // create fields for unparse
       }
       _.each(aggregatData, (e) => {
         const obj = {};
@@ -84,11 +85,21 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
               if (measurements.hasOwnProperty(measurement)) {
                 let label = `${instrument}_${measurement}_channel`;
                 obj[label] = channelHash[instrument + '_' + measurement]; // channel
+
+                if (dataObject.fields.indexOf(label) === -1) { // add to fields?
+                  dataObject.fields.push(label);
+                }
                 const data = measurements[measurement];
 
                 label = `${instrument}_${measurement}_flag`;
+                if (dataObject.fields.indexOf(label) === -1) { // add to fields?
+                  dataObject.fields.push(label);
+                }
                 obj[label] = flagsHash[_.last(data).val].label; // Flag
                 label = `${instrument}_${measurement}_value`;
+                if (dataObject.fields.indexOf(label) === -1) { // add to fields?
+                  dataObject.fields.push(label);
+                }
                 // taking care of flag Q (span)
                 if (flagsHash[_.last(data).val].label === 'Q') {
                   obj[label] = 0; // set value to 0
@@ -113,9 +124,9 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         obj.QCstatus_channel = 51;
         obj.QCstatus_flag = 'K';
         obj.QCstatus_value = 99000;
-        dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
         dataObject.data.push(obj);
       });
+      dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
       break;
     case 'tceq':
       const site = LiveSites.findOne({AQSID: `${aqsid}`});
@@ -192,6 +203,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         obj.QCstatus_value = 99000;
         dataObject.data.push(obj);
       });
+      dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
       break;
     default:
       throw new Meteor.Error('Unexpected switch clause', 'exception in switch statement for export file format');
@@ -226,7 +238,7 @@ function createTCEQData(aqsid, data) {
   const csvComplete = Papa.unparse({
     data: data.data,
     fields: data.fields
-});
+  });
   // removing header from csv string
   const n = csvComplete.indexOf('\n');
   const csv = csvComplete.substring(n + 1);

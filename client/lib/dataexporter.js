@@ -22,7 +22,12 @@ DataExporter = {
 
         // download the data as csv file
         if (site !== undefined) {
-          const csv = Papa.unparse(data);
+          //const csv = Papa.unparse(data);
+          console.log(data.fields)
+          const csv = Papa.unparse({
+            data: data.data,
+            fields: data.fields
+          });
 
           // create site name from incoming folder
           const siteName = (site.incoming.match(new RegExp('UH' +
