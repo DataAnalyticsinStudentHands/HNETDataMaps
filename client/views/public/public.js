@@ -88,7 +88,7 @@ function createRose(container, current) {
     series: [{
       data: [current],
       dataLabels: {
-        format: '<span style="font-size:25px;color:' +
+        format: '<span style="font-size:12px;color:' +
         ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}' + '°</span>',
         borderWidth: 0,
         y: 40
@@ -104,7 +104,7 @@ function createGauge(container, current) {
     chart: {
       type: 'solidgauge',
       renderTo: container,
-      height: 300
+      height: 200
     },
     title: null,
     pane: {
@@ -148,7 +148,7 @@ function createGauge(container, current) {
     series: [{
       data: [current],
       dataLabels: {
-        format: '<div style="text-align:center"><span style="font-size:25px;color:' +
+        format: '<div style="text-align:center"><span style="font-size:12px;color:' +
         ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span><br/>' +
         '<span style="font-size:12px;color:silver">m/s</span></div>'
       }
@@ -161,7 +161,8 @@ function createBar(chartName, current, unit) {
   return new Highcharts.chart({
     chart: {
       type: 'column',
-      renderTo: chartName
+      renderTo: chartName,
+      height: 300
     },
     exporting: {
       enabled: false
@@ -181,7 +182,7 @@ function createBar(chartName, current, unit) {
     },
     series: [{
       data: [current],
-      name: `<div style="text-align:center"><span style="font-size:25px;">${current}</span><span style="font-size:12px;color:silver"> ${unit}</span></div>`
+      name: `<div style="text-align:center"><span style="font-size:20px;">${current}</span><span style="font-size:12px;color:silver"> ${unit}</span></div>`
     }],
     legend: {
       symbolHeight: 0,
@@ -314,7 +315,8 @@ Template.public.onCreated(function() {
 
             // create current data bar and gauge charts
             let current = Router.current().data().currentData.subTypes[subType][metric][1].val;
-            current = Math.round(current * 100) / 100;
+            current = Math.round(current);
+            // current = Math.round(current * 100) / 100;
             const unit = Router.current().data().currentData.subTypes[subType][metric][3].val;
 
             if (chartsHash[metric] === 'gauge') {

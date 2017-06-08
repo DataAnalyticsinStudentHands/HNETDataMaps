@@ -40,6 +40,7 @@ body > .container {
 }
 .container .text-muted {
   margin: 20px 0;
+  font-size: 80%;
 }
 
 .footer > .container {

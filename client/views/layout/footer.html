@@ -2,16 +2,20 @@
 	<div class="container">
 
 	  <div class="row cols-middle">
-      <div class="col-md-1">
-        <img  src="/img/sites/{{site.AQSID}}/logo.png" alt="">
+      <div class="col-md-2">
+        {{#if site.AQSID}}
+          <img  src="/img/sites/{{site.AQSID}}/logo.png" alt="" height="70">
+        {{else}}
+          <img  src="/img/logo.png" alt="" height="70">
+         {{/if}}
       </div>
 
-	    <div class="col-md-6 text-muted">
-        {{siteSpecific}}<br/> <br/>Data Analytics in Student Hands &copy; 2016 University of Houston
+	    <div class="col-md-8 text-muted">
+        {{siteSpecific}}<br/> <br/>Data Analytics in Student Hands &copy; 2017 University of Houston
       </div>
-      <div class="col-md-4">
+      <!-- <div class="col-md-1">
 				<span class="pull-right text-muted ">Version: {{gitRev 'tag'}}</span>
-      </div>
+      </div> -->
 	  </div>
 	</div>
 </template>
