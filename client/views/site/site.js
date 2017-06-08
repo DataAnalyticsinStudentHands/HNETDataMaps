@@ -408,12 +408,12 @@ Template.site.helpers({
 Template.site.events({
   // set y-axis min/max from form
   'submit .adjust' (event) {
-
     // Prevent default browser form submit
     event.preventDefault();
     // find axis of graph
     const target = event.target;
-    const chart = $(`#container-chart-${target.id}`).highcharts();
+    const index = $(`#container-chart-${target.id}`).data('highchartsChart');
+    const chart = Highcharts.charts[index];
     const metric = chart.title.textStr.split(/[ ]+/)[1]; // measurement
     const yAxis = chart.get(metric);
     // Set value from form element
