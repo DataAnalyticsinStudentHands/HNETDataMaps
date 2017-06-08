@@ -37,7 +37,8 @@ function createRose(container, current) {
       plotBackgroundColor: null,
       plotBackgroundImage: null,
       plotBorderWidth: 0,
-      plotShadow: false
+      plotShadow: false,
+      height: 220
     },
     title: {
       text: null
@@ -88,10 +89,10 @@ function createRose(container, current) {
     series: [{
       data: [current],
       dataLabels: {
-        format: '<span style="font-size:12px;color:' +
+        format: '<span style="font-size:20px;color:' +
         ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}' + '°</span>',
         borderWidth: 0,
-        y: 40
+        y: 120
       }
     }]
   });
@@ -104,7 +105,7 @@ function createGauge(container, current) {
     chart: {
       type: 'solidgauge',
       renderTo: container,
-      height: 200
+      height: 220
     },
     title: null,
     pane: {
@@ -114,7 +115,7 @@ function createGauge(container, current) {
       endAngle: 90,
       background: {
         backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || '#EEE',
-        innerRadius: '60%',
+        innerRadius: '30%',
         outerRadius: '100%',
         shape: 'arc'
       }
@@ -129,6 +130,9 @@ function createGauge(container, current) {
         [0.5, '#DDDF0D'], // yellow
         [0.9, '#DF5353'] // red
       ],
+      labels: {
+        y: 0
+      },
       min: 0,
       max: 50
     },
@@ -136,7 +140,7 @@ function createGauge(container, current) {
     plotOptions: {
       solidgauge: {
         dataLabels: {
-          y: 5,
+          y: 40,
           borderWidth: 0,
           useHTML: true
         }
@@ -148,9 +152,9 @@ function createGauge(container, current) {
     series: [{
       data: [current],
       dataLabels: {
-        format: '<div style="text-align:center"><span style="font-size:12px;color:' +
-        ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span><br/>' +
-        '<span style="font-size:12px;color:silver">m/s</span></div>'
+        format: '<div style="text-align:center"><span style="font-size:20px;color:' +
+        ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span>' +
+        '<span style="font-size:12px;color:silver"> m/s</span></div>'
       }
     }]
   });
