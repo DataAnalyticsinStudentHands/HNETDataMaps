@@ -126,7 +126,9 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         obj.QCstatus_value = 99000;
         dataObject.data.push(obj);
       });
-      dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
+      if (dataObject.fields !== undefined) {
+        dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
+      }
       break;
     case 'tceq':
       const site = LiveSites.findOne({AQSID: `${aqsid}`});
@@ -203,7 +205,9 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         obj.QCstatus_value = 99000;
         dataObject.data.push(obj);
       });
-      dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
+      if (dataObject.fields !== undefined) {
+        dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
+      }
       break;
     default:
       throw new Meteor.Error('Unexpected switch clause', 'exception in switch statement for export file format');
