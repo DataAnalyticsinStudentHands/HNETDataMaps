@@ -505,8 +505,10 @@ var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
       singleObj.subTypes.Rain[1].val = parsedLines[k][8];
       singleObj.subTypes.Rain[1].unit = 'inch';
 
-      let epoch = moment(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').unix();
-      epoch = epoch - (epoch % 1); // rounding down
+      // add 6 hours to timestamp and then parse as UTC before converting to epoch
+      const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+      let epoch = timeStamp.unix();
+      epoch -= (epoch % 1); // rounding down
       singleObj.epoch = epoch;
       singleObj.epoch5min = epoch - (epoch % 300);
       singleObj.TimeStamp = parsedLines[k][0];
@@ -547,9 +549,9 @@ const readFile = Meteor.bindEnvironment(function(path) {
           dynamicTyping: true,
           skipEmptyLines: true,
           complete(results) {
-            // remove the first 4 lines - headers
-            results.data.splice(0, 4);
             if (!secondIteration) {
+              // remove the first 4 lines - headers
+              results.data.splice(0, 4);
               batchMetDataUpsert(results.data, path);
               secondIteration = true;
             } else {
