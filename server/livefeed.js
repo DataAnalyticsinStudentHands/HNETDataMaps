@@ -477,8 +477,23 @@ var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
       singleObj.subTypes.TRH[1].unit = 'C';
       singleObj.subTypes.TRH[2] = {};
       singleObj.subTypes.TRH[2].metric = 'RH';
-      singleObj.subTypes.TRH[2].val = parsedLines[k][3];
+      // fix for RH values
+      // condition: RH value < 1 -> set to 100
+      if (parsedLines[k][3] < 1) {
+        singleObj.subTypes.TRH[2].val = 100;
+      } else {
+        // condition: prevoius RH value - current RH > 15 -> set to 100
+        if (k > 0) {
+          if ((parsedLines[k][3] - parsedLines[k - 1][3]) > 15) {
+            singleObj.subTypes.TRH[2].val = 100;
+          } else {
+            singleObj.subTypes.TRH[2].val = parsedLines[k][3];
+          }
+        }
+        singleObj.subTypes.TRH[2].val = parsedLines[k][3];
+      }
       singleObj.subTypes.TRH[2].unit = 'pct';
+
       singleObj.subTypes.Baro[0] = {};
       singleObj.subTypes.Baro[0].metric = 'Flag';
       singleObj.subTypes.Baro[0].val = 1;
@@ -486,6 +501,7 @@ var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
       singleObj.subTypes.Baro[1].metric = 'Press';
       singleObj.subTypes.Baro[1].val = parsedLines[k][4];
       singleObj.subTypes.Baro[1].unit = 'mbar';
+
       singleObj.subTypes.RMY[0] = {};
       singleObj.subTypes.RMY[0].metric = 'Flag';
       singleObj.subTypes.RMY[0].val = 1;
@@ -497,6 +513,7 @@ var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
       singleObj.subTypes.RMY[2].metric = 'WD';
       singleObj.subTypes.RMY[2].val = parsedLines[k][7];
       singleObj.subTypes.RMY[2].unit = 'deg';
+
       singleObj.subTypes.Rain[0] = {};
       singleObj.subTypes.Rain[0].metric = 'Flag';
       singleObj.subTypes.Rain[0].val = 1;
