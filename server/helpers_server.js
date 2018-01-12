@@ -303,7 +303,36 @@ Meteor.methods({
       ]
     });
   },
-  pushData(aqsid, startEpoch, endEpoch, manualPush) {
+  pushSiteData(aqsid) {
+
+      // check last push not older than 1 day (24 hours)
+      if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
+        const startEpoch = site.lastPushEpoch;
+
+        const data = exportDataAsCSV(site.AQSID, startEpoch, endEpoch, 'tceq');
+
+        if (Object.keys(data).length === 0 && data.constructor === Object) {
+          logger.error('No data.', `Could not find data for automatic push ${site.siteName} ${startEpoch}/${endEpoch}.`);
+        } else {
+          const outputFile = createTCEQData(site.AQSID, data);
+          // create entry for pushing site
+          pushingSites.push({
+            aqsid: site.AQSID,
+            startTimeStamp: `${data.data[0].dateGMT} ${data.data[0].timeGMT}`,
+            endTimeStamp: `${_.last(data.data).dateGMT} ${_.last(data.data).timeGMT}`,
+            outputFile
+          });
+          outputFiles = outputFiles.concat(`${outputFile} `);
+
+          const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-HH-mm-ss');
+          const endTime = moment.unix(endEpoch).format('YYYY-MM-DD-HH-mm-ss');
+          logger.info(`created automatic pushfile for AQSID: ${site.AQSID} ${site.siteName}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endTime: ${endTime}`);
+        }
+      }
+
+
+
+
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, 'tceq');
 
     if (Object.keys(data).length === 0 && data.constructor === Object) {
@@ -352,103 +381,6 @@ Meteor.methods({
       return pathModule.basename(result);
     } catch (err) {
       throw new Meteor.Error('Error during push file', err);
-    }
-  },
-  pushMultipleData() {
-    // placeholder for push files
-    let outputFiles = '';
-    // get sites
-    const activeSites = LiveSites.find({ status: 'Active' });
-
-    // get closest 5 min intervall
-    const ROUNDING = 5 * 60 * 1000;/* ms */
-    let end = moment();
-    end = moment(Math.floor((+end) / ROUNDING) * ROUNDING);
-    const endEpoch = moment(end).unix();
-
-    const pushingSites = [];
-
-    activeSites.forEach(function(site) {
-      // check last push not older than 1 day (24 hours)
-      if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
-        const startEpoch = site.lastPushEpoch;
-
-        const data = exportDataAsCSV(site.AQSID, startEpoch, endEpoch, 'tceq');
-
-        if (Object.keys(data).length === 0 && data.constructor === Object) {
-          logger.error('No data.', `Could not find data for automatic push ${site.siteName} ${startEpoch}/${endEpoch}.`);
-        } else {
-          const outputFile = createTCEQData(site.AQSID, data);
-          // create entry for pushing site
-          pushingSites.push({
-            aqsid: site.AQSID,
-            startTimeStamp: `${data.data[0].dateGMT} ${data.data[0].timeGMT}`,
-            endTimeStamp: `${_.last(data.data).dateGMT} ${_.last(data.data).timeGMT}`,
-            outputFile
-          });
-          outputFiles = outputFiles.concat(`${outputFile} `);
-
-          const startTime = moment.unix(startEpoch).format('YYYY-MM-DD-HH-mm-ss');
-          const endTime = moment.unix(endEpoch).format('YYYY-MM-DD-HH-mm-ss');
-          logger.info(`created automatic pushfile for AQSID: ${site.AQSID} ${site.siteName}, startEpoch: ${startEpoch}, endEpoch: ${endEpoch}, startTime: ${startTime}, endTime: ${endTime}`);
-        }
-      }
-    });
-
-    if (pushingSites.length !== 0) {
-      // setup for push data to TCEQ
-      const ftps = new FTPS({
-        host: 'ftps.tceq.texas.gov',
-        username: 'jhflynn@central.uh.edu',
-        password: hnetsftp,
-        retries: 2,
-        protocol: 'ftps',
-        port: 990
-      });
-
-      // Set up a future
-      const fut = new Future();
-
-      ftps.cd('UH/c696').raw(`mput ${outputFiles}`).exec((err, res) => {
-        if (res.error) {
-          logger.error('Error during automatic push:', res.error);
-          fut.throw(`Error during push file: ${res.error}`);
-        } else {
-          const pushEpoch = moment().unix();
-          logger.info(`Pushed multiple ${outputFiles} ${JSON.stringify(res)}`);
-          // Return the results
-          fut.return(pushEpoch);
-        }
-      });
-
-      try {
-        const result = fut.wait();
-
-        pushingSites.forEach(function (site) {
-
-          // update last push epoch for each site
-          LiveSites.update({
-            AQSID: site.aqsid
-          }, {
-            $set: {
-              lastPushEpoch: result
-            }
-          }, { validate: false });
-
-          // insert a timestamp for the pushed data
-          Exports.insert({
-            _id: `${site.aqsid}_${moment().unix()}`,
-            pushEpoch: result,
-            site: site.aqsid,
-            startEpoch: moment.utc(site.startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
-            endEpoch: moment.utc(site.endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
-            fileName: site.outputFile,
-            manual: false
-          });
-        });
-      } catch (err) {
-        throw new Meteor.Error('Error during push file', err);
-      }
     }
   },
   pushEdits(aqsid, pushPointsEpochs) {
