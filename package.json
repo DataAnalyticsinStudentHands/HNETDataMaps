@@ -1,16 +1,16 @@
 {
   "name": "dash_data_maps",
   "version": "0.9.0",
-  "description": "DASH DataMaps - a real time analysis & visualization frame work",
+  "description": "HNET DataMaps - a real time sensor analysis & visualization frame work",
   "main": "main.html",
   "dependencies": {
     "bcrypt": "^0.8.7",
     "chokidar": "^1.7.0",
-    "eslint-plugin-import": "^2.0.1",
     "fibers": "^1.0.15",
     "fs-extra": "^0.30.0",
+    "fsevents": "^1.1.3",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
-    "highcharts": "^4.2.7",
+    "highcharts": "^6.0.4",
     "junk": "^1.0.3"
   },
   "scripts": {
@@ -96,19 +96,19 @@
         {
           "allowForLoopAfterthoughts": true
         }
-      ] 
+      ]
     }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/DataAnalyticsinStudentHands/DataMaps.git"
+    "url": "https://github.com/DataAnalyticsinStudentHands/HNETDataMaps.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/DataAnalyticsinStudentHands/DataMaps/issues"
+    "url": "https://github.com/DataAnalyticsinStudentHands/HNETDataMaps/issues"
   },
-  "homepage": "https://github.com/DataAnalyticsinStudentHands/DataMaps",
+  "homepage": "https://github.com/DataAnalyticsinStudentHands/HNETDataMaps",
   "devDependencies": {
     "@meteorjs/eslint-config-meteor": "^1.0.5",
     "babel-eslint": "^7.2.3",
