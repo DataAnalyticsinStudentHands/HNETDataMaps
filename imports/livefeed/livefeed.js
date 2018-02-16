@@ -1,9 +1,10 @@
 // required packages
 import chokidar from 'chokidar';
+import { LiveSites, LiveData, AggrData } from '../api/collections_server';
+import { logger, globalsite } from '../startup/startup';
 
 const fs = Npm.require('fs');
 const pathModule = Npm.require('path');
-
 
 function perform5minAggregat(siteId, startEpoch, endEpoch) {
   // create temp collection as placeholder for aggreagation results
@@ -559,7 +560,7 @@ const readFile = Meteor.bindEnvironment(function(path) {
   if (siteId === test) {
     fs.readFile(path, 'utf-8', (err, output) => {
       let secondIteration = false;
-      // HNET special treatment of data files from Loggernet (met data)
+      // HNET special treatment of data files from loggernet (met data)
       if (fileType.endsWith('met')) {
         Papa.parse(output, {
           header: false,
@@ -604,7 +605,7 @@ Meteor.methods({
   }
 });
 
-const liveWatcher = chokidar.watch('/hnet/incoming/current', {
+const liveWatcher = chokidar.watch(`/hnet/incoming/current/${globalsite.incoming}`, {
   ignored: /[\/\\]\./,
   ignoreInitial: true,
   usePolling: true,
@@ -622,5 +623,5 @@ liveWatcher.on('add', (path) => {
 }).on('error', (error) => {
   logger.error('Error happened', error);
 }).on('ready', () => {
-  logger.info('Ready for changes in /hnet/incoming/current/.');
+  logger.info(`Ready for changes in /hnet/incoming/current/${globalsite.incoming}`);
 });

@@ -48,7 +48,6 @@ standard-minifier-css@1.2.0
 standard-minifier-js@1.2.0
 
 # logging
-infinitedg:winston              # Winston logger
 
 # mapping
 mdg:geolocation
@@ -72,3 +71,4 @@ johdirr:meteor-git-rev
 fongandrew:find-and-modify
 williamledoux:bootstrap-toggle
 reywood:publish-composite
+msavin:sjobs
