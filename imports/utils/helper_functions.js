@@ -2,6 +2,7 @@
 import fs from 'fs-extra';
 import { logger } from '../startup/startup';
 import { LiveSites, AggrData } from '../api/collections_server';
+import { flagsHash } from '../api/constants';
 
 /*
  * Export csv data file in defined format, default: TCEQ format

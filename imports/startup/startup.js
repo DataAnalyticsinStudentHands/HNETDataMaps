@@ -1,11 +1,6 @@
 import fs from 'fs-extra';
 import { Meteor } from 'meteor/meteor';
 import { LiveSites } from '../api/collections_server';
-import winston from 'winston';
-
-// Setting up Winston logger
-const console = new winston.transports.Console({ name: 'console', timestamp: true });
-export const logger = new winston.Logger({ transports: [console] });
 
 // Setting up directory in which this server expects incoming files (uses an environment variable)
 export const globalsite = LiveSites.findOne({ AQSID: `${process.env.aqsid}` });
