@@ -47,9 +47,6 @@ stylus@=2.513.4                 # needed for ian:accounts-ui-bootstrap-3
 standard-minifier-css@1.2.0
 standard-minifier-js@1.2.0
 
-# logging
-infinitedg:winston              # Winston logger
-
 # mapping
 mdg:geolocation
 bevanhunt:leaflet               # Mapping
