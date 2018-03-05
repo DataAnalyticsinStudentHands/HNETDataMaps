@@ -1,3 +1,4 @@
-import '../imports/api/collections_server';
+import '../imports/startup/server';
 import '../imports/api/data/server/publications';
 import '../imports/cronjobs/cronJob_checks';
+import '../imports/startup/both/admindashboard-config';

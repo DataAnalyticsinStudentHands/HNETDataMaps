@@ -13,8 +13,7 @@
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "highcharts": "^4.2.7",
     "junk": "^1.0.3",
-    "meteor-node-stubs": "^0.3.2",
-    "winston": "^2.4.0"
+    "meteor-node-stubs": "^0.3.2"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

@@ -3,6 +3,8 @@ import fs from 'fs-extra';
 import FTPS from 'ftps';
 import pathModule from 'path';
 
+import { LiveSites } from '../api/collections_both';
+
 const Future = Npm.require('fibers/future');
 
 // reading ftps password from environment

@@ -1,3 +1,7 @@
+import { TabularTables } from 'meteor/aldeed:tabular'
+
+import { LiveSites } from '../../api/collections_both';
+
 TabularTables = {};
 
 TabularTables.Edits = new Tabular.Table({

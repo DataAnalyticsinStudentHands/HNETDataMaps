@@ -1,3 +1,5 @@
+import { LiveSites } from '../api/collections_both';
+
 // import packages
 import fs from 'fs-extra';
 import junk from 'junk';

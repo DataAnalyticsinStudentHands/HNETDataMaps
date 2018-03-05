@@ -1,3 +1,5 @@
+import { LiveSites } from '../../collections_both';
+
 // aggregation of live and aggregated data to be plotted with highstock
 Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
 
