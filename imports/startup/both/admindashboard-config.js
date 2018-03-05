@@ -1,3 +1,5 @@
+import { sAlert } from 'meteor/juliancwirko:s-alert';
+
 // configuration of admin interface
 AdminConfig = {
   skin: 'black-light',
@@ -50,6 +52,8 @@ AdminDashboard.addCollectionItem(function(collection, path) {
 
 AdminDashboard.addSidebarItem('Version', AdminDashboard.path('versionInfo'), { icon: 'info' });
 
+
+Meteor.startup(function () {
 sAlert.config({
   effect: '',
   position: 'top-right',
@@ -77,4 +81,5 @@ sAlert.config({
   // onClose: function() {
   //     /* Code here will be executed once the alert closes. */
   // }
+});
 });
