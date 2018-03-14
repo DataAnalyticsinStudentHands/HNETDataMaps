@@ -10,7 +10,6 @@
     "fs-extra": "^0.30.0",
     "fsevents": "^1.1.3",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
-    "highcharts": "^6.0.4",
     "junk": "^1.0.3"
   },
   "scripts": {

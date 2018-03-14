@@ -2,6 +2,8 @@ import fs from 'fs-extra';
 import { Meteor } from 'meteor/meteor';
 import { LiveSites } from '../api/collections_server';
 
+logger.info(process.env.aqsid)
+
 // Setting up directory in which this server expects incoming files (uses an environment variable)
 export const globalsite = LiveSites.findOne({ AQSID: `${process.env.aqsid}` });
 
@@ -16,7 +18,7 @@ Meteor.startup(function() {
   // Create directory for outgoing files for tomorrow
   fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function(err) {
     if (err) {
-      winston.error(err);
+      logger.error(err);
     }
   });
 });

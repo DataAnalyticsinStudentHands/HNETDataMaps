@@ -1,7 +1,8 @@
 // required packages
 import chokidar from 'chokidar';
+import { logger } from 'meteor/votercircle:winston';
 import { LiveSites, LiveData, AggrData } from '../api/collections_server';
-import { logger, globalsite } from '../startup/startup';
+import { globalsite } from '../startup/startup';
 
 const fs = Npm.require('fs');
 const pathModule = Npm.require('path');
