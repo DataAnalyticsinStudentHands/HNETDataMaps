@@ -4,7 +4,7 @@ import { SimpleSchema } from 'meteor/aldeed:simple-schema';
 export const LiveSites = new Mongo.Collection('livesites');
 
 // schema for the LiveSites collection, used in admin UI
-SitesSchema = new SimpleSchema({
+const SitesSchema = new SimpleSchema({
   siteName: {
     type: String,
     label: 'Site Name',
@@ -75,19 +75,19 @@ SitesSchema = new SimpleSchema({
   state: {
     type: String
   },
-	city: {
-		label: 'City',
+  city: {
+    label: 'City',
     type: String
   },
   elevation: {
     type: String,
     optional: true
   },
-	'externalLink.href': {
+  'externalLink.href': {
     type: String,
     label: 'href, e.g. http://site.com/page'
   },
-	'externalLink.name': {
+  'externalLink.name': {
     type: String,
     label: 'Label'
   },

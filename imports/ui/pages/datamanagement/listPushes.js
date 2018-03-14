@@ -1,3 +1,6 @@
+import { logger } from 'meteor/votercircle:winston';
+import { loadFile } from '../../../methods/client-methods';
+
 import './listPushes.html';
 
 const dataToShow = new ReactiveVar();
@@ -17,15 +20,17 @@ Template.viewDataCell.events({
     const rowIndex = $(event.target).closest('tr').index();
     const rowData = dataTable.row(rowIndex).data();
 
-    Meteor.call('loadFile', rowData.fileName, function(err, response) {
-      if (!err) {
-        dataToShow.set(response);
-        dataFilePath.set(rowData.fileName);
-        // Show the Data File modal
-        $('#dataFileModal').modal({}).modal('show');
-      } else {
+    loadFile.call({
+      path: rowData.fileName
+    }, (err, res) => {
+      if (err) {
         sAlert.error('Could not find file.');
       }
+
+      dataToShow.set(res);
+      dataFilePath.set(rowData.fileName);
+      // Show the Data File modal
+      $('#dataFileModal').modal({}).modal('show');
     });
   }
 });

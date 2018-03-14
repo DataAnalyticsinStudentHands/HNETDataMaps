@@ -1,3 +1,4 @@
+import '../styles.css';
 import './footer.html';
 import './layout.html';
 import './loading.html';

@@ -15,6 +15,13 @@ tracker@1.1.0
 jquery@1.11.9
 underscore@1.0.9
 
+# data
+mongo@1.1.12                           # The database Meteor supports right now
+aldeed:collection2              # Automatic validation of insert and update operations on the client and server.
+udondan:bulk-collection-update  # Collection bulk update
+meteorhacks:aggregate           # MongoDB Aggregation
+dburles:collection-helpers      # helpers for collections stuff
+
 # ui
 blaze-html-templates@1.0.4
 session@1.1.6
@@ -27,12 +34,7 @@ twbs:bootstrap                  # UI package
 peppelg:bootstrap-3-modal       # better modal windows
 aldeed:tabular									# reactive data tables
 
-# data
-mongo@1.1.12                           # The database Meteor supports right now
-aldeed:collection2              # Automatic validation of insert and update operations on the client and server.
-udondan:bulk-collection-update  # Collection bulk update
-meteorhacks:aggregate           # MongoDB Aggregation
-dburles:collection-helpers      # helpers for collections stuff
+
 
 # routing
 iron:router
@@ -70,3 +72,4 @@ fongandrew:find-and-modify
 williamledoux:bootstrap-toggle
 reywood:publish-composite
 votercircle:winston
+mdg:validated-method

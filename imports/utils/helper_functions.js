@@ -1,6 +1,6 @@
 // required packages
 import fs from 'fs-extra';
-import { logger } from '../startup/startup';
+import { logger } from 'meteor/votercircle:winston';
 import { LiveSites, AggrData } from '../api/collections_both';
 
 /*

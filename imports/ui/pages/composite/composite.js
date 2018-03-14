@@ -1,4 +1,5 @@
 import Highcharts from 'highcharts/highstock';
+import { CompositeDataSeries } from '../../../api/collections_client';
 
 import './composite.html';
 

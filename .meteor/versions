@@ -69,6 +69,7 @@ localstorage@1.0.11
 logging@1.1.15
 makalu:better-dateinput-polyfill@0.0.2
 mdg:geolocation@1.3.0
+mdg:validated-method@1.1.0
 mdg:validation-error@0.2.0
 meteor@1.2.17
 meteor-base@1.0.4

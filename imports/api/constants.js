@@ -1,4 +1,4 @@
-flagsHash = {
+export const flagsHash = {
   0: {
     val: 0,
     description: 'zero',
@@ -90,7 +90,7 @@ flagsHash = {
   }
 };
 
-channelHash = {
+export const channelHash = {
   RMY_WS: 1,
   RMY_WD: 2,
   TRH_Temp: 6,

@@ -13,7 +13,7 @@ import '../../ui/pages/site/site';
 import '../../ui/pages/admin/versionInfo.html';
 import '../../ui/pages/about/project.html';
 
-import { LiveSites } from '../../api/collections_both';
+import { LiveSites, AggrData } from '../../api/collections_both';
 
 Router.configure({
   layoutTemplate: 'layout' // whole template fra

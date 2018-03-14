@@ -1,4 +1,7 @@
-// required packages
+import { SimpleSchema } from 'meteor/aldeed:simple-schema';
+import { ValidatedMethod } from 'meteor/mdg:validated-method';
+import { logger } from 'meteor/votercircle:winston';
+// npm packages
 import fs from 'fs-extra';
 import FTPS from 'ftps';
 import pathModule from 'path';
@@ -10,9 +13,15 @@ const Future = Npm.require('fibers/future');
 // reading ftps password from environment
 const hnetsftp = process.env.hnetsftp;
 
-Meteor.methods({
-  loadFile(path) {
-    var fut = new Future();
+export const loadFile = new ValidatedMethod({
+  name: 'loadFile',
+  validate: new SimpleSchema({
+    language: {
+      type: String
+    }
+  }).validator(),
+  run({ path }) {
+    const fut = new Future();
 
     fs.readFile(path, 'utf-8', (err, data) => {
       if (err) {
@@ -26,7 +35,10 @@ Meteor.methods({
     const fileData = fut.wait();
 
     return fileData;
-  },
+  }
+});
+
+Meteor.methods({
   exportData(aqsid, startEpoch, endEpoch, fileFormat) {
     const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat);
 

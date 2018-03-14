@@ -1,3 +1,6 @@
+import { LiveSites } from '../../../api/collections_both';
+import { DataExporter } from '../../components/dataexporter';
+
 import './datamanagement.html';
 
 const startEpoch = new ReactiveVar(moment().subtract(1, 'days').unix()); // 24 hours ago - seconds
@@ -26,15 +29,15 @@ Template.datamanagement.helpers({
 });
 
 Template.datamanagement.events = {
-  'change #startdatepicker' (event) {
+  'change #startdatepicker'(event) {
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'change #enddatepicker' (event) {
+  'change #enddatepicker'(event) {
     endEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
   },
-  'click #createAggregates' (event, target) {
+  'click #createAggregates'(event, target) {
     event.preventDefault();
-    const site = LiveSites.findOne({siteName: $('#selectedSite').val()});
+    const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
 
     const start = target.$('form.management input[name=start]').val();
     const end = target.$('form.management input[name=end]').val();
@@ -44,12 +47,12 @@ Template.datamanagement.events = {
         sAlert.error(`Error:\n ${err.reason}`);
         return;
       }
-      sAlert.success(`Called Creating Aggregates!`);
+      sAlert.success('Called Creating Aggregates!');
     });
   },
-  'click #downloadData' (event, target) {
+  'click #downloadData'(event, target) {
     event.preventDefault();
-    const site = LiveSites.findOne({siteName: $('#selectedSite').val()});
+    const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
 
     const start = target.$('form.management input[name=start]').val();
     const end = target.$('form.management input[name=end]').val();
@@ -57,9 +60,9 @@ Template.datamanagement.events = {
     // call export for all channels and download
     DataExporter.getDataTCEQ(site.AQSID, start, end, false);
   },
-	'click #downloadActiveData' (event, target) {
+  'click #downloadActiveData'(event, target) {
     event.preventDefault();
-    const site = LiveSites.findOne({siteName: $('#selectedSite').val()});
+    const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
 
     const start = target.$('form.management input[name=start]').val();
     const end = target.$('form.management input[name=end]').val();
@@ -67,7 +70,7 @@ Template.datamanagement.events = {
     // call export for active channels and download
     DataExporter.getDataTCEQ(site.AQSID, start, end, true);
   },
-  'click #pushData' (event, target) {
+  'click #pushData'(event, target) {
     event.preventDefault();
     const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
 
@@ -83,20 +86,20 @@ Template.datamanagement.events = {
       sAlert.success(`Pushed file\n ${response} successfull!`);
     });
   },
-'click #deleteAggregates' (event, target) {
-  event.preventDefault();
-  const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
+  'click #deleteAggregates'(event, target) {
+    event.preventDefault();
+    const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
 
-  const start = target.$('form.management input[name=start]').val();
-  const end = target.$('form.management input[name=end]').val();
+    const start = target.$('form.management input[name=start]').val();
+    const end = target.$('form.management input[name=end]').val();
 
-  // call to delete aggreagtes
-  Meteor.call('deleteAggregates', site.AQSID, start, end, (err, response) => {
-    if (err) {
-      sAlert.error(`Error:\n ${err.reason}`);
-      return;
-    }
-    sAlert.success(`Deleted:\n ${response} aggregated data points`);
-  });
-}
+    // call to delete aggreagtes
+    Meteor.call('deleteAggregates', site.AQSID, start, end, (err, response) => {
+      if (err) {
+        sAlert.error(`Error:\n ${err.reason}`);
+        return;
+      }
+      sAlert.success(`Deleted:\n ${response} aggregated data points`);
+    });
+  }
 };

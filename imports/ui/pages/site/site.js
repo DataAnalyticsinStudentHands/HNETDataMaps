@@ -2,6 +2,10 @@ import Highcharts from 'highcharts/highstock';
 
 import './site.html';
 
+import { LiveSites } from '../../../api/collections_both';
+import { DataSeries } from '../../../api/collections_client';
+import { flagsHash } from '../../../api/constants';
+
 // 3 days
 const startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
 const selectedFlag = new ReactiveVar(null);

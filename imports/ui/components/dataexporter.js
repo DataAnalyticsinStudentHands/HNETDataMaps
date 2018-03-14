@@ -1,5 +1,5 @@
 // Call for exporting data in certain formats and download client side
-DataExporter = {
+export const DataExporter = {
   getDataTCEQ: function(aqsid, startEpoch, endEpoch, activeOnly) {
     // Return a new promise.
     return new Promise(function(resolve, reject) {

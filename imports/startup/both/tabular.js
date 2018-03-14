@@ -1,10 +1,11 @@
-import { TabularTables } from 'meteor/aldeed:tabular'
+import { Tabular } from 'meteor/aldeed:tabular';
 
-import { LiveSites } from '../../api/collections_both';
+import { LiveSites, Exports } from '../../api/collections_both';
+import { AggrEdits } from '../../api/collections_client';
 
-TabularTables = {};
+// TabularTables = {};
 
-TabularTables.Edits = new Tabular.Table({
+new Tabular.Table({
   name: 'Edits',
   collection: AggrEdits,
   order: [
@@ -62,7 +63,7 @@ TabularTables.Edits = new Tabular.Table({
   extraFields: ['fileName']
 });
 
-TabularTables.Pushes = new Tabular.Table({
+new Tabular.Table({
   name: 'Pushes',
   collection: Exports,
   order: [
@@ -106,7 +107,7 @@ TabularTables.Pushes = new Tabular.Table({
   extraFields: ['fileName', 'manual']
 });
 
-TabularTables.Status = new Tabular.Table({
+new Tabular.Table({
   name: 'Status',
   collection: LiveSites,
   paging: false,

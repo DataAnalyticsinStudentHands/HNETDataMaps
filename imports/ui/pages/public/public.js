@@ -1,4 +1,5 @@
 import Highcharts from 'highcharts';
+import { PublicDataSeries } from '../../../api/collections_client';
 
 import './public.html';
 

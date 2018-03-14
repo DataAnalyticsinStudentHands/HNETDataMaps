@@ -1,3 +1,5 @@
+import { LiveSites } from '../../../api/collections_both'
+
 import './fixSites.html';
 
 Template.fixSites.helpers({
