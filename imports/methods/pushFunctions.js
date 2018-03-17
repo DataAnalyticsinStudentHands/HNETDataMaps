@@ -4,6 +4,7 @@ import pathModule from 'path';
 import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
+import { moment } from 'meteor/momentjs:moment';
 import { LiveSites, Exports } from '../api/collections_both';
 import { exportDataAsCSV, createTCEQData } from './fileFunctions';
 
@@ -70,7 +71,7 @@ export const pushMultipleData = function pushMultipleData() {
 
   const pushingSites = [];
 
-  activeSites.forEach(function (site) {
+  activeSites.forEach((site) => {
     // check last push not older than 1 day (24 hours)
     if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
       const startEpoch = site.lastPushEpoch;
@@ -126,7 +127,7 @@ export const pushMultipleData = function pushMultipleData() {
     try {
       const result = fut.wait();
 
-      pushingSites.forEach(function (site) {
+      pushingSites.forEach((site) => {
         // update last push epoch for each site
         LiveSites.update({
           AQSID: site.aqsid
