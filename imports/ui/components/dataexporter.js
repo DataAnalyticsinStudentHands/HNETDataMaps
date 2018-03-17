@@ -1,3 +1,5 @@
+import { LiveSites } from '../../api/collections_both'
+
 // Call for exporting data in certain formats and download client side
 export const DataExporter = {
   getDataTCEQ: function(aqsid, startEpoch, endEpoch, activeOnly) {
@@ -22,8 +24,6 @@ export const DataExporter = {
 
         // download the data as csv file
         if (site !== undefined) {
-          //const csv = Papa.unparse(data);
-          console.log(data.fields)
           const csv = Papa.unparse({
             data: data.data,
             fields: data.fields

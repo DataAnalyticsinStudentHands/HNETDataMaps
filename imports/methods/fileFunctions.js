@@ -1,12 +1,13 @@
-// required packages
 import fs from 'fs-extra';
+import Future from 'fibers/future';
+import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
+import { _ } from 'meteor/underscore';
 import { LiveSites, AggrData } from '../api/collections_both';
+import { flagsHash, channelHash } from '../api/constants';
 
-/*
- * Export csv data file in defined format, default: TCEQ format
- */
-function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
+// Export csv data file in defined format, default: TCEQ format
+export const exportDataAsCSV = function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
   const dataObject = {};
 
   let aggregatData;
@@ -73,13 +74,13 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
         obj.status = 0;
 
-        for (const instrument in e.subTypes) {
-          if (e.subTypes.hasOwnProperty(instrument)) {
+        Object.keys(e.subTypes).forEach((instrument) => {
+          if (Object.prototype.hasOwnProperty.call(e.subTypes, instrument)) {
             const measurements = e.subTypes[instrument];
-            for (const measurement in measurements) {
-              if (measurements.hasOwnProperty(measurement)) {
+            Object.keys(measurements).forEach((measurement) => {
+              if (Object.prototype.hasOwnProperty.call(measurements, measurement)) {
                 let label = `${instrument}_${measurement}_channel`;
-                obj[label] = channelHash[instrument + '_' + measurement]; // channel
+                obj[label] = channelHash[`${instrument}_${measurement}`]; // channel
 
                 if (dataObject.fields.indexOf(label) === -1) { // add to fields?
                   dataObject.fields.push(label);
@@ -102,16 +103,16 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                   let outputValue = data[1].val; // avg
                   // HNET Unit conversion for Temp from C to F
                   if (measurement === 'Temp' || measurement === 'AmbTemp') {
-                    outputValue = outputValue * 9 / 5 + 32;
+                    outputValue = (outputValue * 9 / 5) + 32;
                   } else if (measurement === 'WS') {
                     outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
                   }
                   obj[label] = outputValue.toFixed(3);
                 }
               }
-            }
+            });
           }
-        }
+        });
 
         obj.QCref_channel = 50;
         obj.QCref_flag = 'K';
@@ -125,8 +126,11 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
       }
       break;
-    case 'tceq':
-      const site = LiveSites.findOne({AQSID: `${aqsid}`});
+    case 'tceq': {
+      const site = LiveSites.findOne({ AQSID: `${aqsid}` });
+      if (site === undefined) {
+        throw new Error(`Could not find AQSID: ${aqsid} in LiveSites.`);
+      }
       const channels = site.Channels;
       const activeChannels = [];
       _.each(channels, (channel) => {
@@ -150,14 +154,14 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
         obj.status = 0;
 
-        for (const instrument in e.subTypes) {
-          if (e.subTypes.hasOwnProperty(instrument)) {
+        Object.keys(e.subTypes).forEach((instrument) => {
+          if (Object.prototype.hasOwnProperty.call(e.subTypes, instrument)) {
             const measurements = e.subTypes[instrument];
-            for (const measurement in measurements) {
-              if (measurements.hasOwnProperty(measurement)) {
+            Object.keys(measurements).forEach((measurement) => {
+              if (Object.prototype.hasOwnProperty.call(measurements, measurement)) {
                 if (activeChannels.includes(measurement)) { // check wheather measurement is an active channel
                   let label = `${instrument}_${measurement}_channel`;
-                  obj[label] = channelHash[instrument + '_' + measurement]; // channel
+                  obj[label] = channelHash[`${instrument}_${measurement}`]; // channel
 
                   if (dataObject.fields.indexOf(label) === -1) { // add to fields?
                     dataObject.fields.push(label);
@@ -178,9 +182,9 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                     obj[label] = 0; // set value to 0
                   } else {
                     let outputValue = data[1].val; // avg
-                    // Unit conversion for Temp from C to F
+                    // HNET Unit conversion for Temp from C to F
                     if (measurement === 'Temp' || measurement === 'AmbTemp') {
-                      outputValue = outputValue * 9 / 5 + 32;
+                      outputValue = (outputValue * 9 / 5) + 32;
                     } else if (measurement === 'WS') {
                       outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
                     }
@@ -188,9 +192,9 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                   }
                 }
               }
-            }
+            });
           }
-        }
+        });
 
         obj.QCref_channel = 50;
         obj.QCref_flag = 'K';
@@ -204,22 +208,19 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         dataObject.fields.push('QCref_channel', 'QCref_flag', 'QCref_value', 'QCstatus_channel', 'QCstatus_flag', 'QCstatus_value');
       }
       break;
+    }
     default:
       throw new Meteor.Error('Unexpected switch clause', 'exception in switch statement for export file format');
   }
   return dataObject;
-}
+};
 
-function createTCEQData(aqsid, data) {
-  if (typeof (hnetsftp) === 'undefined') {
-    // hnetsftp environment variable doesn't exists
-    return logger.error('No password found for hnet sftp.');
-  }
-
+// writes a TCEQ input formatted output file to the local outgoing folder
+export const createTCEQData = function createTCEQData(aqsid, data) {
   const site = LiveSites.find({ AQSID: `${aqsid}` }).fetch()[0];
 
   if (site === undefined) {
-    return logger.error('Could not find dir for AQSID: ', aqsid, ' in LiveSites.');
+    throw new Meteor.Error('Could not find AQSID: ', aqsid, ' in LiveSites.');
   }
 
   // create site name from incoming folder
@@ -228,7 +229,7 @@ function createTCEQData(aqsid, data) {
   '_')))[1].slice(-2);
   // ensure whether output dir exists
   const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
-  fs.ensureDirSync(outputDir, function (err) {
+  fs.ensureDirSync(outputDir, (err) => {
     return logger.error(err); // => null
     // outputdir has now been created, including the directory it is to be placed in
   });
@@ -249,4 +250,31 @@ function createTCEQData(aqsid, data) {
     logger.error('Could not write TCEQ push file.', `Could not write TCEQ push file. Error: ${error}`);
     throw new Meteor.Error('Could not write TCEQ push file.', `Could not write TCEQ push file. Error: ${error}`);
   }
-}
+};
+
+export const loadFile = function loadFile(path) {
+  const fut = new Future();
+
+  fs.readFile(path, 'utf-8', (err, data) => {
+    if (err) {
+      logger.error(err);
+      fut.throw(err);
+    } else {
+      fut.return(data);
+    }
+  });
+
+  const fileData = fut.wait();
+
+  return fileData;
+};
+
+export const exportData = function exportData(aqsid, startEpoch, endEpoch, fileFormat) {
+  const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat);
+
+  if (Object.keys(data).length === 0 && data.constructor === Object) {
+    throw new Meteor.Error('No data.', 'Could not find data for selected site/period.');
+  }
+
+  return data;
+};

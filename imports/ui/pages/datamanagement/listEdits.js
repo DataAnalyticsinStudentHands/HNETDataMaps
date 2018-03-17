@@ -7,7 +7,7 @@ Template.viewEditsCell.events({
     const rowData = dataTable.row(rowIndex).data();
 
     // go back to site with startEpoch
-    Router.go('site', { _id: `${this.site}` }, { query: `startEpoch=${rowData.startEpoch}` });
+    Router.go('hnetsite', { _id: `${this.site}` }, { query: `startEpoch=${rowData.startEpoch}` });
   }
 });
 

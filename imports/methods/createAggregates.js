@@ -1,10 +1,10 @@
-// required packages
+import { Meteor } from 'meteor/meteor';
+import { logger } from 'meteor/votercircle:winston';
+import { moment } from 'meteor/momentjs:moment';
+import { LiveData, AggrData } from '../api/collections_both';
 
-const fs = Npm.require('fs');
-const pathModule = Npm.require('path');
-
-
-function perform5minAggregat(siteId, startEpoch, endEpoch) {
+export const create5minAggregates = function create5minAggregates(siteId, startEpoch, endEpoch) {
+  logger.info(`Client called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}`);
   // create temp collection as placeholder for aggreagation results
   const aggrResultsName = `aggr${moment().valueOf()}`;
   const AggrResults = new Meteor.Collection(aggrResultsName);
@@ -49,7 +49,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   LiveData.aggregate(pipeline, { allowDiskUse: true });
 
   // create new structure for data series to be used for charts
-  AggrResults.find({}).forEach(function(e) {
+  AggrResults.find({}).forEach(function (e) {
     const subObj = {};
     subObj._id = `${e.site}_${e._id}`;
     subObj.site = e.site;
@@ -60,8 +60,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     for (let i = 0; i < subTypes.length; i++) {
       for (var subType in subTypes[i]) {
         if (subTypes[i].hasOwnProperty(subType)) {
-          var data = subTypes[i][subType];
-          var numValid = 1;
+          const data = subTypes[i][subType];
+          let numValid = 1;
           var newkey;
 
           // if flag is not existing, put 9 as default, need to ask Jim?
@@ -93,8 +93,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             }
 
             // Convert wind speed and wind direction waves into wind north and east component vectors
-            var windNord = Math.cos(windDir / 180 * Math.PI) * windSpd;
-            var windEast = Math.sin(windDir / 180 * Math.PI) * windSpd;
+            const windNord = Math.cos(windDir / 180 * Math.PI) * windSpd;
+            const windEast = Math.sin(windDir / 180 * Math.PI) * windSpd;
 
             let flag = data[0].val;
 
@@ -314,11 +314,4 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   });
   // drop temp collection that was placeholder for aggreagation results
   AggrResults.rawCollection().drop();
-}
-
-Meteor.methods({
-  new5minAggreg(siteId, startEpoch, endEpoch) {
-    logger.info(`Helper called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}`);
-    perform5minAggregat(siteId, startEpoch, endEpoch);
-  }
-});
+};

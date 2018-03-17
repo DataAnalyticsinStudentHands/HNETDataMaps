@@ -1,5 +1,4 @@
 import { logger } from 'meteor/votercircle:winston';
-import { loadFile } from '../../../methods/client-methods';
 
 import './listPushes.html';
 
@@ -20,9 +19,8 @@ Template.viewDataCell.events({
     const rowIndex = $(event.target).closest('tr').index();
     const rowData = dataTable.row(rowIndex).data();
 
-    loadFile.call({
-      path: rowData.fileName
-    }, (err, res) => {
+
+    Meteor.call('loadFile', rowData.fileName, (err, res) => {
       if (err) {
         sAlert.error('Could not find file.');
       }

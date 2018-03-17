@@ -42,7 +42,7 @@ Template.datamanagement.events = {
     const start = target.$('form.management input[name=start]').val();
     const end = target.$('form.management input[name=end]').val();
 
-    Meteor.call('new5minAggreg', site.AQSID, start, end, function(err, response) {
+    Meteor.call('create5minAggregates', site.AQSID, start, end, function(err, response) {
       if (err) {
         sAlert.error(`Error:\n ${err.reason}`);
         return;

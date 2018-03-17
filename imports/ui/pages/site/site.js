@@ -1,10 +1,17 @@
 import Highcharts from 'highcharts/highstock';
+import { Meteor } from 'meteor/meteor';
+import { ReactiveVar } from 'meteor/reactive-var';
+import { moment } from 'meteor/momentjs:moment';
+import { Template } from 'meteor/templating';
+import { Router } from 'meteor/iron:router';
+import { _ } from 'meteor/underscore';
 
 import './site.html';
 
 import { LiveSites } from '../../../api/collections_both';
 import { DataSeries } from '../../../api/collections_client';
 import { flagsHash } from '../../../api/constants';
+import { DataExporter } from '../../components/dataexporter';
 
 // 3 days
 const startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
@@ -31,10 +38,10 @@ const Charts = new Meteor.Collection(null);
  */
 function selectPointsByDrag(e) {
   // Select points only for series where allowPointSelect
-  Highcharts.each(this.series, function(series) {
+  Highcharts.each(this.series, function (series) {
     if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
 
-      Highcharts.each(series.points, function(point) {
+      Highcharts.each(series.points, function (point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
           point.select(true, true);
         }
@@ -43,7 +50,7 @@ function selectPointsByDrag(e) {
   });
 
   // Fire a custom event
-  Highcharts.fireEvent(this, 'selectedpoints', {points: this.getSelectedPoints()});
+  Highcharts.fireEvent(this, 'selectedpoints', { points: this.getSelectedPoints() });
 
   return false; // Don't zoom
 }
@@ -55,9 +62,9 @@ function selectedPoints(e) {
   // reset variables
   EditPoints.remove({});
   selectedFlag.set(null);
-  note.set(null);
+  note.set('');
 
-  _.each(e.points, function(point) {
+  _.each(e.points, function (point) {
     if (point.series.name !== 'Navigator') {
       const selectedPoint = {};
       selectedPoint.x = point.x;
@@ -73,9 +80,9 @@ function selectedPoints(e) {
   });
 
   // Show the Edit Points modal
-  Modal.show("editPoints");
+  Modal.show('editPoints');
 
-  $('#editPointsModal table tr .fa').click(function(event) {
+  $('#editPointsModal table tr .fa').click(function (event) {
     // Get X value stored in the data-id attribute of the button
     const pointId = $(event.currentTarget).data('id');
 
@@ -322,7 +329,7 @@ Template.editPoints.events({
 
     Meteor.call('pushEdits', Router.current().params._id, listPushPoints, (error, result) => {
       if (error) {
-        sAlert.error('Error during push.', error);
+        sAlert.error(`Error during push. ${error}`);
       }
       if (result) {
         sAlert.success(`Pushed file ${result} successful!`);
@@ -331,6 +338,7 @@ Template.editPoints.events({
   },
   // Handle the note filed change event (update note)
   'change .js-editNote' (event) {
+
     // Get value from editNote element
     const text = event.currentTarget.value;
     note.set(text);
@@ -346,7 +354,7 @@ Template.editPoints.events({
 
     // update the edited points with the selected flag and note on the server
     updatedPoints.forEach(function(point) {
-      Meteor.call('insertUpdateFlag', point.site, point.x, point.instrument, point.measurement, flagsHash[selectedFlag.get()].val, note.get());
+      Meteor.call('insertEditFlag', point.site, point.x, point.instrument, point.measurement, flagsHash[selectedFlag.get()].val, note.get());
     });
 
     // Clear note field
@@ -363,7 +371,7 @@ Template.editPoints.helpers({
     });
   },
   availableFlags() {
-    return _.where(flagsHash, {selectable: true});
+    return _.where(flagsHash, { selectable: true });
   },
   flagSelected() {
     return flagsHash[selectedFlag.get()];
@@ -386,7 +394,7 @@ Template.editPoints.helpers({
     return val.toFixed(3);
   },
   isValid() {
-    const validFlagSet = _.pluck(_.where(flagsHash, {selectable: true}), 'val');
+    const validFlagSet = _.pluck(_.where(flagsHash, { selectable: true }), 'val');
     return _.contains(validFlagSet, selectedFlag.get());
   }
 });
@@ -398,7 +406,7 @@ Template.registerHelper('formatDate', function(epoch) {
 
 Template.site.helpers({
   sitename() {
-    const site = LiveSites.findOne({AQSID: Router.current().params._id});
+    const site = LiveSites.findOne({ AQSID: Router.current().params._id });
     return site && site.siteName;
   },
   selectedDate() {

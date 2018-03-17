@@ -15,15 +15,14 @@ new Tabular.Table({
     {
       data: 'editEpoch',
       title: 'Edit Timestamp',
-      render: function(val, type, doc) {
+      render: function (val, type, doc) {
         return moment.unix(val).format('YYYY/MM/DD HH:mm:ss');
       }
     }, {
       data: 'site',
       title: 'Site',
-      render: function(val, type, doc) {
-        const selectedSite = LiveSites.findOne({AQSID: val});
-        return selectedSite.siteName;
+      render: function (val, type, doc) {
+        return LiveSites.findOne({ AQSID: val }).siteName;
       }
     }, {
       data: 'startEpoch',
