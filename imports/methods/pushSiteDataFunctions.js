@@ -186,7 +186,10 @@ export const pushSiteData = function pushSiteData(aqsid) {
     if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
       // use last endEpoch as starting point
       const lastPush = Exports.find({ pushEpoch: site.lastPushEpoch });
-      const startEpoch = lastPush.endEpoch;
+      let startEpoch = lastPush.endEpoch;
+      if (startEpoch === undefined) {
+        startEpoch = site.lastPushEpoch;
+      }
       // try to find everything that is available until now
       const endEpoch = moment().unix();
 
@@ -195,7 +198,7 @@ export const pushSiteData = function pushSiteData(aqsid) {
       const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
 
       if (Object.keys(data).length === 0 && data.constructor === Object) {
-        throw new Error('NoData', 'Could not find data for selected site/period.');
+        throw new Error(`Could not find data for ${startEpoch} - ${endEpoch}`);
       }
 
       const startTimeStamp = `${data.data[0].dateGMT} ${data.data[0].timeGMT}`;
@@ -220,9 +223,10 @@ export const pushSiteData = function pushSiteData(aqsid) {
 
       const result = fut.wait();
       // insert a timestamp for the pushed data
+      const newLastPushEpoch = moment().unix();
       Exports.insert({
         _id: `${aqsid}_${moment().unix()}`,
-        pushEpoch: moment().unix(),
+        pushEpoch: newLastPushEpoch,
         site: aqsid,
         startEpoch: moment.utc(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
         endEpoch: moment.utc(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
@@ -232,14 +236,14 @@ export const pushSiteData = function pushSiteData(aqsid) {
 
       // update last push epoch
       LiveSites.update({
-        AQSID: site.aqsid
+        AQSID: aqsid
       }, {
         $set: {
-          lastPushEpoch: result
+          lastPushEpoch: newLastPushEpoch
         }
-      }, { validate: false });
+      });
     }
   } catch (err) {
-    logger.error(err.message, err);
+    logger.error(err.message);
   }
 };
