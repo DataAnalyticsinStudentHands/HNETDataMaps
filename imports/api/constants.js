@@ -1,4 +1,4 @@
-flagsHash = {
+export const flagsHash = {
   0: {
     val: 0,
     description: 'zero',
@@ -90,7 +90,7 @@ flagsHash = {
   }
 };
 
-channelHash = {
+export const channelHash = {
   RMY_WS: 1,
   RMY_WD: 2,
   TRH_Temp: 6,
@@ -112,7 +112,7 @@ channelHash = {
   SO2_SO2Conc: 26
 };
 
-unitsHash = {
+export const unitsHash = {
   O3: 'pbbv',
   Conc: 'pbbv',
   conc: 'pbbv',

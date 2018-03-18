@@ -1,4 +1,4 @@
-import { logger } from 'meteor/votercircle:winston'
+import { logger } from 'meteor/votercircle:winston';
 
 const consoleOptions = {
   colorize: true,
@@ -6,7 +6,7 @@ const consoleOptions = {
   levels: { debug: 0, info: 1, warn: 2, error: 3 },
   colors: { debug: 'blue', info: 'green', warn: 'orange', error: 'red' },
   handleExeptions: true,
-  humanReadableUnhandledException: true,
+  humanReadableUnhandledException: true
 };
 
 // Add & configure the console transport

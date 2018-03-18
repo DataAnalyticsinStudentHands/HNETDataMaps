@@ -1,4 +1,4 @@
-Schemas = {};
+import { Mongo } from 'meteor/mongo';
 
 // all air monitoring sites pushing to us
 export const LiveSites = new Mongo.Collection('livesites');

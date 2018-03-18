@@ -1,22 +1,17 @@
 import fs from 'fs-extra';
 import { Meteor } from 'meteor/meteor';
+import { logger } from 'meteor/votercircle:winston';
+import { moment } from 'meteor/momentjs:moment';
 import { LiveSites } from '../api/collections_server';
-
-logger.info(process.env.aqsid)
 
 // Setting up directory in which this server expects incoming files (uses an environment variable)
 export const globalsite = LiveSites.findOne({ AQSID: `${process.env.aqsid}` });
 
-Meteor.startup(function() {
-  // Insert sample data if the live site collection is empty
-  if (LiveSites.find().count() === 0) {
-    JSON.parse(Assets.getText('livesites.json')).site.forEach(function(doc) {
-      LiveSites.insert(doc);
-    });
-  }
+logger.info(`This instance is for AQSID ${process.env.aqsid} - ${globalsite.siteName}`);
 
+Meteor.startup(() => {
   // Create directory for outgoing files for tomorrow
-  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, function(err) {
+  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, (err) => {
     if (err) {
       logger.error(err);
     }

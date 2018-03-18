@@ -15,43 +15,19 @@ tracker@1.1.0
 jquery@1.11.9
 underscore@1.0.9
 
-# ui
-blaze-html-templates@1.0.4
-session@1.1.6
-spacebars@1.0.12
-reactive-var@1.0.10
-reactive-dict@1.1.8
-fortawesome:fontawesome         # fontawesome packaged for Meteor
-makalu:better-dateinput-polyfill # Date picker
-twbs:bootstrap                  # UI package
-peppelg:bootstrap-3-modal       # better modal windows
-aldeed:tabular									# reactive data tables
-
 # data
 mongo@1.1.12                           # The database Meteor supports right now
 aldeed:collection2              # Automatic validation of insert and update operations on the client and server.
 udondan:bulk-collection-update  # Collection bulk update
 meteorhacks:aggregate           # MongoDB Aggregation
 dburles:collection-helpers      # helpers for collections stuff
+fongandrew:find-and-modify
 
-# routing
-iron:router
-
-# accounts
-accounts-password@1.3.0               # Password based authentication
-useraccounts:iron-routing
-alanning:roles                  # Managing roles for users
-yogiben:admin                   # Admin Interface for user/collection management
-ian:accounts-ui-bootstrap-3     # accounts UI
-stylus@=2.513.4                 # needed for ian:accounts-ui-bootstrap-3
 standard-minifier-css@1.2.0
 standard-minifier-js@1.2.0
 
 # logging
-
-# mapping
-mdg:geolocation
-bevanhunt:leaflet               # Mapping
+votercircle:winston
 
 # tools
 momentjs:moment                 # Time calculations
@@ -61,15 +37,5 @@ harrison:papa-parse             # csv parsing used for push file generation
 email@1.1.17
 epaminond:nodemailer
 
-# mobile
-mobile-experience@1.0.4
-
-juliancwirko:s-alert
 shell-server
 
-johdirr:meteor-git-rev
-fongandrew:find-and-modify
-williamledoux:bootstrap-toggle
-reywood:publish-composite
-msavin:sjobs
-votercircle:winston

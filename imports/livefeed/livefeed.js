@@ -1,11 +1,14 @@
-// required packages
 import chokidar from 'chokidar';
+import fs from 'fs-extra';
+import pathModule from 'path';
+import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
+import { _ } from 'meteor/underscore';
+import { moment } from 'meteor/momentjs:moment';
+import { Papa } from 'meteor/harrison:papa-parse';
+import { bulkCollectionUpdate } from 'meteor/udondan:bulk-collection-update';
 import { LiveSites, LiveData, AggrData } from '../api/collections_server';
 import { globalsite } from '../startup/startup';
-
-const fs = Npm.require('fs');
-const pathModule = Npm.require('path');
 
 function perform5minAggregat(siteId, startEpoch, endEpoch) {
   // create temp collection as placeholder for aggreagation results
@@ -52,7 +55,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   LiveData.aggregate(pipeline, { allowDiskUse: true });
 
   // create new structure for data series to be used for charts
-  AggrResults.find({}).forEach(function(e) {
+  AggrResults.find({}).forEach((e) => {
     const subObj = {};
     subObj._id = `${e.site}_${e._id}`;
     subObj.site = e.site;
@@ -319,7 +322,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   AggrResults.rawCollection().drop();
 }
 
-var makeObj = function(keys, startIndex, previousObject) {
+var makeObj = function (keys, startIndex, previousObject) {
   const obj = {};
   obj.subTypes = {};
   let metron = [];
@@ -550,12 +553,12 @@ var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
   }
 });
 
-const readFile = Meteor.bindEnvironment(function(path) {
+const readFile = Meteor.bindEnvironment((path) => {
   // test whether the siteId in the file name matches the directory
   const pathArray = path.split(pathModule.sep);
   const fileName = pathArray[pathArray.length - 1];
   const siteId = fileName.split(/[_]+/)[1];
-	const fileType = fileName.split(/[_]+/)[2];
+  const fileType = fileName.split(/[_]+/)[2];
   const parentDir = pathArray[pathArray.length - 2];
   const test = parentDir.substring(parentDir.lastIndexOf('UH') + 2, parentDir.lastIndexOf('_'));
   if (siteId === test) {
@@ -596,13 +599,6 @@ const readFile = Meteor.bindEnvironment(function(path) {
     });
   } else {
     logger.error('File has been added in not matching directory.');
-  }
-});
-
-Meteor.methods({
-  new5minAggreg(siteId, startEpoch, endEpoch) {
-    logger.info(`Helper called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}`);
-    perform5minAggregat(siteId, startEpoch, endEpoch);
   }
 });
 
