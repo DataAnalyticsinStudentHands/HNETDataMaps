@@ -1,6 +1,6 @@
-# HNETDataMaps
+# HNETDataMaps Client
 
-This is a development repository for a data processing framework for atmospheric sensors.
+This is the web frontend for a data processing framework for atmospheric sensors who can monitor and edit their data.
 
 The documentation for end users can be found in the Wiki.
 
@@ -25,12 +25,9 @@ to install e.g. on Mac OS or Linux:
 * For pushing data out, the server is using [lftp](https://lftp.yar.ru/) which must be installed.
 
 
-
-
 ## Getting started
 
-You may have to run the following:
-`meteor npm install --save highcharts ftps junk fs-extra chokidar fsevents winston`
+Clone and run: `meteor npm install`
 
 
 ## Testing in local development environment
