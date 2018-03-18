@@ -184,8 +184,9 @@ export const pushSiteData = function pushSiteData(aqsid) {
     const site = LiveSites.findOne({ AQSID: `${aqsid}` });
     // check last push not older than 1 day (24 hours)
     if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
-      // use last pushepoch as starting point
-      const startEpoch = site.lastPushEpoch;
+      // use last endEpoch as starting point
+      const lastPush = Exports.find({ pushEpoch: site.lastPushEpoch });
+      const startEpoch = lastPush.endEpoch;
       // try to find everything that is available until now
       const endEpoch = moment().unix();
 
