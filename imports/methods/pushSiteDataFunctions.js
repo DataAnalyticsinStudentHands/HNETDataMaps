@@ -189,6 +189,8 @@ export const pushSiteData = function pushSiteData(aqsid) {
       // try to find everything that is available until now
       const endEpoch = moment().unix();
 
+      logger.info(`Trying to get data for ${startEpoch} - ${endEpoch}`);
+
       const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
 
       if (Object.keys(data).length === 0 && data.constructor === Object) {

@@ -8,9 +8,7 @@
     "chokidar": "^1.7.0",
     "fibers": "^1.0.15",
     "fs-extra": "^0.30.0",
-    "fsevents": "^1.1.3",
-    "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
-    "junk": "^1.0.3"
+    "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

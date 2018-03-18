@@ -611,10 +611,10 @@ const liveWatcher = chokidar.watch(`/hnet/incoming/current/${globalsite.incoming
 
 liveWatcher.on('add', (path) => {
   logger.info('File ', path, ' has been added.');
-  readFile(path);
+  //readFile(path);
 }).on('change', (path) => {
   logger.info('File', path, 'has been changed');
-  readFile(path);
+  //readFile(path);
 }).on('addDir', (path) => {
   logger.info('Directory', path, 'has been added');
 }).on('error', (error) => {
