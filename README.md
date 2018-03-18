@@ -1,8 +1,6 @@
-# HNETDataMaps
+# HNETDataMaps (Server)
 
-This is a development repository for a data processing framework for atmospheric sensors.
-
-The documentation for end users can be found in the Wiki.
+This is server part for for a data processing framework for atmospheric sensors. Each site has it's own instance of a serve running to process incoming files.
 
 The following instructions are for developers who want to setup their own version. This is a [meteor](https://www.meteor.com/) based framework.
 
@@ -29,12 +27,7 @@ to install e.g. on Mac OS or Linux:
 
 ## Getting started
 
-You may have to run the following:
-* `meteor npm install --save highcharts`
-* `meteor npm install --save ftps`
-* `meteor npm install --save junk`
-* `meteor npm install --save fs-extra`
-* `meteor npm install --save chokidar`
+Clone and run: `meteor npm install`
 
 
 ## Testing in local development environment
