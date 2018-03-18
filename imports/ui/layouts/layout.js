@@ -1,4 +1,5 @@
 import '../styles.css';
+import '../sb-admin-2.css';
 import './footer.html';
 import './layout.html';
 import './loading.html';

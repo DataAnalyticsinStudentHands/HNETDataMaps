@@ -77,7 +77,8 @@ const SitesSchema = new SimpleSchema({
   },
   city: {
     label: 'City',
-    type: String
+    type: String,
+    optional: true
   },
   elevation: {
     type: String,

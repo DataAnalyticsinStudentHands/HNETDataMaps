@@ -3,6 +3,7 @@ import Future from 'fibers/future';
 import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
+import { moment } from 'meteor/momentjs:moment';
 import { LiveSites, AggrData } from '../api/collections_both';
 import { flagsHash, channelHash } from '../api/constants';
 

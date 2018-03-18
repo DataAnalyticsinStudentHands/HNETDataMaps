@@ -1,22 +1,23 @@
-import { LiveSites } from '../api/collections_both';
-
-// import packages
 import fs from 'fs-extra';
-import junk from 'junk';
+import os from 'os';
+import { Meteor } from 'meteor/meteor';
+import { logger } from 'meteor/votercircle:winston';
+import { moment } from 'meteor/momentjs:moment';
+import { Nodemailer } from 'meteor/epaminond:nodemailer';
+import { LiveSites } from '../api/collections_both';
 
 // structure to hold current/before status information
 const statusObject = {};
 
 // helper function to send emails using nodemailer
-const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
-
+const sendEmail = Meteor.bindEnvironment((reportType, reportString) => {
   // Find all users that have subscribed to receive status emails and update the mailList
   const listSubscribers = Meteor.users.find({ receiveSiteStatusEmail: true });
 
   // list of receipients
   let mailList = '';
 
-  listSubscribers.forEach(function(user) {
+  listSubscribers.forEach((user) => {
     if (user.receiveSiteStatusEmail) {
       mailList = `${user.emails[0].address},${mailList}`;
     }
@@ -34,7 +35,7 @@ const sendEmail = Meteor.bindEnvironment(function (reportType, reportString) {
     if (error) {
       logger.info('Can not send email. Error: ', error);
     } else {
-      logger.info('Message sent: ', info);
+      logger.info(`Message sent: ${reportString}`, info);
     }
   });
 });
@@ -46,84 +47,52 @@ Meteor.setInterval(() => {
   // report
   let reportString = `H-NET Site Status as of ${moment().format('YYYY/MM/DD, HH:mm:ss')} \n`;
 
-  // get sites
+  // get all sites
+  // const allSites = LiveSites.find({ status: 'Active' });
   const allSites = LiveSites.find({ });
 
   allSites.forEach((site) => {
-    const siteName = site.incoming;
-    const stats = fs.statSync(watchedPath + siteName);
+    const siteFolder = site.incoming;
+    const stats = fs.statSync(watchedPath + siteFolder);
 
     const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments
     const timeDiff = moment() - currentSiteMoment;
 
-    if (!statusObject[siteName]) {
-      statusObject[siteName] = {};
+    if (!statusObject[siteFolder]) {
+      statusObject[siteFolder] = {};
     }
 
+    // check whether site data has been received in folder
     if (timeDiff > site.statusCheckInterval * 60 * 1000) {
-      statusObject[siteName].current = `\n${siteName}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
+      statusObject[siteFolder].current = `\n${siteFolder}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
     } else {
-      statusObject[siteName].current = `\n${siteName}: Operational`;
+      statusObject[siteFolder].current = `\n${siteFolder}: Operational`;
     }
 
     // initialize before status in first run
-    if (!statusObject[siteName].before) {
-      statusObject[siteName].before = statusObject[siteName].current;
+    if (!statusObject[siteFolder].before) {
+      statusObject[siteFolder].before = statusObject[siteFolder].current;
     }
 
     // initialize sendUpdateReport
-    statusObject[siteName].sendUpdateReport = false;
+    statusObject[siteFolder].sendUpdateReport = false;
 
     // Adding info for each site to the report
-    reportString = `${reportString}${statusObject[siteName].current}\n`;
+    reportString = `${reportString}${statusObject[siteFolder].current}\n`;
 
-    if (statusObject[siteName].current !== statusObject[siteName].before) {
-      statusObject[siteName].sendUpdateReport = true;
+    if (statusObject[siteFolder].current !== statusObject[siteFolder].before) {
+      statusObject[siteFolder].sendUpdateReport = true;
     }
 
-    statusObject[siteName].before = statusObject[siteName].current;
-
-  // fs.readdir(watchedPath, function(err, folders) {
-  //   folders.filter(junk.not).forEach(function(afolder) {
-  //     const stats = fs.statSync(watchedPath + afolder);
-	//
-  //     const currentSiteMoment = moment(Date.parse(stats.mtime)); // from milliseconds into moments
-  //     const timeDiff = moment() - currentSiteMoment;
-	//
-  //     if (!statusObject[afolder]) {
-  //       statusObject[afolder] = {};
-  //     }
-	//
-  //     if (timeDiff > 30 * 60 * 1000) {
-  //       statusObject[afolder].current = `\n${afolder}: has no update since ${moment(currentSiteMoment).format('YYYY/MM/DD, HH:mm:ss')}`;
-  //     } else {
-  //       statusObject[afolder].current = `\n${afolder}: Operational`;
-  //     }
-	//
-  //     // initialize before status in first run
-  //     if (!statusObject[afolder].before) {
-  //       statusObject[afolder].before = statusObject[afolder].current;
-  //     }
-	//
-  //     // initialize sendUpdateReport
-  //     statusObject[afolder].sendUpdateReport = false;
-	//
-  //     // Adding info for each site to the report
-  //     reportString = `${reportString}${statusObject[afolder].current}\n`;
-	//
-  //     if (statusObject[afolder].current !== statusObject[afolder].before) {
-  //       statusObject[afolder].sendUpdateReport = true;
-  //     }
-	//
-  //     statusObject[afolder].before = statusObject[afolder].current;
-  //   });
+    statusObject[siteFolder].before = statusObject[siteFolder].current;
   });
 
-  for(const site in statusObject) {
-    if (statusObject.hasOwnProperty(site)) {
+  Object.keys(statusObject).forEach((site) => {
+    if (Object.prototype.hasOwnProperty.call(statusObject, site)) {
       if (statusObject[site].sendUpdateReport) {
-        sendEmail(`${require('os').hostname()} ${statusObject[site].current}`, reportString);
+        logger.info(`would send ... ${reportString}`);
+        // sendEmail(`${os.hostname()} ${statusObject[site].current}`, reportString);
       }
     }
-  }
+  });
 }, 5 * 60 * 1000); // run every 5 min, to report a site is down immidiately
