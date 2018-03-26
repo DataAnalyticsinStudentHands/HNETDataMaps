@@ -185,9 +185,10 @@ export const pushSiteData = function pushSiteData(aqsid) {
     // check last push not older than 1 day (24 hours)
     if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
       // use last endEpoch as starting point
-      const lastPush = Exports.find({ pushEpoch: site.lastPushEpoch });
+      const lastPush = Exports.findOne({ pushEpoch: site.lastPushEpoch });
       let startEpoch = lastPush.endEpoch;
       if (startEpoch === undefined) {
+        // or if just has been resetted
         startEpoch = site.lastPushEpoch;
       }
       // try to find everything that is available until now
