@@ -1,11 +1,13 @@
-// Import to load these templates
+import { Router } from 'meteor/iron:router';
+
 import '../../ui/layouts/layout';
 import '../../ui/pages/about/about';
 import '../../ui/pages/admin/fixSites';
 import '../../ui/pages/composite/composite';
 import '../../ui/pages/datamanagement/datamanagement';
 import '../../ui/pages/datamanagement/listEdits';
-import '../../ui/pages/datamanagement/listPushes';
+import '../../ui/pages/datamanagement/listAutomaticPushes';
+import '../../ui/pages/datamanagement/listManualPushes';
 import '../../ui/pages/home/home';
 import '../../ui/pages/public/public';
 import '../../ui/pages/site/site';
@@ -92,9 +94,16 @@ Router.route('/listEdits/', {
     this.render();
   }
 });
-Router.route('/listPushes/', {
-  name: 'listPushes',
-  template: 'listPushes',
+Router.route('/listAutomaticPushes/', {
+  name: 'listAutomaticPushes',
+  template: 'listAutomaticPushes',
+  action: function() {
+    this.render();
+  }
+});
+Router.route('/listManualPushes/', {
+  name: 'listManualPushes',
+  template: 'listManualPushes',
   action: function() {
     this.render();
   }

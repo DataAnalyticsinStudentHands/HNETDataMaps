@@ -1,20 +1,21 @@
-import { logger } from 'meteor/votercircle:winston';
+import { Meteor } from 'meteor/meteor';
+import { ReactiveVar } from 'meteor/reactive-var';
+import { Template } from 'meteor/templating';
+import { sAlert } from 'meteor/juliancwirko:s-alert';
 
-import './listPushes.html';
+import './listAutomaticPushes.html';
 
 const dataToShow = new ReactiveVar();
 const dataFilePath = new ReactiveVar();
-Session.set('ToggleSelector', true);
 
-Template.listPushes.helpers({
+Template.listAutomaticPushes.helpers({
   selector() {
-    return { manual: Session.get('ToggleSelector') };
-  },
-  toggle_selector_options() { }
+    return { manual: false };
+  }
 });
 
 Template.viewDataCell.events({
-  'click .js-view-data': function(event) {
+  'click .js-view-data': function (event) {
     const dataTable = $(event.target).closest('table').DataTable();
     const rowIndex = $(event.target).closest('tr').index();
     const rowData = dataTable.row(rowIndex).data();

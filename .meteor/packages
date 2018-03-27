@@ -69,6 +69,5 @@ shell-server
 
 johdirr:meteor-git-rev
 fongandrew:find-and-modify
-williamledoux:bootstrap-toggle
 reywood:publish-composite
 votercircle:winston

@@ -63,7 +63,51 @@ new Tabular.Table({
 });
 
 new Tabular.Table({
-  name: 'Pushes',
+  name: 'AutomaticPushes',
+  collection: Exports,
+  order: [
+    [0, "desc"]
+  ],
+  columns: [
+    {
+      data: 'pushEpoch',
+      title: 'Push Timestamp',
+      render: function(val, type, doc) {
+        return moment.unix(val).format('YYYY/MM/DD HH:mm:ss');
+      }
+    }, {
+      data: 'site',
+      title: 'Site',
+      render: function(val, type, doc) {
+        const selectedSite = LiveSites.findOne({AQSID: val});
+        return selectedSite.siteName;
+      }
+    }, {
+      data: 'startEpoch',
+      title: 'Start Period',
+      render: function(val, type, doc) {
+        return moment.unix(val).format('YYYY/MM/DD HH:mm:ss');
+      }
+    }, {
+      data: 'endEpoch',
+      title: 'End Period',
+      render: function(val, type, doc) {
+        return moment.unix(val).format('YYYY/MM/DD HH:mm:ss');
+      }
+    }, {
+      title: 'View File',
+      width: '10%',
+      tmpl: Meteor.isClient && Template.viewDataCell,
+      tmplContext: function (rowData) {
+        return { item: rowData };
+      }
+    }
+  ],
+  extraFields: ['fileName', 'manual']
+});
+
+new Tabular.Table({
+  name: 'ManualPushes',
   collection: Exports,
   order: [
     [0, "desc"]
