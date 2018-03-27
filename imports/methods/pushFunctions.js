@@ -41,15 +41,25 @@ export const pushData = function pushData(aqsid, startEpoch, endEpoch, manualPus
 
     const result = fut.wait();
     // insert a timestamp for the pushed data
+    const manualPushEpoch = moment().unix();
     Exports.insert({
       _id: `${aqsid}_${moment().unix()}`,
-      pushEpoch: moment().unix(),
+      pushEpoch: manualPushEpoch,
       site: aqsid,
       startEpoch: moment.utc(startTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
       endEpoch: moment.utc(endTimeStamp, 'YY/MM/DD HH:mm:ss').unix(),
       fileName: result,
       manual: manualPush
     });
+
+    LiveSites.update({
+      AQSID: `${aqsid}`
+    }, {
+      $set: {
+        lastManualPushEpoch: manualPushEpoch
+      }
+    });
+
     return pathModule.basename(result);
   } catch (err) {
     logger.error(err);
@@ -57,6 +67,7 @@ export const pushData = function pushData(aqsid, startEpoch, endEpoch, manualPus
   }
 };
 
+// NOT BEING USED RIGHT NOW!!!!!
 export const pushMultipleData = function pushMultipleData() {
   // placeholder for push files
   let outputFiles = '';

@@ -120,6 +120,9 @@ const SitesSchema = new SimpleSchema({
   lastUpdateEpoch: {
     type: SimpleSchema.Integer
   },
+  lastManualPushEpoch: {
+    type: SimpleSchema.Integer
+  },
   footerText: {
     label: 'Footer Text',
     optional: true,
