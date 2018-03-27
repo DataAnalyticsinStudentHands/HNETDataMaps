@@ -38,6 +38,10 @@
     "eslint-plugin-react": "^6.2.2"
   },
   "eslintConfig": {
+    "env": {
+            "browser": true,
+            "jquery": true
+    },
     "parser": "babel-eslint",
     "parserOptions": {
       "allowImportExportEverywhere": true
