@@ -212,7 +212,7 @@ export const pushSiteData = function pushSiteData(aqsid) {
       // Set up a future
       const fut = new Future();
       // call ftps async method
-      ftps.cd('UH/tmp').addFile(outputFile).exec((err, res) => {
+      ftps.cd('UH/c696').addFile(outputFile).exec((err, res) => {
         if (res.error) {
           fut.throw(`Error during push file: ${res.error}`);
         } else {
