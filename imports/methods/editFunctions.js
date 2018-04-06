@@ -55,7 +55,7 @@ export const pushEdits = function pushEdits(aqsid, pushPointsEpochs) {
     // Set up a future
     const fut = new Future();
     // call ftps async method
-    ftps.cd('UH/tmp').addFile(pushFile).exec((err, res) => {
+    ftps.cd('UH/c696').addFile(pushFile).exec((err, res) => {
       if (res.error) {
         fut.throw(res.error);
       } else {

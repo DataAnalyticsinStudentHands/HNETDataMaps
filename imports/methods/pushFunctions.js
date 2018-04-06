@@ -29,7 +29,7 @@ export const pushData = function pushData(aqsid, startEpoch, endEpoch, manualPus
     // Set up a future
     const fut = new Future();
     // call ftps async method
-    ftps.cd('UH/tmp').addFile(outputFile).exec((err, res) => {
+    ftps.cd('UH/c696').addFile(outputFile).exec((err, res) => {
       if (res.error) {
         fut.throw(`Error during push file: ${res.error}`);
       } else {
@@ -123,7 +123,7 @@ export const pushMultipleData = function pushMultipleData() {
     // Set up a future
     const fut = new Future();
 
-    ftps.cd('UH/tmp').raw(`mput ${outputFiles}`).exec((err, res) => {
+    ftps.cd('UH/c696').raw(`mput ${outputFiles}`).exec((err, res) => {
       if (res.error) {
         logger.error('Error during automatic push:', res.error);
         fut.throw(`Error during push file: ${res.error}`);
