@@ -5,6 +5,7 @@ import { moment } from 'meteor/momentjs:moment';
 import { Template } from 'meteor/templating';
 import { Router } from 'meteor/iron:router';
 import { _ } from 'meteor/underscore';
+import { sAlert } from 'meteor/juliancwirko:s-alert';
 
 import './site.html';
 
@@ -344,7 +345,7 @@ Template.editPoints.events({
     note.set(text);
   },
   // Handle the button "Change Flag" event
-  'click .js-change' (event) {
+  'click button#btnChange' (event) {
     event.preventDefault();
 
     const updatedPoints = EditPoints.find({}).fetch();
