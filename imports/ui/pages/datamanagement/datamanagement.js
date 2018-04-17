@@ -1,3 +1,9 @@
+import { Meteor } from 'meteor/meteor';
+import { ReactiveVar } from 'meteor/reactive-var';
+import { Template } from 'meteor/templating';
+import { moment } from 'meteor/momentjs:moment';
+import { sAlert } from 'meteor/juliancwirko:s-alert';
+import { datetimepicker } from 'meteor/hujhax:bootstrap3-datetimepicker';
 import { LiveSites } from '../../../api/collections_both';
 import { DataExporter } from '../../components/dataexporter';
 
@@ -6,8 +12,19 @@ import './datamanagement.html';
 const startEpoch = new ReactiveVar(moment().subtract(1, 'days').unix()); // 24 hours ago - seconds
 const endEpoch = new ReactiveVar(moment().unix());
 
-Template.datamanagement.onCreated(function() {
+Template.datamanagement.onCreated(function () {
   Meteor.subscribe('liveSites');
+});
+
+Template.datamanagement.onRendered(function () {
+  // setup date picker
+  this.$('#datetimepicker1').datetimepicker({
+    format: 'MM/DD/YYYY',
+    widgetPositioning: {
+      horizontal: 'left',
+      vertical: 'auto'
+    }
+  });
 });
 
 Template.datamanagement.helpers({
@@ -22,6 +39,9 @@ Template.datamanagement.helpers({
   },
   endEpoch() {
     return endEpoch.get();
+  },
+  startDate() {
+    return startDate.get();
   },
   availableSites() {
     return LiveSites.find();
@@ -100,6 +120,20 @@ Template.datamanagement.events = {
         return;
       }
       sAlert.success(`Deleted:\n ${response} aggregated data points`);
+    });
+  },
+  'click #reimportLiveData'(event, target) {
+    event.preventDefault();
+    const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
+    const selectedDate = target.$('#selectedDate').val();
+
+    // call to reimport Live data files
+    Meteor.call('reimportLiveData', site.incoming, selectedDate, (err, response) => {
+      if (err) {
+        sAlert.error(`Error:\n ${err.reason}`);
+        return;
+      }
+      sAlert.success(`Imported:\n ${response} live data points`);
     });
   }
 };

@@ -1,7 +1,11 @@
+import pathModule from 'path';
+import fs from 'fs-extra';
 import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { moment } from 'meteor/momentjs:moment';
-import { LiveData, AggrData } from '../api/collections_both';
+import { Papa } from 'meteor/harrison:papa-parse';
+import { bulkCollectionUpdate } from 'meteor/udondan:bulk-collection-update';
+import { LiveData, AggrData, LiveSites } from '../api/collections_both';
 
 export const create5minAggregates = function create5minAggregates(siteId, startEpoch, endEpoch) {
   logger.info(`Client called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}`);
@@ -314,4 +318,278 @@ export const create5minAggregates = function create5minAggregates(siteId, startE
   });
   // drop temp collection that was placeholder for aggreagation results
   AggrResults.rawCollection().drop();
+};
+
+const makeObj = (keys, startIndex, previousObject) => {
+  const obj = {};
+  obj.subTypes = {};
+  let metron = [];
+  for (const key in keys) {
+    if (keys.hasOwnProperty(key)) {
+      // Fix for wrong headers _Wind
+      let newKey = key;
+      if (key.indexOf('_Wind') >= 0) {
+        newKey = key.replace('_Wind', '');
+      }
+      const subKeys = newKey.split('_'); // split each column header
+      if (subKeys.length > startIndex) { // skipping e.g. 'TheTime'
+        metron = subKeys[2]; // instrument i.e. Wind, Ozone etc.
+        const measurement = subKeys[3]; // measurement conc, temp, etc.
+        const value = keys[key];
+        let unitType = 'NA';
+        if (subKeys[4] !== undefined) {
+          unitType = subKeys[4]; // unit
+        }
+
+        if (!obj.subTypes[metron]) {
+          obj.subTypes[metron] = [
+            {
+              metric: measurement,
+              val: value,
+              unit: unitType
+            }
+          ];
+        } else {
+          if (measurement === 'Flag') { // Flag should be always first
+            obj.subTypes[metron].unshift({ metric: measurement, val: value });
+          } else {
+            obj.subTypes[metron].push({ metric: measurement, val: value, unit: unitType });
+          }
+        }
+      }
+    }
+  }
+
+  for (var subType in obj.subTypes) {
+    if (obj.subTypes.hasOwnProperty(subType)) {
+      // automatic flagging of 03 values to be flagged with 9(N)
+      if (subType === 'O3' || subType === '49i') {
+        // condition: O3 value above 250
+        if (obj.subTypes[subType][1].val > 250) {
+          obj.subTypes[subType][0].val = 9;
+        }
+        // if a O3 value changes for more than 30 ppb from previous value
+        if (previousObject) {
+          const diff = obj.subTypes[subType][1].val - previousObject.subTypes[subType][1].val;
+          if (diff >= 30) {
+            obj.subTypes[subType][0].val = 9;
+          }
+        }
+      }
+    }
+  }
+
+  return obj;
+};
+
+const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
+  // find the site information using the location of the file that is being read
+  const pathArray = path.split(pathModule.sep);
+  const parentDir = pathArray[pathArray.length - 2];
+  const site = LiveSites.findOne({ incoming: parentDir });
+
+  if (site.AQSID) {
+    // create objects from parsed lines
+    const allObjects = [];
+    let previousObject = {};
+    for (let k = 0; k < parsedLines.length; k++) {
+      let singleObj = {};
+      if (k === 0) {
+        singleObj = makeObj(parsedLines[k], 1);
+      } else {
+        singleObj = makeObj(parsedLines[k], 1, previousObject);
+      }
+      let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + (6 * 3600);
+      epoch -= (epoch % 1); // rounding down
+      singleObj.epoch = epoch;
+      singleObj.epoch5min = epoch - (epoch % 300);
+      singleObj.theTime = parsedLines[k].TheTime;
+      singleObj.site = site.AQSID;
+      singleObj.file = pathArray[pathArray.length - 1];
+      singleObj._id = `${site.AQSID}_${epoch}`;
+      allObjects.push(singleObj);
+      previousObject = singleObj;
+    }
+
+    // using bulkCollectionUpdate
+    bulkCollectionUpdate(LiveData, allObjects, {
+      callback: function() {
+        let startEpoch = ((parsedLines[0].TheTime - 25569) * 86400) + (6 * 3600);
+        startEpoch -= (startEpoch % 1); // rounding down
+        let endEpoch = ((parsedLines[parsedLines.length - 1].TheTime - 25569) * 86400) + (6 * 3600);
+        endEpoch -= (endEpoch % 1); // rounding down
+
+        logger.info(`LiveData imported from: ${path} for: ${site.siteName}`);
+        create5minAggregates(site.AQSID, startEpoch, endEpoch);
+      }
+    });
+  }
+});
+
+var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
+  // find the site information using the location of the file that is being read
+  const pathArray = path.split(pathModule.sep);
+  const parentDir = pathArray[pathArray.length - 2];
+  const site = LiveSites.findOne({ incoming: parentDir });
+
+  if (site.AQSID) {
+    // update the timestamp for the last update for the site
+    const stats = fs.statSync(path);
+    const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
+    if (site.lastUpdateEpoch < fileModified) {
+      LiveSites.update({
+        // Selector
+        AQSID: `${site.AQSID}`
+      }, {
+        // Modifier
+        $set: {
+          lastUpdateEpoch: fileModified
+        }
+      }, { validate: false });
+    }
+
+    // create objects from parsed lines
+    const allObjects = [];
+    for (let k = 0; k < parsedLines.length; k++) {
+      const singleObj = {};
+      singleObj.subTypes = {};
+      singleObj.subTypes.TRH = [];
+      singleObj.subTypes.Baro = [];
+      singleObj.subTypes.RMY = [];
+      singleObj.subTypes.Rain = [];
+
+      singleObj.subTypes.TRH[0] = {};
+      singleObj.subTypes.TRH[0].metric = 'Flag';
+      singleObj.subTypes.TRH[0].val = 1;
+      singleObj.subTypes.TRH[1] = {};
+      singleObj.subTypes.TRH[1].metric = 'Temp';
+      singleObj.subTypes.TRH[1].val = parsedLines[k][2];
+      singleObj.subTypes.TRH[1].unit = 'C';
+      singleObj.subTypes.TRH[2] = {};
+      singleObj.subTypes.TRH[2].metric = 'RH';
+      // fix for RH values
+      // condition: RH value < 1 -> set to 100
+      if (parsedLines[k][3] < 1) {
+        singleObj.subTypes.TRH[2].val = 100;
+      } else {
+        // condition: prevoius RH value - current RH > 15 -> set to 100
+        if (k > 0) {
+          if ((parsedLines[k][3] - parsedLines[k - 1][3]) > 15) {
+            singleObj.subTypes.TRH[2].val = 100;
+          } else {
+            singleObj.subTypes.TRH[2].val = parsedLines[k][3];
+          }
+        }
+        singleObj.subTypes.TRH[2].val = parsedLines[k][3];
+      }
+      singleObj.subTypes.TRH[2].unit = 'pct';
+
+      singleObj.subTypes.Baro[0] = {};
+      singleObj.subTypes.Baro[0].metric = 'Flag';
+      singleObj.subTypes.Baro[0].val = 1;
+      singleObj.subTypes.Baro[1] = {};
+      singleObj.subTypes.Baro[1].metric = 'Press';
+      singleObj.subTypes.Baro[1].val = parsedLines[k][4];
+      singleObj.subTypes.Baro[1].unit = 'mbar';
+
+      singleObj.subTypes.RMY[0] = {};
+      singleObj.subTypes.RMY[0].metric = 'Flag';
+      singleObj.subTypes.RMY[0].val = 1;
+      singleObj.subTypes.RMY[1] = {};
+      singleObj.subTypes.RMY[1].metric = 'WS';
+      singleObj.subTypes.RMY[1].val = parsedLines[k][6];
+      singleObj.subTypes.RMY[1].unit = 'ms';
+      singleObj.subTypes.RMY[2] = {};
+      singleObj.subTypes.RMY[2].metric = 'WD';
+      singleObj.subTypes.RMY[2].val = parsedLines[k][7];
+      singleObj.subTypes.RMY[2].unit = 'deg';
+
+      singleObj.subTypes.Rain[0] = {};
+      singleObj.subTypes.Rain[0].metric = 'Flag';
+      singleObj.subTypes.Rain[0].val = 1;
+      singleObj.subTypes.Rain[1] = {};
+      singleObj.subTypes.Rain[1].metric = 'Precip';
+      singleObj.subTypes.Rain[1].val = parsedLines[k][8];
+      singleObj.subTypes.Rain[1].unit = 'inch';
+
+      // add 6 hours to timestamp and then parse as UTC before converting to epoch
+      const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+      let epoch = timeStamp.unix();
+      epoch -= (epoch % 1); // rounding down
+      singleObj.epoch = epoch;
+      singleObj.epoch5min = epoch - (epoch % 300);
+      singleObj.TimeStamp = parsedLines[k][0];
+      singleObj.site = site.AQSID;
+      singleObj.file = pathArray[pathArray.length - 1];
+      singleObj._id = `${site.AQSID}_${epoch}_met`;
+      allObjects.push(singleObj);
+    }
+
+    // using bulkCollectionUpdate
+    bulkCollectionUpdate(LiveData, allObjects, {
+      callback: function() {
+        const nowEpoch = moment().unix();
+        const agoEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
+
+        logger.info(`LiveData met updated from: ${path} for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
+        perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
+      }
+    });
+  }
+});
+
+const readFile = Meteor.bindEnvironment((path) => {
+  // find out whether we have to read DAQFactory or Loggernet data
+  const pathArray = path.split(pathModule.sep);
+  const fileName = pathArray[pathArray.length - 1];
+  const fileType = fileName.split(/[_]+/)[2];
+  fs.readFile(path, 'utf-8', (err, output) => {
+    let secondIteration = false;
+    // HNET special treatment of data files from loggernet (met data)
+    if (fileType.endsWith('met')) {
+      Papa.parse(output, {
+        header: false,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete(results) {
+          if (!secondIteration) {
+            // remove the first 4 lines - headers
+            results.data.splice(0, 4);
+            batchMetDataUpsert(results.data, path);
+            secondIteration = true;
+          } else {
+            return;
+          }
+        }
+      });
+    } else {
+      Papa.parse(output, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete(results) {
+          if (!secondIteration) {
+            batchLiveDataUpsert(results.data, path);
+            secondIteration = true;
+          } else {
+            return;
+          }
+        }
+      });
+    }
+  });
+});
+
+export const reimportLiveData = function reimportLiveData(incomingFolder, selectedDate) {
+  const shortSiteName = incomingFolder.substring(incomingFolder.lastIndexOf('UH') + 2, incomingFolder.lastIndexOf('_'));
+  const path = `/hnet/incoming/current/${incomingFolder}/HNET_${shortSiteName}_TCEQ_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
+
+  if (!fs.existsSync(path)) {
+    logger.error('Error in call for reimportLiveData.', `Could not find data for ${selectedDate}.`);
+    throw new Meteor.Error('File does not exists.', `Could not find data for ${selectedDate}.`);
+  }
+
+  logger.info(path)
+  const data = readFile(path);
+  return `called reimport data at path ${path}`;
 };

@@ -3,7 +3,7 @@ import { loadFile, exportData } from '../../methods/fileFunctions';
 import { resetLastPushDate } from '../../methods/adminFunctions';
 import { deleteAggregates, insertEditFlag, insertEdits, pushEdits } from '../../methods/editFunctions';
 import { pushData } from '../../methods/pushFunctions';
-import { create5minAggregates } from '../../methods/createAggregates';
+import { create5minAggregates, reimportLiveData } from '../../methods/processData';
 
 Meteor.methods({
   'create5minAggregates': create5minAggregates,
@@ -14,5 +14,6 @@ Meteor.methods({
   'loadFile': loadFile,
   'pushData': pushData,
   'pushEdits': pushEdits,
+  'reimportLiveData': reimportLiveData,
   'resetLastPushDate': resetLastPushDate
 });
