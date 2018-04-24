@@ -90,8 +90,8 @@ Meteor.setInterval(() => {
   Object.keys(statusObject).forEach((site) => {
     if (Object.prototype.hasOwnProperty.call(statusObject, site)) {
       if (statusObject[site].sendUpdateReport) {
-        logger.info(`would send ... ${reportString}`);
-        // sendEmail(`${os.hostname()} ${statusObject[site].current}`, reportString);
+        // logger.info(`would send ... ${reportString}`);
+        sendEmail(`${os.hostname()} ${statusObject[site].current}`, reportString);
       }
     }
   });
