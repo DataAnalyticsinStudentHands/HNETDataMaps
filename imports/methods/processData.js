@@ -382,6 +382,16 @@ const makeObj = (keys, startIndex, previousObject) => {
   return obj;
 };
 
+const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEpoch, endEpoch) => {
+  // using bulkCollectionUpdate
+  bulkCollectionUpdate(LiveData, allObjects, {
+    callback: function() {
+      logger.info(`LiveData imported from: ${path} for: ${site.siteName}`);
+      create5minAggregates(site.AQSID, startEpoch, endEpoch);
+    }
+  });
+});
+
 const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   // find the site information using the location of the file that is being read
   const pathArray = path.split(pathModule.sep);
@@ -411,22 +421,16 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       previousObject = singleObj;
     }
 
-    // using bulkCollectionUpdate
-    bulkCollectionUpdate(LiveData, allObjects, {
-      callback: function() {
-        let startEpoch = ((parsedLines[0].TheTime - 25569) * 86400) + (6 * 3600);
-        startEpoch -= (startEpoch % 1); // rounding down
-        let endEpoch = ((parsedLines[parsedLines.length - 1].TheTime - 25569) * 86400) + (6 * 3600);
-        endEpoch -= (endEpoch % 1); // rounding down
-
-        logger.info(`LiveData imported from: ${path} for: ${site.siteName}`);
-        create5minAggregates(site.AQSID, startEpoch, endEpoch);
-      }
-    });
+    // prepare for call to bulk update and aggregation
+    let startEpoch = ((parsedLines[0].TheTime - 25569) * 86400) + (6 * 3600);
+    startEpoch -= (startEpoch % 1); // rounding down
+    let endEpoch = ((parsedLines[parsedLines.length - 1].TheTime - 25569) * 86400) + (6 * 3600);
+    endEpoch -= (endEpoch % 1); // rounding down
+    callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch);
   }
 });
 
-var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
+const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   // find the site information using the location of the file that is being read
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
@@ -525,16 +529,13 @@ var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
       allObjects.push(singleObj);
     }
 
-    // using bulkCollectionUpdate
-    bulkCollectionUpdate(LiveData, allObjects, {
-      callback: function() {
-        const nowEpoch = moment().unix();
-        const agoEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
-
-        logger.info(`LiveData met updated from: ${path} for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
-        perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
-      }
-    });
+    const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+    let startEpoch = startTimeStamp.unix();
+    startEpoch -= (startEpoch % 1); // rounding down
+    const endTimeStamp = moment.utc(parsedLines[parsedLines.length - 1][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+    let endEpoch = endTimeStamp.unix();
+    endEpoch -= (endEpoch % 1); // rounding down
+    callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch);
   }
 });
 
@@ -580,16 +581,20 @@ const readFile = Meteor.bindEnvironment((path) => {
   });
 });
 
-export const reimportLiveData = function reimportLiveData(incomingFolder, selectedDate) {
+export const reimportLiveData = function reimportLiveData(incomingFolder, selectedDate, selectedType) {
   const shortSiteName = incomingFolder.substring(incomingFolder.lastIndexOf('UH') + 2, incomingFolder.lastIndexOf('_'));
-  const path = `/hnet/incoming/current/${incomingFolder}/HNET_${shortSiteName}_TCEQ_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
+  let path = `/hnet/incoming/current/${incomingFolder}/HNET_${shortSiteName}_TCEQ_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
 
+logger.info(selectedType)
+  if (selectedType !== 'DAQFactory') {
+    path = `/hnet/incoming/current/${incomingFolder}/HNET_${shortSiteName}_TCEQmet_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
+  }
+logger.info(path)
   if (!fs.existsSync(path)) {
-    logger.error('Error in call for reimportLiveData.', `Could not find data for ${selectedDate}.`);
-    throw new Meteor.Error('File does not exists.', `Could not find data for ${selectedDate}.`);
+    logger.error('Error in call for reimportLiveData.', `Could not find data for ${selectedDate} and site ${shortSiteName}.`);
+    throw new Meteor.Error('File does not exists.', `Could not find data for ${selectedDate} and site ${shortSiteName}.`);
   }
 
-  logger.info(path)
-  const data = readFile(path);
-  return `called reimport data at path ${path}`;
+  readFile(path);
+  return `started reimport data at path ${path}`;
 };

@@ -126,14 +126,15 @@ Template.datamanagement.events = {
     event.preventDefault();
     const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
     const selectedDate = target.$('#selectedDate').val();
+    const selectedType = target.$('#selectedType').val();
 
     // call to reimport Live data files
-    Meteor.call('reimportLiveData', site.incoming, selectedDate, (err, response) => {
+    Meteor.call('reimportLiveData', site.incoming, selectedDate, selectedType, (err, response) => {
       if (err) {
         sAlert.error(`Error:\n ${err.reason}`);
         return;
       }
-      sAlert.success(`Imported:\n ${response} live data points`);
+      sAlert.success(`Import:\n ${response} live data points`);
     });
   }
 };

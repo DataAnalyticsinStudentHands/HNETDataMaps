@@ -98,9 +98,12 @@
     <h3 class="panel-title">Data Management for 10s Data</h3>
   </div>
   <div class="panel-body">
+
+      <span id="helpBlock" class="help-block">We are going to find the file based on the date and site that you select. The file name must contain the date selected.</span>
+
     <div class="row">
         <div class="col-xs-2">
-          <label for="selectedSite">Select Date:</label>
+          <label for="datetimepicker1">Select Date:</label>
           <div class="form-group">
                 <div class='input-group date' id='datetimepicker1'>
                     <input type='text' class="form-control" id='selectedDate'/>
@@ -110,6 +113,19 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-xs-3">
+          <div class="form-group">
+            <label>Select Type of 10s Data:</label>
+            <select class="form-control" id='selectedType'>
+              <option>DAQFactory</option>
+              <option>LoggerNet(met)</option>
+            </select>
+          </div>
+        </div>
+
+
+
       </div>
        <br>
       <div class="row extra-bottom-padding">
