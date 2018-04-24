@@ -585,11 +585,10 @@ export const reimportLiveData = function reimportLiveData(incomingFolder, select
   const shortSiteName = incomingFolder.substring(incomingFolder.lastIndexOf('UH') + 2, incomingFolder.lastIndexOf('_'));
   let path = `/hnet/incoming/current/${incomingFolder}/HNET_${shortSiteName}_TCEQ_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
 
-logger.info(selectedType)
   if (selectedType !== 'DAQFactory') {
     path = `/hnet/incoming/current/${incomingFolder}/HNET_${shortSiteName}_TCEQmet_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
   }
-logger.info(path)
+
   if (!fs.existsSync(path)) {
     logger.error('Error in call for reimportLiveData.', `Could not find data for ${selectedDate} and site ${shortSiteName}.`);
     throw new Meteor.Error('File does not exists.', `Could not find data for ${selectedDate} and site ${shortSiteName}.`);
