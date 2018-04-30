@@ -102,6 +102,10 @@ export const create5minAggregates = function create5minAggregates(siteId, startE
 
             let flag = data[0].val;
 
+            if (flag !== 1) { // if flag is not 1 (valid) don't increase numValid
+              numValid = 0;
+            }
+
             // automatic flagging of high wind speed values/flag with 9(N)
             if (windSpd >= 35) {
               numValid = 0;
@@ -142,6 +146,10 @@ export const create5minAggregates = function create5minAggregates(siteId, startE
               }
 
               const flag = data[0].val;
+
+              if (flag !== 1) { // if flag is not 1 (valid) don't increase numValid
+                numValid = 0;
+              }
 
               if (!aggrSubTypes[newkey]) {
                 if (numValid === 0) {
