@@ -70,3 +70,14 @@ code {
 .row.extra-bottom-padding{
    margin-bottom: 20px;
 }
+
+/* Added more label collection-helpers
+-------------------------------------------------- */
+
+.label-zero {
+  background-color: #ff9900;
+}
+.label-zero[href]:hover,
+.label-zero[href]:focus {
+  background-color: #ffad33;
+}

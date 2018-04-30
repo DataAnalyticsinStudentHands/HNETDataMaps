@@ -3,9 +3,10 @@ export const flagsHash = {
     val: 0,
     description: 'zero',
     label: 'Q',
-    selectable: false,
+    selectable: true,
     color: 'orange',
-    color10: 'green'
+    color10: 'green',
+    labelcolor: 'label-zero'
   },
   1: {
     val: 1,
