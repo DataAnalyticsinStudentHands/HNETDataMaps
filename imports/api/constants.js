@@ -3,9 +3,10 @@ export const flagsHash = {
     val: 0,
     description: 'zero',
     label: 'Q',
-    selectable: false,
+    selectable: true,
     color: 'orange',
-    color10: 'green'
+    color10: 'green',
+    labelcolor: 'label-zero'
   },
   1: {
     val: 1,
@@ -115,7 +116,7 @@ export const channelHash = {
   SO2_SO2Conc: 26
 };
 
-unitsHash = {
+export const unitsHash = {
   O3: 'pbbv',
   Conc: 'pbbv',
   conc: 'pbbv',

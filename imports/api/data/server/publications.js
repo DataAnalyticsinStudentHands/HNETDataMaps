@@ -1,5 +1,6 @@
+import { _ } from 'meteor/underscore';
 import { LiveSites, AggrData, LiveData } from '../../collections_both';
-import { flagsHash } from '../../constants';
+import { flagsHash, unitsHash } from '../../constants';
 
 // aggregation of live and aggregated data to be plotted with highstock
 Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
@@ -388,6 +389,123 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
           const selectedSite = LiveSites.findOne({ AQSID: site });
 
           subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
+            name: selectedSite.siteName,
+            type: 'scatter',
+            marker: {
+              enabled: true,
+              radius: 2,
+              symbol: 'circle',
+              fillColor: `${selectedSite.compositeColor}`
+            },
+            lineWidth: 0,
+            data: dataSorted,
+            yAxis: {
+              allowDecimals: false,
+              title: {
+                text: unitsHash[measurement]
+              },
+              min: 0,
+              opposite: false
+            }
+          });
+        }
+      }
+    }
+  }, function(error) {
+    Meteor._debug('error during composite publication aggregation: ' + error);
+  });
+});
+
+Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
+
+  var subscription = this;
+  var pollCompData = {};
+
+  var aggCompPipe = [
+    {
+      $match: {
+        epoch: {
+          $gt: parseInt(startEpoch, 10),
+          $lt: parseInt(endEpoch, 10)
+        },
+        site: {
+          $in: ["482010695", "99999"]
+        }
+      }
+    }, {
+      $sort: {
+        epoch: -1
+      }
+    }, {
+      $group: {
+        _id: '$subTypes',
+        data: {
+          $push: {
+            site: '$site',
+            epoch: '$epoch'
+          }
+        }
+      }
+    }
+  ];
+
+  AggrData.aggregate(aggCompPipe, (err, results) => {
+    // create new structure for composite data series to be used for charts
+
+    var t0 = now();
+    if (results.length > 0) {
+      results.forEach((line) => {
+        const epoch = line.data[0].epoch;
+        const site = line.data[0].site;
+        _.each(line._id, (data) => { // Instrument, HPM60 etc.
+          _.each(data, (points, measurement) => { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+            if (!pollCompData[measurement]) { // create placeholder for measurement
+              pollCompData[measurement] = {};
+            }
+            if (!pollCompData[measurement][site]) { // create placeholder for series if not exists
+              pollCompData[measurement][site] = [];
+            }
+
+            if (_.last(points).val === 1) { // get all measurements where flag == 1
+              let datapoint = {};
+              // HNET special treatment for precipitation using sum instead of avg
+              if (measurement.indexOf('Precip') >= 0) {
+                datapoint = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[0].val // sum
+                };
+              } else {
+                datapoint = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[1].val // average
+                };
+              }
+
+              pollCompData[measurement][site].push(datapoint);
+            }
+          });
+        });
+      });
+    }
+
+var t1 = now();
+logger.info("Call to doSomething took " + (t1 - t0) + " milliseconds.")
+
+    for (var measurement in pollCompData) {
+      if (pollCompData.hasOwnProperty(measurement)) {
+        for (var site in pollCompData[measurement]) { //key equals measurement
+          // skip loop if the property is from prototype
+          if (!pollCompData[measurement].hasOwnProperty(site))
+            continue;
+
+          var dataSorted = pollCompData[measurement][site].sort(function(obj1, obj2) {
+            // Ascending: first age less than the previous
+            return obj1.x - obj2.x;
+          });
+
+          const selectedSite = LiveSites.findOne({ AQSID: site });
+
+          subscription.added('compositeCampusDataSeries', `${measurement}_${site}_comp}`, {
             name: selectedSite.siteName,
             type: 'scatter',
             marker: {
