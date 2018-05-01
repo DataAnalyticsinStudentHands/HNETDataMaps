@@ -116,7 +116,7 @@ export const channelHash = {
   SO2_SO2Conc: 26
 };
 
-unitsHash = {
+export const unitsHash = {
   O3: 'pbbv',
   Conc: 'pbbv',
   conc: 'pbbv',
