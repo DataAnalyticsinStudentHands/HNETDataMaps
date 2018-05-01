@@ -81,3 +81,14 @@ code {
 .label-zero[href]:focus {
   background-color: #ffad33;
 }
+
+/* Loader image for date loading
+-------------------------------------------------- */
+
+.loader {
+  display: none;
+}
+
+.loading-wrapper {
+  display: none;
+}

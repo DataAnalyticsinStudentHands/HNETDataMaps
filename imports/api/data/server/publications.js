@@ -344,7 +344,8 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
         const epoch = line.data[0].epoch;
         const site = line.data[0].site;
         _.each(line._id, function(data, instrument) { // Instrument, HPM60 etc.
-          _.each(data, function(points, measurement) { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+          _.each(data, function(points, origMeasurement) { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+            const measurement = origMeasurement.toUpperCase();
             if (!pollCompData[measurement]) { // create placeholder for measurement
               pollCompData[measurement] = {};
             }
@@ -416,10 +417,14 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
   });
 });
 
-Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
+Meteor.publish('compositeCampusDataSeries', function() {
 
   var subscription = this;
   var pollCompData = {};
+
+  const startEpoch = 1525095000;
+  const endEpoch = 1525181400;
+
 
   var aggCompPipe = [
     {
@@ -438,13 +443,14 @@ Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
       }
     }, {
       $group: {
-        _id: '$subTypes',
-        data: {
-          $push: {
-            site: '$site',
-            epoch: '$epoch'
-          }
-        }
+        // _id: '$subTypes',
+        // data: {
+        //   $push: {
+        //     site: '$site',
+        //     epoch: '$epoch'
+        //   }
+        // }
+        _id: { subTypes: '$subTypes' , site: '$site' , epoch: '$epoch'}
       }
     }
   ];
@@ -452,13 +458,13 @@ Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
   AggrData.aggregate(aggCompPipe, (err, results) => {
     // create new structure for composite data series to be used for charts
 
-    var t0 = now();
     if (results.length > 0) {
       results.forEach((line) => {
-        const epoch = line.data[0].epoch;
-        const site = line.data[0].site;
-        _.each(line._id, (data) => { // Instrument, HPM60 etc.
-          _.each(data, (points, measurement) => { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+        const epoch = line._id.epoch;
+        const site = line._id.site;
+        _.each(line._id.subTypes, (data) => { // Instrument, HPM60 etc.
+          _.each(data, (points, origMeasurement) => { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+            const measurement = origMeasurement.toUpperCase();
             if (!pollCompData[measurement]) { // create placeholder for measurement
               pollCompData[measurement] = {};
             }
@@ -480,7 +486,6 @@ Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
                   y: points[1].val // average
                 };
               }
-
               pollCompData[measurement][site].push(datapoint);
             }
           });
@@ -488,48 +493,47 @@ Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
       });
     }
 
-var t1 = now();
-logger.info("Call to doSomething took " + (t1 - t0) + " milliseconds.")
 
-    for (var measurement in pollCompData) {
-      if (pollCompData.hasOwnProperty(measurement)) {
-        for (var site in pollCompData[measurement]) { //key equals measurement
-          // skip loop if the property is from prototype
-          if (!pollCompData[measurement].hasOwnProperty(site))
-            continue;
+    Object.keys(pollCompData).forEach((measurement) => {
+      if (Object.prototype.hasOwnProperty.call(pollCompData, measurement)) {
+        const chart = [];
+        Object.keys(pollCompData[measurement]).forEach((site) => {
+          if (Object.prototype.hasOwnProperty.call(pollCompData[measurement], site)) {
+            var dataSorted = pollCompData[measurement][site].sort((obj1, obj2) => {
+              // Ascending: sorting by epoch?
+              return obj1.x - obj2.x;
+            });
 
-          var dataSorted = pollCompData[measurement][site].sort(function(obj1, obj2) {
-            // Ascending: first age less than the previous
-            return obj1.x - obj2.x;
-          });
-
-          const selectedSite = LiveSites.findOne({ AQSID: site });
-
-          subscription.added('compositeCampusDataSeries', `${measurement}_${site}_comp}`, {
-            name: selectedSite.siteName,
-            type: 'scatter',
-            marker: {
-              enabled: true,
-              radius: 2,
-              symbol: 'circle',
-              fillColor: `${selectedSite.compositeColor}`
-            },
-            lineWidth: 0,
-            data: dataSorted,
-            yAxis: {
-              allowDecimals: false,
-              title: {
-                text: unitsHash[measurement]
+            const selectedSite = LiveSites.findOne({ AQSID: site });
+            const series = [{
+              name: selectedSite.siteName,
+              type: 'scatter',
+              marker: {
+                enabled: true,
+                radius: 2,
+                symbol: 'circle',
+                fillColor: `${selectedSite.compositeColor}`
               },
-              min: 0,
-              opposite: false
-            }
-          });
-        }
+              lineWidth: 0,
+              data: dataSorted,
+              yAxis: {
+                allowDecimals: false,
+                title: {
+                  text: unitsHash[measurement]
+                },
+                min: 0,
+                opposite: false
+              }
+            }];
+            chart.push(series);
+          }
+        });
+        subscription.added('compositeCampusDataSeries', measurement, chart);
       }
-    }
+    });
+    this.ready();
   }, function(error) {
-    Meteor._debug('error during composite publication aggregation: ' + error);
+    Meteor._debug('error during campus composite publication aggregation: ' + error);
   });
 });
 

@@ -1,20 +1,45 @@
 <template name="compositeCampus">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Composite Plots for Sites at the UH Main Campus</h3>
+    </div>
+    <div class="panel-body">
+      <h5>Select Date: </h5>
+      <input type="date" value="{{selectedDate}}" id="datepicker">
+    </div>
+  </div>
 
-	<div class="panel panel-default">
-		<div class="panel-heading">
-			<h3 class="panel-title">Composite Plots for Sites at the UH Main Campus</h3>
-		</div>
-		<div class="panel-body">
-			<h5>Select Date: </h5>
-			<input type="date" value="{{selectedDate}}" id="datepicker">
-		</div>
-	</div>
 
-	<!-- container for charts -->
-	{{#each charts}}
-	<div id="container-chart-{{_id}}" style="width: 100%"></div>
-	<!-- placeholder for editPoints modal -->
-	{{else}}
-		<p >Found no data for the selected date.</p>
-	{{/each}}
+
+
+
+
+  {{> loader}}
+
+  {{#if Template.subscriptionsReady}}
+    <div class="loading-wrapper">
+      <h3 class="page-header">Smooth as butter, kid.</h3>
+      <div class="list-group">
+        <!-- container for charts   -->
+        {{#each charts}}
+          <div id="container-chart-{{_id}}" style="width: 100%">{{createChart}}</div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+</template>
+
+<template name="loader">
+  <svg class="loader" version="1.1" id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     width="40px" height="40px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+  <path fill="#000" d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z">
+    <animateTransform attributeType="xml"
+      attributeName="transform"
+      type="rotate"
+      from="0 25 25"
+      to="360 25 25"
+      dur="0.6s"
+      repeatCount="indefinite"/>
+    </path>
+  </svg>
 </template>
