@@ -7,5 +7,8 @@ export const DataSeries = new Mongo.Collection('dataSeries');
 // collection used for charts only (composite data in the right format)
 export const CompositeDataSeries = new Mongo.Collection('compositeDataSeries');
 
+// collection used for charts only (composite data in the right format)
+export const CompositeCampusDataSeries = new Mongo.Collection('compositeCampusDataSeries');
+
 // collection used for charts only (public data in the right format)
 export const PublicDataSeries = new Mongo.Collection('publicDataSeries');

@@ -52,8 +52,12 @@
 			{{/each}}
 		</ul>
 	</li>
-	<li class="{{ activeIfTemplateIs 'composite' }}">
-		<a class="item" href="{{pathFor 'composite'}}">Composites</a>
+  <li class="dropdown">
+		<a href="#" data-toggle="dropdown" class="dropdown-toggle">Cdssafs<b class="caret"></b></a>
+		<ul class="dropdown-menu">
+			<li><a href="{{pathFor 'composite'}}">All Sites</a></li>
+			<li><a href="{{pathFor 'compositeCampus'}}">UH Campus Sites</a></li>
+		</ul>
 	</li>
 	{{/if}} {{#if isInRole 'admin,Editor' }}
 	<li class="dropdown">

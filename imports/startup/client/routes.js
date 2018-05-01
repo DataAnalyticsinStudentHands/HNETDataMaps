@@ -4,6 +4,7 @@ import '../../ui/layouts/layout';
 import '../../ui/pages/about/about';
 import '../../ui/pages/admin/fixSites';
 import '../../ui/pages/composite/composite';
+import '../../ui/pages/composite/compositeCampus';
 import '../../ui/pages/datamanagement/datamanagement';
 import '../../ui/pages/datamanagement/listEdits';
 import '../../ui/pages/datamanagement/listAutomaticPushes';
@@ -83,6 +84,13 @@ Router.route('hnetsite', {
 Router.route('/composite/', {
   name: 'composite',
   template: 'composite',
+  action: function() {
+    this.render();
+  }
+});
+Router.route('/compositeCampus/', {
+  name: 'compositeCampus',
+  template: 'compositeCampus',
   action: function() {
     this.render();
   }
