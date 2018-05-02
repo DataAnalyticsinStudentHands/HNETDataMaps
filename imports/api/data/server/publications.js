@@ -496,39 +496,29 @@ Meteor.publish('compositeCampusDataSeries', function() {
 
     Object.keys(pollCompData).forEach((measurement) => {
       if (Object.prototype.hasOwnProperty.call(pollCompData, measurement)) {
-        const chart = [];
+
+        const chartSeries = { charts: [] };
         Object.keys(pollCompData[measurement]).forEach((site) => {
           if (Object.prototype.hasOwnProperty.call(pollCompData[measurement], site)) {
             var dataSorted = pollCompData[measurement][site].sort((obj1, obj2) => {
               // Ascending: sorting by epoch?
               return obj1.x - obj2.x;
             });
-
             const selectedSite = LiveSites.findOne({ AQSID: site });
-            const series = [{
+            const series = {
               name: selectedSite.siteName,
-              type: 'scatter',
               marker: {
                 enabled: true,
                 radius: 2,
                 symbol: 'circle',
                 fillColor: `${selectedSite.compositeColor}`
               },
-              lineWidth: 0,
-              data: dataSorted,
-              yAxis: {
-                allowDecimals: false,
-                title: {
-                  text: unitsHash[measurement]
-                },
-                min: 0,
-                opposite: false
-              }
-            }];
-            chart.push(series);
+              data: dataSorted
+            };
+            chartSeries.charts.push(series);
           }
         });
-        subscription.added('compositeCampusDataSeries', measurement, chart);
+        subscription.added('compositeCampusDataSeries', measurement, chartSeries);
       }
     });
     this.ready();

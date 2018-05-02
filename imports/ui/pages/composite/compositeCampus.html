@@ -9,22 +9,14 @@
     </div>
   </div>
 
-
-
-
-
-
   {{> loader}}
 
   {{#if Template.subscriptionsReady}}
     <div class="loading-wrapper">
-      <h3 class="page-header">Smooth as butter, kid.</h3>
-      <div class="list-group">
         <!-- container for charts   -->
         {{#each charts}}
-          <div id="container-chart-{{_id}}" style="width: 100%">{{createChart}}</div>
+          <div id="container-chart-{{_id}}" style="width: 100%">{{createChart _id}}</div>
         {{/each}}
-      </div>
     </div>
   {{/if}}
 </template>

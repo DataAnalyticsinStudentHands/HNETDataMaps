@@ -126,6 +126,7 @@ export const unitsHash = {
   WS: 'meter/second',
   WD: 'degree',
   Temp: 'degree C',
+  TEMP: 'degree C',
   RH: 'percent',
   MassConc: 'ugm3',
   AmbTemp: 'C'
