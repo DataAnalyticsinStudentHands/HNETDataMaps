@@ -17,7 +17,7 @@ import { DataExporter } from '../../components/dataexporter';
 // 3 days
 const startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
 const selectedFlag = new ReactiveVar(null);
-var note = new ReactiveVar(null);
+const note = new ReactiveVar(null);
 
 Meteor.subscribe('liveSites');
 
@@ -338,8 +338,7 @@ Template.editPoints.events({
     });
   },
   // Handle the note filed change event (update note)
-  'change .js-editNote' (event) {
-
+  'input #editNote'(event) {
     // Get value from editNote element
     const text = event.currentTarget.value;
     note.set(text);
@@ -395,8 +394,17 @@ Template.editPoints.helpers({
     return val.toFixed(3);
   },
   isValid() {
-    const validFlagSet = _.pluck(_.where(flagsHash, { selectable: true }), 'val');
-    return _.contains(validFlagSet, selectedFlag.get());
+    let flagSelection = false;
+    let noteWritten = false;
+    if (note.get() !== null) {
+      if (note.get() !== '') {
+        noteWritten = true;
+      }
+    }
+    if (selectedFlag.get() !== null) {
+      flagSelection = true;
+    }
+    return (flagSelection && noteWritten);
   }
 });
 
