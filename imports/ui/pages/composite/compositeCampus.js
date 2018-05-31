@@ -10,8 +10,8 @@ import { unitsHash } from '../../../api/constants';
 import './compositeCampus.html';
 
 // 24 hours ago - seconds
-var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
-var endEpoch = new ReactiveVar(moment().unix());
+const startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
+const endEpoch = new ReactiveVar(moment().unix());
 
 Highcharts.setOptions({
   global: {
@@ -23,12 +23,24 @@ Highcharts.setOptions({
   }
 });
 
-Template.compositeCampus.onCreated(function() {
-//  this.getListId = () => FlowRouter.getParam('_id');
+Template.compositeCampus.onRendered(() => {
+  // setup date picker
+  this.$('#datetimepicker1').datetimepicker({
+    format: 'MM/DD/YYYY',
+    useCurrent: true,
+    defaultDate: new Date(),
+    widgetPositioning: {
+      horizontal: 'left',
+      vertical: 'auto'
+    }
+  });
+});
 
+Template.compositeCampus.onCreated(function() {
   this.autorun(() => {
-    this.subscribe('compositeCampusDataSeries', () => {
-      $('.loader').delay(300).fadeOut('slow', () => {
+    this.subscribe('compositeCampusDataSeries', startEpoch.get(), endEpoch.get(), () => {
+      $('svg').delay(750).fadeIn();
+      $('.loader').delay(1000).fadeOut('slow', () => {
         $('.loading-wrapper').fadeIn('slow');
       });
     });
@@ -42,24 +54,19 @@ Template.compositeCampus.helpers({
   charts() {
     return CompositeCampusDataSeries.find();
   },
-  createChart(test) {
-    const data = CompositeCampusDataSeries.find({ _id: test }).fetch();
+  createChart(measurement) {
+    const data = CompositeCampusDataSeries.find({ _id: measurement }).fetch();
 
     // Use Meteor.defer() to create chart after DOM is ready:
-    Meteor.defer(function() {
-
-    // Create standard Highcharts chart with options:
-      Highcharts.StockChart(`container-chart-${test}`, {
-        exporting: {
-          enabled: true
-        },
-        type: 'scatter',
-        lineWidth: 0,
+    Meteor.defer(() => {
+      if (document.getElementById(`container-chart-${measurement}`) !== null) {
+      // Create standard Highcharts chart with options:
+      const chart = Highcharts.StockChart(`container-chart-${measurement}`, {
         chart: {
           zoomType: 'x'
         },
         title: {
-          text: test
+          text: measurement
         },
         xAxis: {
           type: 'datetime',
@@ -78,7 +85,7 @@ Template.compositeCampus.helpers({
         yAxis: {
           allowDecimals: false,
           title: {
-            text: unitsHash[test]
+            text: unitsHash[measurement]
           },
           min: 0,
           opposite: false
@@ -137,17 +144,19 @@ Template.compositeCampus.helpers({
           selected: 0
         }
       });
+      // allow some time for highcharts to figure out right container size
+      setTimeout(() => {
+        chart.reflow();
+      }, 200);
+    }
     });
   }
 });
 
 Template.compositeCampus.events({
-  'change #datepicker' (event) {
-    startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
+  'dp.change #datetimepicker1'(event) {
+    // Get the selected date
+    startEpoch.set(moment(event.date, 'YYYY-MM-DD').unix());
     endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
   }
-});
-
-Template.compositeCampus.onRendered(() => {
-  $('svg').delay(200).fadeIn();
 });

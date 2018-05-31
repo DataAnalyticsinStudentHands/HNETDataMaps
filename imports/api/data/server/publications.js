@@ -417,16 +417,12 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
   });
 });
 
-Meteor.publish('compositeCampusDataSeries', function() {
+Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
 
   var subscription = this;
   var pollCompData = {};
 
-  const startEpoch = 1525095000;
-  const endEpoch = 1525181400;
-
-
-  var aggCompPipe = [
+  const aggCompPipe = [
     {
       $match: {
         epoch: {
@@ -434,7 +430,7 @@ Meteor.publish('compositeCampusDataSeries', function() {
           $lt: parseInt(endEpoch, 10)
         },
         site: {
-          $in: ["482010695", "99999"]
+          $in: ['482010695', '99999']
         }
       }
     }, {
@@ -443,21 +439,13 @@ Meteor.publish('compositeCampusDataSeries', function() {
       }
     }, {
       $group: {
-        // _id: '$subTypes',
-        // data: {
-        //   $push: {
-        //     site: '$site',
-        //     epoch: '$epoch'
-        //   }
-        // }
-        _id: { subTypes: '$subTypes' , site: '$site' , epoch: '$epoch'}
+        _id: { subTypes: '$subTypes', site: '$site', epoch: '$epoch' }
       }
     }
   ];
 
   AggrData.aggregate(aggCompPipe, (err, results) => {
     // create new structure for composite data series to be used for charts
-
     if (results.length > 0) {
       results.forEach((line) => {
         const epoch = line._id.epoch;
@@ -493,10 +481,8 @@ Meteor.publish('compositeCampusDataSeries', function() {
       });
     }
 
-
     Object.keys(pollCompData).forEach((measurement) => {
       if (Object.prototype.hasOwnProperty.call(pollCompData, measurement)) {
-
         const chartSeries = { charts: [] };
         Object.keys(pollCompData[measurement]).forEach((site) => {
           if (Object.prototype.hasOwnProperty.call(pollCompData[measurement], site)) {
@@ -507,6 +493,7 @@ Meteor.publish('compositeCampusDataSeries', function() {
             const selectedSite = LiveSites.findOne({ AQSID: site });
             const series = {
               name: selectedSite.siteName,
+              type: 'scatter',
               marker: {
                 enabled: true,
                 radius: 2,
@@ -518,6 +505,7 @@ Meteor.publish('compositeCampusDataSeries', function() {
             chartSeries.charts.push(series);
           }
         });
+
         subscription.added('compositeCampusDataSeries', measurement, chartSeries);
       }
     });

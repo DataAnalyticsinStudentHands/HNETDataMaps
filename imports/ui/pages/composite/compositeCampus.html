@@ -4,8 +4,19 @@
       <h3 class="panel-title">Composite Plots for Sites at the UH Main Campus</h3>
     </div>
     <div class="panel-body">
-      <h5>Select Date: </h5>
-      <input type="date" value="{{selectedDate}}" id="datepicker">
+      <div class="row">
+        <div class="col-xs-2">
+          <label for="datetimepicker1">Select Date:</label>
+          <div class="form-group">
+            <div class='input-group date' id='datetimepicker1'>
+                <input type='text' class="form-control" id='selectedDate'/>
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
+        </div>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -14,10 +25,17 @@
   {{#if Template.subscriptionsReady}}
     <div class="loading-wrapper">
         <!-- container for charts   -->
-        {{#each charts}}
-          <div id="container-chart-{{_id}}" style="width: 100%">{{createChart _id}}</div>
-        {{/each}}
+        {{#with charts}}
+            {{#if this.count}}
+              {{#each this}}
+                <div id="container-chart-{{_id}}" style="width: 100% !important;">{{createChart _id}}</div>
+              {{/each}}
+            {{else}}
+               <h4><span class="label label-default">No data found</span></h4>
+            {{/if}}
+          {{/with}}
     </div>
+
   {{/if}}
 </template>
 
