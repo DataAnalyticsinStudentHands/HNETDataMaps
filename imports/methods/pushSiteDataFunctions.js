@@ -186,11 +186,18 @@ export const pushSiteData = function pushSiteData(aqsid) {
     if (site.lastPushEpoch > moment().subtract(1, 'days').unix()) {
       // use last endEpoch as starting point
       const lastPush = Exports.findOne({ pushEpoch: site.lastPushEpoch });
-      let startEpoch = lastPush.endEpoch;
-      if (startEpoch === undefined) {
+      let startEpoch;
+      if (lastPush === undefined) {
         // or if just has been resetted
         startEpoch = site.lastPushEpoch;
+      } else {
+        startEpoch = lastPush.endEpoch;
+        if (startEpoch === undefined) {
+          // or if just has been resetted
+          startEpoch = site.lastPushEpoch;
+        }
       }
+
       // try to find everything that is available until now
       const endEpoch = moment().unix();
 
