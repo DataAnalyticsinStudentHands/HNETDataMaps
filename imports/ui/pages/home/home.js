@@ -17,7 +17,7 @@ Template.home.onRendered(function() {
   });
 
   $('#displayMap').css('height', window.innerHeight - 20);
-  $('#displayMap').css('width', window.innerWidth / (2 - 20));
+  $('#displayMap').css('width', window.innerWidth /2 - 20);
   L.Icon.Default.imagePath = 'packages/bevanhunt_leaflet/images';
 
   AQmap.setView([
