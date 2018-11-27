@@ -14,8 +14,8 @@ import { DataSeries } from '../../../api/collections_client';
 import { flagsHash } from '../../../api/constants';
 import { DataExporter } from '../../components/dataexporter';
 
-// 3 days
-const startEpoch = new ReactiveVar(moment().subtract(4320, 'minutes').unix());
+// 1 day
+const startEpoch = new ReactiveVar(moment().subtract(1440, 'minutes').unix());
 const selectedFlag = new ReactiveVar(null);
 const note = new ReactiveVar(null);
 
@@ -203,10 +203,6 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
           count: 1,
           text: '1 Day'
         }, {
-          type: 'day',
-          count: 3,
-          text: '3 Days'
-        }, {
           type: 'minute',
           count: 60,
           text: 'Hour'
@@ -215,7 +211,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
       buttonTheme: {
         width: 60
       },
-      selected: 1
+      selected: 0
     }
   });
 }
@@ -236,7 +232,7 @@ Template.site.onCreated(function() {
       mySub.stop();
     }
     // Subscribe
-    mySub = Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix());
+    mySub = Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(1440, 'minutes').unix());
 
     Charts.remove({});
 
@@ -446,6 +442,6 @@ Template.site.events({
   },
   'click #downloadCurrent' () {
     // call export and download
-    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(4320, 'minutes').unix(), false);
+    DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(1440, 'minutes').unix(), false);
   }
 });
