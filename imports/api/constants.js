@@ -106,6 +106,7 @@ export const channelHash = {
   NOx_NOxconc: 30,
   NOy_NOyConc: 34,
   NO_NOConc: 28,
+  NO2_NO2conc: 29,
   NOx_NO2Conc: 29,
   Rain_Precip: 8,
   Baro_Press: 9,
