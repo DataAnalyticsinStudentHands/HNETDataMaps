@@ -342,7 +342,7 @@ const makeObj = (keys, startIndex, previousObject) => {
       const subKeys = newKey.split('_'); // split each column header
       if (subKeys.length > startIndex) { // skipping e.g. 'TheTime'
         metron = subKeys[2]; // instrument i.e. Wind, Ozone etc.
-        const measurement = subKeys[3]; // measurement conc, temp, etc.
+        const measurement = subKeys[3]; // measurement/channel conc, temp, etc.
         const value = keys[key];
         let unitType = 'NA';
         if (subKeys[4] !== undefined) {
@@ -370,7 +370,7 @@ const makeObj = (keys, startIndex, previousObject) => {
 
   for (var subType in obj.subTypes) {
     if (obj.subTypes.hasOwnProperty(subType)) {
-      // automatic flagging of 03 values to be flagged with 9(N)
+      // fix automatic flagging of 03 values to be flagged with 9(N)
       if (subType === 'O3' || subType === '49i') {
         // condition: O3 value above 250
         if (obj.subTypes[subType][1].val > 250) {
@@ -381,6 +381,26 @@ const makeObj = (keys, startIndex, previousObject) => {
           const diff = obj.subTypes[subType][1].val - previousObject.subTypes[subType][1].val;
           if (diff >= 30) {
             obj.subTypes[subType][0].val = 9;
+          }
+        }
+      }
+      // fix for RH values
+      if (subType === 'TRH' || subType === 'HMP60') {
+        // find index for RH channel
+        let rhIndex = 0;
+        obj.subTypes[subType].forEach((item, index) => {
+          if (item.metric === 'RH') {
+            rhIndex = index;
+          }
+        });
+        // condition: RH value < 1 -> set to 100
+        if (obj.subTypes[subType][rhIndex].metric === 'RH' && obj.subTypes[subType][rhIndex].val.length !== 0 && obj.subTypes[subType][rhIndex].val < 1) {
+          obj.subTypes[subType][rhIndex].val = 100;
+        }
+        // condition: prevoius RH value - current RH > 15 -> set to 100
+        if (previousObject) {
+          if (obj.subTypes[subType][rhIndex].metric === 'RH' && ((obj.subTypes[subType][rhIndex].val - previousObject.subTypes[subType][rhIndex].val) > 15)) {
+            obj.subTypes[subType][rhIndex].val = 100;
           }
         }
       }
