@@ -90,5 +90,5 @@ code {
 }
 
 .loading-wrapper {
-  display: none;
+  display: initial;
 }

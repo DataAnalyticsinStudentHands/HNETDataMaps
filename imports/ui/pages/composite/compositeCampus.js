@@ -52,6 +52,7 @@ Template.compositeCampus.helpers({
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
   },
   charts() {
+    console.log("hello");
     return CompositeCampusDataSeries.find();
   },
   createChart(measurement) {
@@ -61,94 +62,90 @@ Template.compositeCampus.helpers({
     Meteor.defer(() => {
       if (document.getElementById(`container-chart-${measurement}`) !== null) {
       // Create standard Highcharts chart with options:
-      const chart = Highcharts.StockChart(`container-chart-${measurement}`, {
-        chart: {
-          zoomType: 'x'
-        },
-        title: {
-          text: measurement
-        },
-        xAxis: {
-          type: 'datetime',
-          title: {
-            text: 'Local Time'
+        const chart = Highcharts.StockChart(`container-chart-${measurement}`, {
+          chart: {
+            zoomType: 'x'
           },
-          minRange: 3600
-        },
-        navigator: {
+          title: {
+            text: measurement
+          },
           xAxis: {
-            dateTimeLabelFormats: {
-              hour: '%e. %b'
+            type: 'datetime',
+            title: {
+              text: 'Local Time'
+            },
+            minRange: 3600
+          },
+          navigator: {
+            xAxis: {
+              dateTimeLabelFormats: {
+                hour: '%e. %b'
+              }
             }
+          },
+          yAxis: {
+            allowDecimals: false,
+            title: {
+              text: unitsHash[measurement]
+            },
+            min: 0,
+            opposite: false
+          },
+          series: data[0].charts,
+          tooltip: {
+            enabled: true,
+            crosshairs: [true],
+            positioner(labelWidth, labelHeight, point) {
+              let tooltipX;
+              let tooltipY;
+              if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
+                tooltipX = this.chart.plotLeft;
+                tooltipY = this.chart.plotTop + this.chart.plotHeight - (2 * labelHeight) - 10;
+              } else {
+                tooltipX = this.chart.plotLeft;
+                tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
+              }
+              return {
+                x: tooltipX,
+                y: tooltipY
+              };
+            },
+            formatter() {
+              let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
+              s += `<br/>${this.series.name} <b>${this.y.toFixed(2)}</b>`;
+              return s;
+            },
+            shared: false
+          },
+          credits: {
+            enabled: false
+          },
+          legend: {
+            enabled: true,
+            align: 'right',
+            layout: 'vertical',
+            verticalAlign: 'top',
+            y: 100
+          },
+          rangeSelector: {
+            inputEnabled: false,
+            allButtonsEnabled: true,
+            buttons: [{
+              type: 'day',
+              count: 1,
+              text: '1 Day'
+            }, {
+              type: 'minute',
+              count: 60,
+              text: 'Hour'
+            }],
+            buttonTheme: {
+              width: 60
+            },
+            selected: 0
           }
-        },
-        yAxis: {
-          allowDecimals: false,
-          title: {
-            text: unitsHash[measurement]
-          },
-          min: 0,
-          opposite: false
-        },
-        series: data[0].charts,
-        tooltip: {
-          enabled: true,
-          crosshairs: [true],
-          positioner(labelWidth, labelHeight, point) {
-            let tooltipX;
-            let tooltipY;
-            if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
-              tooltipX = this.chart.plotLeft;
-              tooltipY = this.chart.plotTop + this.chart.plotHeight - (2 * labelHeight) - 10;
-            } else {
-              tooltipX = this.chart.plotLeft;
-              tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
-            }
-            return {
-              x: tooltipX,
-              y: tooltipY
-            };
-          },
-          formatter() {
-            let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
-            s += `<br/>${this.series.name} <b>${this.y.toFixed(2)}</b>`;
-            return s;
-          },
-          shared: false
-        },
-        credits: {
-          enabled: false
-        },
-        legend: {
-          enabled: true,
-          align: 'right',
-          layout: 'vertical',
-          verticalAlign: 'top',
-          y: 100
-        },
-        rangeSelector: {
-          inputEnabled: false,
-          allButtonsEnabled: true,
-          buttons: [{
-            type: 'day',
-            count: 1,
-            text: '1 Day'
-          }, {
-            type: 'minute',
-            count: 60,
-            text: 'Hour'
-          }],
-          buttonTheme: {
-            width: 60
-          },
-          selected: 0
-        }
-      });
-      // allow some time for highcharts to figure out right container size
-      setTimeout(() => {
-        chart.reflow();
-      }, 200);
-    }
+        });
+      }
     });
   }
 });
