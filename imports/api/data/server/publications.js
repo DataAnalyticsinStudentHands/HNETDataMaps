@@ -1,11 +1,12 @@
+import { Meteor } from 'meteor/meteor';
 import { _ } from 'meteor/underscore';
-import { LiveSites, AggrData, LiveData } from '../../collections_both';
-import { flagsHash, unitsHash } from '../../constants';
+import { LiveSites, AggrData, LiveData, Exports } from '../../collections_both';
+import { AggrEdits } from '../../collections_client';
+import { flagsHash } from '../../constants';
 
 // aggregation of live and aggregated data to be plotted with highstock
 Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
-
-  var subscription = this;
+  const subscription = this;
   const pollData = {};
   const poll5Data = {};
 
@@ -15,39 +16,39 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
         $gt: parseInt(startEpoch, 10),
         $lt: parseInt(endEpoch, 10)
       }
-    }] }, { fields: { epoch: 1, subTypes: 1 }, sort: { epoch: 1 } }).forEach(function (test) {
+    }] }, { fields: { epoch: 1, subTypes: 1 }, sort: { epoch: 1 } }).forEach((test) => {
       // reorganize aggregated data for plot
       const epoch = test.epoch;
-      _.each(test.subTypes, function(subKey, subType) { // subType is O3, etc.
-          if (!poll5Data[subType]) {
-            poll5Data[subType] = {};
+      _.each(test.subTypes, function (subKey, subType) { // subType is O3, etc.
+        if (!poll5Data[subType]) {
+          poll5Data[subType] = {};
+        }
+        _.each(subKey, function(sub, key) { // sub is the array with metric/val pairs as subarrays
+          if (!poll5Data[subType][key]) { // create placeholder if not exists
+            poll5Data[subType][key] = [];
+            poll5Data[subType][key].unit = sub[3]; // unit
           }
-          _.each(subKey, function(sub, key) { // sub is the array with metric/val pairs as subarrays
-            if (!poll5Data[subType][key]) { // create placeholder if not exists
-              poll5Data[subType][key] = [];
-              poll5Data[subType][key].unit = sub[3]; // unit
+          if (_.last(sub).metric.indexOf('Flag') >= 0) { // get all measurements
+            let datapoint = {};
+            // HNET special treatment for precipitation using sum instead of avg
+            if (key.indexOf('Precip') >= 0) {
+              datapoint = {
+                x: epoch * 1000, // milliseconds
+                y: sub[0].val, // sum
+                color: flagsHash[_.last(sub).val].color, // the last element contains the latest flag
+                name: _.last(sub).val // will use the name of the point to hold the flag value
+              };
+            } else {
+              datapoint = {
+                x: epoch * 1000, // milliseconds
+                y: sub[1].val, // average
+                color: flagsHash[_.last(sub).val].color, // the last element contains the latest flag
+                name: _.last(sub).val // will use the name of the point to hold the flag value
+              };
             }
-            if (_.last(sub).metric.indexOf('Flag') >= 0) { // get all measurements
-              let datapoint = {};
-              // HNET special treatment for precipitation using sum instead of avg
-              if (key.indexOf('Precip') >= 0) {
-                datapoint = {
-                  x: epoch * 1000, // milliseconds
-                  y: sub[0].val, // sum
-                  color: flagsHash[_.last(sub).val].color, // the last element contains the latest flag
-                  name: _.last(sub).val // will use the name of the point to hold the flag value
-                };
-              } else {
-                datapoint = {
-                  x: epoch * 1000, // milliseconds
-                  y: sub[1].val, // average
-                  color: flagsHash[_.last(sub).val].color, // the last element contains the latest flag
-                  name: _.last(sub).val // will use the name of the point to hold the flag value
-                };
-              }
-              poll5Data[subType][key].push(datapoint);
-            }
-          });
+            poll5Data[subType][key].push(datapoint);
+          }
+        });
       });
     });
 
@@ -55,8 +56,9 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
     if (poll5Data.hasOwnProperty(pub5Key)) {
       for (var key in poll5Data[pub5Key]) { // key equals measurement
         // skip loop if the property is from prototype
-        if (!poll5Data[pub5Key].hasOwnProperty(key))
-           continue;
+        if (!poll5Data[pub5Key].hasOwnProperty(key)) {
+          continue;
+        }
 
         // create yAxis object
         let yAxis = {};
@@ -104,8 +106,8 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             title: {
               text: `${key}[${poll5Data[pub5Key][key].unit.val}]`
             },
-              opposite: false,
-              min: 0
+            opposite: false,
+            min: 0
           };
         } else if (pub5Key.indexOf('Baro') >= 0) {
           // HNET setting for Baro instrument
@@ -158,7 +160,6 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
       $lt: parseInt(endEpoch, 10)
     }
   }] }, { fields: { epoch: 1, subTypes: 1 }, sort: { epoch: 1 } }).forEach(function (test) {
-
     // reorganize live data for plot
     const epoch = test.epoch;
     _.each(test.subTypes, function(subKey, subType) {
@@ -307,11 +308,10 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
 
 // aggregation of aggregated data to be plotted with highstock for composites
 Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
+  const subscription = this;
+  const pollCompData = {};
 
-  var subscription = this;
-  var pollCompData = {};
-
-  var aggCompPipe = [
+  const aggCompPipe = [
     {
       $match: {
         epoch: {
@@ -402,9 +402,8 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
 });
 
 Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
-
-  var subscription = this;
-  var pollCompData = {};
+  const subscription = this;
+  const pollCompData = {};
 
   const aggCompPipe = [
     {
@@ -673,7 +672,7 @@ Meteor.publish('exports', function() {
 Meteor.publish('liveSites', function() {
   return LiveSites.find({}, {
     sort: {
-      'siteName': 1
+      siteName: 1
     }
   });
 });
@@ -684,8 +683,8 @@ Meteor.publish('userData', function() {
       _id: this.userId
     }, {
       fields: {
-        'other': 1,
-        'things': 1
+        other: 1,
+        things: 1
       }
     });
   } else {
