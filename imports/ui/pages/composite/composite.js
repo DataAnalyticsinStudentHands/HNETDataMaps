@@ -1,168 +1,171 @@
 import Highcharts from 'highcharts/highstock';
+import { Meteor } from 'meteor/meteor';
+import { ReactiveVar } from 'meteor/reactive-var';
+import { moment } from 'meteor/momentjs:moment';
+import { Template } from 'meteor/templating';
+import { _ } from 'meteor/underscore';
 import { CompositeDataSeries } from '../../../api/collections_client';
+import { unitsHash } from '../../../api/constants';
 
 import './composite.html';
 
 // 24 hours ago - seconds
-var startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
-var endEpoch = new ReactiveVar(moment().unix());
+const startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
+const endEpoch = new ReactiveVar(moment().unix());
 
 Highcharts.setOptions({
   global: {
     useUTC: false,
-    getTimezoneOffset: function (timestamp) {
+    getTimezoneOffset: (timestamp) => {
       const timezoneOffset = 0;
-
       return timezoneOffset;
     }
   }
 });
 
-// placeholder for dynamic chart containers
-const Charts = new Meteor.Collection(null);
-
-/**
- * Create highstock based chart.
- */
-function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
-  const mychart = new Highcharts.StockChart({
-    exporting: {
-      enabled: true,
-    },
-    chart: {
-      zoomType: 'x',
-      renderTo: chartName,
-    },
-    title: {
-      text: titleText,
-    },
-    xAxis: {
-      type: 'datetime',
-      title: {
-        text: 'Local Time',
-      },
-      minRange: 3600,
-    },
-    navigator: {
-      xAxis: {
-        dateTimeLabelFormats: {
-          hour: '%e. %b',
-        },
-      },
-    },
-    yAxis: yAxisOptions,
-    series: seriesOptions,
-    tooltip: {
-      enabled: true,
-      crosshairs: [true],
-      positioner(labelWidth, labelHeight, point) {
-        let tooltipX;
-        let tooltipY;
-        if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
-          tooltipX = this.chart.plotLeft;
-          tooltipY = this.chart.plotTop + this.chart.plotHeight - 2 * labelHeight - 10;
-        } else {
-          tooltipX = this.chart.plotLeft;
-          tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
-        }
-        return {
-          x: tooltipX,
-          y: tooltipY,
-        };
-      },
-      formatter() {
-        let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
-        s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>';
-        return s;
-      },
-      shared: false,
-    },
-    credits: {
-      enabled: false,
-    },
-    legend: {
-      enabled: true,
-      align: 'right',
-      layout: 'vertical',
-      verticalAlign: 'top',
-      y: 100,
-    },
-    rangeSelector: {
-      inputEnabled: false,
-      allButtonsEnabled: true,
-      buttons: [{
-        type: 'day',
-        count: 1,
-        text: '1 Day',
-      }, {
-        type: 'minute',
-        count: 60,
-        text: 'Hour',
-      }],
-      buttonTheme: {
-        width: 60,
-      },
-      selected: 0,
-    },
+Template.composite.onRendered(() => {
+  // setup date picker
+  this.$('#datetimepicker1').datetimepicker({
+    format: 'MM/DD/YYYY',
+    useCurrent: true,
+    defaultDate: new Date(),
+    widgetPositioning: {
+      horizontal: 'left',
+      vertical: 'auto'
+    }
   });
-}
+});
 
-Template.composite.onRendered(function () {
-  // Do reactive stuff when something is added or removed
-  this.autorun(function () {
-    // Subscribe
-    Meteor.subscribe('compositeDataSeries', startEpoch.get(), endEpoch.get());
-    Charts.remove({});
-
-    let initializing = true;
-
-    CompositeDataSeries.find().observeChanges({
-      added: function (series, seriesData) {
-        if (!initializing) { // true only when we first start
-          const measurement = series.split(/[_]+/)[0];
-
-          // store yAxis options in separate variable
-          const yAxisOptions = seriesData.yAxis;
-          delete seriesData.yAxis;
-
-          // insert object into Charts if not yet exists and create new chart
-          if (!Charts.findOne({
-              _id: measurement
-            }, {
-              reactive: false
-            })) {
-            Charts.insert({
-              _id: measurement,
-            });
-
-            const seriesOptions = [];
-            seriesOptions.push(seriesData);
-            createChart(`container-chart-${measurement}`, measurement, seriesOptions, yAxisOptions);
-          } else {
-            // add series to existing chart
-            const index = $(`#container-chart-${measurement}`).data('highchartsChart');
-            const chart = Highcharts.charts[index];
-            chart.addSeries(seriesData);
-          }
-        }
-      },
+Template.composite.onCreated(function () {
+  this.autorun(() => {
+    this.subscribe('compositeDataSeries', startEpoch.get(), endEpoch.get(), () => {
+      $('svg').delay(750).fadeIn();
+      $('.loader').delay(1000).fadeOut('slow', () => {
+        $('.loading-wrapper').fadeIn('slow');
+      });
     });
-    initializing = false;
-  }); // end autorun
-}); // end of onRendered
+  });
+});
 
 Template.composite.helpers({
   selectedDate() {
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
   },
   charts() {
-    return Charts.find(); // This gives data to the html below
+    console.log("hello from all");
+    return CompositeDataSeries.find();
   },
+  createChart(measurement) {
+    const data = CompositeDataSeries.find({ _id: measurement }).fetch();
+
+    // Use Meteor.defer() to create chart after DOM is ready:
+    Meteor.defer(() => {
+      if (document.getElementById(`container-chart-${measurement}`) !== null) {
+      // Create standard Highcharts chart with options:
+        const chart = Highcharts.StockChart(`container-chart-${measurement}`, {
+          chart: {
+            zoomType: 'x'
+          },
+          title: {
+            text: measurement
+          },
+          xAxis: {
+            type: 'datetime',
+            title: {
+              text: 'Local Time'
+            },
+            minRange: 3600
+          },
+          navigator: {
+            xAxis: {
+              dateTimeLabelFormats: {
+                hour: '%e. %b'
+              }
+            }
+          },
+          yAxis: {
+            allowDecimals: false,
+            title: {
+              text: unitsHash[measurement]
+            },
+            min: 0,
+            opposite: false
+          },
+          series: data[0].charts,
+          tooltip: {
+            enabled: true,
+            crosshairs: [true],
+            positioner(labelWidth, labelHeight, point) {
+              let tooltipX;
+              let tooltipY;
+              if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
+                tooltipX = this.chart.plotLeft;
+                tooltipY = this.chart.plotTop + this.chart.plotHeight - (2 * labelHeight) - 10;
+              } else {
+                tooltipX = this.chart.plotLeft;
+                tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
+              }
+              return {
+                x: tooltipX,
+                y: tooltipY
+              };
+            },
+            formatter() {
+              let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
+              s += `<br/>${this.series.name} <b>${this.y.toFixed(2)}</b>`;
+              return s;
+            },
+            shared: false
+          },
+          credits: {
+            enabled: false
+          },
+          legend: {
+            enabled: true,
+            align: 'right',
+            layout: 'vertical',
+            verticalAlign: 'top',
+            y: 100
+          },
+          rangeSelector: {
+            inputEnabled: false,
+            allButtonsEnabled: true,
+            buttons: [{
+              type: 'day',
+              count: 1,
+              text: '1 Day'
+            }, {
+              type: 'minute',
+              count: 60,
+              text: 'Hour'
+            }],
+            buttonTheme: {
+              width: 60
+            },
+            selected: 0
+          }
+        });
+      }
+    });
+  }
 });
 
 Template.composite.events({
-  'change #datepicker' (event) {
-    startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
+  // set y-axis min/max from form
+  'submit .adjust' (event) {
+    // Prevent default browser form submit
+    event.preventDefault();
+    // find axis of graph
+    const target = event.target;
+    const index = $(`#container-chart-${target.id}`).data('highchartsChart');
+    const chart = Highcharts.charts[index];
+    const yAxis = chart.yAxis[0];
+    // Set value from form element
+    yAxis.setExtremes(target.min.value, target.max.value);
   },
+  'dp.change #datetimepicker1'(event) {
+    // Get the selected date
+    startEpoch.set(moment(event.date, 'YYYY-MM-DD').unix());
+    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
+  }
 });

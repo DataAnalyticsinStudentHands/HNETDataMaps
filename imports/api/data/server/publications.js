@@ -325,26 +325,19 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
       }
     }, {
       $group: {
-        _id: '$subTypes',
-        data: {
-          $push: {
-            site: '$site',
-            epoch: '$epoch'
-          }
-        }
+        _id: { subTypes: '$subTypes', site: '$site', epoch: '$epoch' }
       }
     }
   ];
 
-  AggrData.aggregate(aggCompPipe, function(err, results) {
-
+  AggrData.aggregate(aggCompPipe, (err, results) => {
     // create new structure for composite data series to be used for charts
     if (results.length > 0) {
-      results.forEach(function(line) {
-        const epoch = line.data[0].epoch;
-        const site = line.data[0].site;
-        _.each(line._id, function(data, instrument) { // Instrument, HPM60 etc.
-          _.each(data, function(points, origMeasurement) { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
+      results.forEach((line) => {
+        const epoch = line._id.epoch;
+        const site = line._id.site;
+        _.each(line._id.subTypes, (data) => { // Instrument, HPM60 etc.
+          _.each(data, (points, origMeasurement) => { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
             const measurement = origMeasurement.toUpperCase();
             if (!pollCompData[measurement]) { // create placeholder for measurement
               pollCompData[measurement] = {};
@@ -367,7 +360,6 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
                   y: points[1].val // average
                 };
               }
-
               pollCompData[measurement][site].push(datapoint);
             }
           });
@@ -375,43 +367,35 @@ Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
       });
     }
 
-    for (var measurement in pollCompData) {
-      if (pollCompData.hasOwnProperty(measurement)) {
-        for (var site in pollCompData[measurement]) { //key equals measurement
-          // skip loop if the property is from prototype
-          if (!pollCompData[measurement].hasOwnProperty(site))
-            continue;
-
-          var dataSorted = pollCompData[measurement][site].sort(function(obj1, obj2) {
-            // Ascending: first age less than the previous
-            return obj1.x - obj2.x;
-          });
-
-          const selectedSite = LiveSites.findOne({ AQSID: site });
-
-          subscription.added('compositeDataSeries', `${measurement}_${site}_comp}`, {
-            name: selectedSite.siteName,
-            type: 'scatter',
-            marker: {
-              enabled: true,
-              radius: 2,
-              symbol: 'circle',
-              fillColor: `${selectedSite.compositeColor}`
-            },
-            lineWidth: 0,
-            data: dataSorted,
-            yAxis: {
-              allowDecimals: false,
-              title: {
-                text: unitsHash[measurement]
+    Object.keys(pollCompData).forEach((measurement) => {
+      if (Object.prototype.hasOwnProperty.call(pollCompData, measurement)) {
+        const chartSeries = { charts: [] };
+        Object.keys(pollCompData[measurement]).forEach((site) => {
+          if (Object.prototype.hasOwnProperty.call(pollCompData[measurement], site)) {
+            var dataSorted = pollCompData[measurement][site].sort((obj1, obj2) => {
+              // Ascending: sorting by epoch?
+              return obj1.x - obj2.x;
+            });
+            const selectedSite = LiveSites.findOne({ AQSID: site });
+            const series = {
+              name: selectedSite.siteName,
+              type: 'scatter',
+              marker: {
+                enabled: true,
+                radius: 2,
+                symbol: 'circle',
+                fillColor: `${selectedSite.compositeColor}`
               },
-              min: 0,
-              opposite: false
-            }
-          });
-        }
+              data: dataSorted
+            };
+            chartSeries.charts.push(series);
+          }
+        });
+
+        subscription.added('compositeDataSeries', measurement, chartSeries);
       }
-    }
+    });
+    this.ready();
   }, function(error) {
     Meteor._debug('error during composite publication aggregation: ' + error);
   });
