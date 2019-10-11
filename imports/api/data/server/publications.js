@@ -413,7 +413,7 @@ Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
           $lt: parseInt(endEpoch, 10)
         },
         site: {
-          $in: ['482010695', '99999']
+          $in: ['482010695', '482011611']
         }
       }
     }, {
