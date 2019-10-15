@@ -107,6 +107,21 @@ const SitesSchema = new SimpleSchema({
       ]
     }
   },
+  TCEQPushing: {
+    type: String,
+    max: 10,
+    autoform: {
+      options: [
+        {
+          label: 'Active',
+          value: 'Active'
+        }, {
+          label: 'Inactive',
+          value: 'Inactive'
+        }
+      ]
+    }
+  },
   statusCheckInterval: {
     label: 'Status Check Interval [minutes]',
     type: Number
