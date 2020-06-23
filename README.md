@@ -32,7 +32,8 @@ Clone and run: `meteor npm install`
 
 ## Testing in local development environment
 
-`MONGO_URL=mongodb://localhost:27017/DataMaps meteor`
+If you are testing while the client is also running, you may need to use a diifernt port, e.g.
+`MONGO_URL=mongodb://localhost:27017/DataMaps meteor --port 3001`
 
 For debugging with node inspector run `MONGO_URL=mongodb://localhost:27017/DataMaps meteor debug` and open the app in Chrome with the port listed once the app has started.
 
