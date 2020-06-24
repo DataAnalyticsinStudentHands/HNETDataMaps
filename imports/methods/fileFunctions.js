@@ -225,6 +225,7 @@ export const createTCEQData = function createTCEQData(aqsid, data) {
   }
 
   // create site name from incoming folder
+  // TODO use siteGroup instead of UH
   const siteName = (site.incoming.match(new RegExp('UH' +
   '(.*)' +
   '_')))[1].slice(-2);

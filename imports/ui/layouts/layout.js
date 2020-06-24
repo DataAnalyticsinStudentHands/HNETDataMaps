@@ -17,7 +17,16 @@ Template.navItems.helpers({
       : '';
   },
   sites() {
-    return LiveSites.find({ status: 'Active' });
+    return LiveSites.find({ $and: [
+        { status: 'Active' },
+        { siteGroup: 'HNET' }]
+    });
+  },
+  bc2sites() {
+    return LiveSites.find({ $and: [
+        { status: 'Active' },
+        { siteGroup: 'BC2' }]
+    });
   }
 });
 

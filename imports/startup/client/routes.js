@@ -12,6 +12,7 @@ import '../../ui/pages/datamanagement/listManualPushes';
 import '../../ui/pages/home/home';
 import '../../ui/pages/public/public';
 import '../../ui/pages/site/site';
+import '../../ui/pages/bc2site/bc2site';
 
 import '../../ui/pages/admin/versionInfo.html';
 import '../../ui/pages/about/project.html';
@@ -70,6 +71,23 @@ Router.route('hnetsite', {
     return LiveSites.findOne({ AQSID: this.params._id });
   },
   template: 'site',
+  action: function() {
+    const start = Router.current().params.query.startEpoch;
+    if (start) {
+      this.state.set('fromRouter', (start));
+    } else {
+      this.state.set('fromRouter', moment().subtract(4320, 'minutes').unix());
+    }
+    this.render();
+  }
+});
+
+Router.route('bc2site', {
+  path: '/bc2site/:_id',
+  data: function() {
+    return LiveSites.findOne({ AQSID: this.params._id });
+  },
+  template: 'bc2site',
   action: function() {
     const start = Router.current().params.query.startEpoch;
     if (start) {

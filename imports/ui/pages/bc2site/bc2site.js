@@ -7,7 +7,7 @@ import { Router } from 'meteor/iron:router';
 import { _ } from 'meteor/underscore';
 import { sAlert } from 'meteor/juliancwirko:s-alert';
 
-import './site.html';
+import './bc2site.html';
 import '../editPoints.html';
 
 import { LiveSites } from '../../../api/collections_both';
@@ -217,7 +217,7 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
   });
 }
 
-Template.site.onCreated(function() {
+Template.bc2site.onCreated(function() {
   // use query parameter if enetering site through different route
   const controller = Iron.controller();
   startEpoch.set(controller.state.get('fromRouter'));
@@ -410,7 +410,7 @@ Template.registerHelper('formatDate', function(epoch) {
   return moment(epoch).format('YYYY/MM/DD HH:mm:ss');
 });
 
-Template.site.helpers({
+Template.bc2site.helpers({
   sitename() {
     const site = LiveSites.findOne({ AQSID: Router.current().params._id });
     return site && site.siteName;
@@ -423,7 +423,7 @@ Template.site.helpers({
   }
 });
 
-Template.site.events({
+Template.bc2site.events({
   // set y-axis min/max from form
   'submit .adjust' (event) {
     // Prevent default browser form submit

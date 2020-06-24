@@ -1,6 +1,7 @@
 import pathModule from 'path';
 import fs from 'fs-extra';
 import { Meteor } from 'meteor/meteor';
+import { Promise } from 'meteor/promise';
 import { logger } from 'meteor/votercircle:winston';
 import { moment } from 'meteor/momentjs:moment';
 import { Papa } from 'meteor/harrison:papa-parse';
@@ -50,7 +51,8 @@ export const create5minAggregates = function create5minAggregates(siteId, startE
     }
   ];
 
-  LiveData.aggregate(pipeline, { allowDiskUse: true });
+
+  Promise.await(LiveData.rawCollection().aggregate(pipeline).toArray());
 
   // create new structure for data series to be used for charts
   AggrResults.find({}).forEach(function (e) {
@@ -610,6 +612,7 @@ const readFile = Meteor.bindEnvironment((path) => {
 });
 
 export const reimportLiveData = function reimportLiveData(incomingFolder, selectedDate, selectedType) {
+  // TODO use siteGroup instead of UH
   const shortSiteName = incomingFolder.substring(incomingFolder.lastIndexOf('UH') + 2, incomingFolder.lastIndexOf('_'));
   let path = `/hnet/incoming/current/${incomingFolder}/HNET_${shortSiteName}_TCEQ_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
 

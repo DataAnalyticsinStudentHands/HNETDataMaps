@@ -5,3 +5,5 @@ theme.import.less
 node_modules
 npm-shrinkwrap.json
 npm-debug.log
+.idea
+*.iml

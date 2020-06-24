@@ -4,6 +4,7 @@
   "description": "DASH HNET DataMaps - a real time analysis & visualization frame work for sensor data",
   "main": "main.html",
   "dependencies": {
+    "bcrypt": "^5.0.0",
     "chokidar": "^1.7.0",
     "fibers": "^1.0.15",
     "fs-extra": "^0.30.0",

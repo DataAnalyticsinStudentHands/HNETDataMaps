@@ -1,0 +1,80 @@
+<!-- Modal for editing points -->
+<template name="editPoints">
+    <div class="modal fade" id="editPointsModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="pull-left">
+                        <h4><i class="fa fa-flag" aria-hidden="true"></i> Edit Flags</h4>
+                    </div>
+                    <div class="pull-right">
+                        <div class="dropdown">New Flag:
+                            <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                Select one ..
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                                {{#each availableFlags}}
+                                    <li>{{> flagLabel}}</li>
+                                {{/each}}
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Timestamp</th>
+                            <th>Value</th>
+                            <th>Instrument</th>
+                            <th>Measurement</th>
+                            <th>Current Flag</th>
+                            <th>New Flag</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {{#each points}}
+                            <tr>
+                                <td><i class="fa fa-times js-remove-point" data-id="{{id}}"></i></td>
+                                <td>{{formatDate x}}</td>
+                                <td>{{formatDataValue y}}</td>
+                                <td>{{instrument}}</td>
+                                <td>{{measurement}}</td>
+                                <td>{{> flaginTable flag}}</td>
+                                <td>{{> flaginTable flagSelected}}</td>
+                            </tr>
+                        {{/each}}
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <form id=editForm>
+                        <div class="form-group">
+                            <label for="editNote">Note</label>
+                            <input type="text" class="form-control js-editNote" id="editNote" name="editNote" placeholder="Type to note for edit" required/>
+                        </div>
+                        Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.
+                        <button type="button" class="btn btn-default" aria-label="Close" data-dismiss="modal" id="btnCancel"><i class="fa fa-times"></i> Cancel</button>
+                        <button type="button" class="btn btn-primary active {{#if isValid}} disabled{{/if}}" data-dismiss="modal" id="btnPush"><i class="fa fa-check"></i> Push Data Points</button>
+                        <button type="button" class="btn btn-primary active {{#unless isValid}} disabled{{/unless}}" data-dismiss="modal" id="btnChange"><i class="fa fa-check"></i> Change Flag</button>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template name="flagLabel">
+    <a href="#" data-value="{{val}}">
+        <div>
+            <span class="label {{labelcolor}} label-as-badge" title="{{description}}">{{label}}</span> {{description}}</div></a>
+</template>
+
+<template name="flaginTable">
+    <span class="label {{labelcolor}} label-as-badge" title="{{description}}">{{label}}</span> {{description}}
+</template>

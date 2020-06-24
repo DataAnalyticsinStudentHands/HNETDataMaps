@@ -52,6 +52,16 @@
 			{{/each}}
 		</ul>
 	</li>
+        <li class="dropdown">
+            <a href="#" data-toggle="dropdown" class="dropdown-toggle">BC2 Sites <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+                {{#each bc2sites}}
+                    <li>
+                        <a href="{{ pathFor 'bc2site' _id=AQSID }}"> {{siteName}} </a>
+                    </li>
+                {{/each}}
+            </ul>
+        </li>
   <li class="dropdown">
 		<a href="#" data-toggle="dropdown" class="dropdown-toggle">Composites<b class="caret"></b></a>
 		<ul class="dropdown-menu">
