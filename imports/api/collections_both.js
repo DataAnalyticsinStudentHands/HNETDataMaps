@@ -10,6 +10,22 @@ const SitesSchema = new SimpleSchema({
     label: 'Site Name',
     max: 100
   },
+  siteGroup: {
+    type: String,
+    label: 'Site Name',
+    max: 10,
+    autoform: {
+      options: [
+        {
+          label: 'HNET',
+          value: 'HNET'
+        }, {
+          label: 'BC2',
+          value: 'BC2'
+        }
+      ]
+    }
+  },
   AQSID: {
     type: String,
     label: 'AQSID',
