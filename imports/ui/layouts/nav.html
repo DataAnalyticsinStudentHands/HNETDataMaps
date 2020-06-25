@@ -42,48 +42,56 @@
 	</li>
 
 	{{#if currentUser}}
-	<li class="dropdown">
-		<a href="#" data-toggle="dropdown" class="dropdown-toggle">HNET Sites <b class="caret"></b></a>
-		<ul class="dropdown-menu">
-			{{#each sites}}
-			  <li>
-			    <a href="{{ pathFor 'hnetsite' _id=AQSID }}"> {{siteName}} </a>
-			  </li>
-			{{/each}}
-		</ul>
-	</li>
-        <li class="dropdown">
-            <a href="#" data-toggle="dropdown" class="dropdown-toggle">BC2 Sites <b class="caret"></b></a>
-            <ul class="dropdown-menu">
-                {{#each bc2sites}}
-                    <li>
-                        <a href="{{ pathFor 'bc2site' _id=AQSID }}"> {{siteName}} </a>
-                    </li>
-                {{/each}}
-            </ul>
-        </li>
-  <li class="dropdown">
-		<a href="#" data-toggle="dropdown" class="dropdown-toggle">Composites<b class="caret"></b></a>
-		<ul class="dropdown-menu">
-			<li><a href="{{pathFor 'composite'}}">All Sites</a></li>
-			<li><a href="{{pathFor 'compositeCampus'}}">UH Campus Sites</a></li>
-		</ul>
-	</li>
-	{{/if}} {{#if isInRole 'admin,Editor' }}
-	<li class="dropdown">
-		<a href="#" data-toggle="dropdown" class="dropdown-toggle">Data Management<b class="caret"></b></a>
-		<ul class="dropdown-menu">
-			<li><a href="{{pathFor 'listEdits'}}">List Edited Data</a></li>
-			<li><a href="{{pathFor 'listAutomaticPushes'}}">List Automatic Push Data</a></li>
-      <li><a href="{{pathFor 'listManualPushes'}}">List Manual Push Data</a></li>
-			<li><a href="{{pathFor 'datamanagement'}}">Actions</a></li>
-		</ul>
-	</li>
-	{{/if}} {{#if isInRole 'admin' }}
-	<li>
-        <a href="/admin">Admin</a>
-      </li>
-	{{/if}}
+        {{#if isInRole 'editor,admin'}}
+            <li class="dropdown">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">HNET Sites <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    {{#each sites}}
+                        <li>
+                            <a href="{{ pathFor 'hnetsite' _id=AQSID }}"> {{siteName}} </a>
+                        </li>
+                    {{/each}}
+                </ul>
+            </li>
+        {{/if}}
+        {{#if isInRole 'bc2editor,editor,admin'}}
+            <li class="dropdown">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">BC2 Sites <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    {{#each bc2sites}}
+                        <li>
+                            <a href="{{ pathFor 'bc2site' _id=AQSID }}"> {{siteName}} </a>
+                        </li>
+                    {{/each}}
+                </ul>
+            </li>
+        {{/if}}
+        {{#if isInRole 'editor,admin'}}
+            <li class="dropdown">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">Composites<b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    <li><a href="{{pathFor 'composite'}}">All Sites</a></li>
+                    <li><a href="{{pathFor 'compositeCampus'}}">UH Campus Sites</a></li>
+                </ul>
+            </li>
+        {{/if}}
+	    {{#if isInRole 'editor,admin' }}
+            <li class="dropdown">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">Data Management<b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    <li><a href="{{pathFor 'listEdits'}}">List Edited Data</a></li>
+                    <li><a href="{{pathFor 'listAutomaticPushes'}}">List Automatic Push Data</a></li>
+                    <li><a href="{{pathFor 'listManualPushes'}}">List Manual Push Data</a></li>
+                    <li><a href="{{pathFor 'datamanagement'}}">Actions</a></li>
+                </ul>
+            </li>
+	    {{/if}}
+        {{#if isInRole 'admin' }}
+            <li>
+                <a href="/admin">Admin</a>
+            </li>
+	    {{/if}}
+    {{/if}}
 
 	<li class="dropdown">
 		<a href="#" data-toggle="dropdown" class="dropdown-toggle">About <b class="caret"></b></a>

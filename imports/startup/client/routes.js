@@ -182,7 +182,7 @@ Router.route('versionInfo', {
 });
 
 Router.plugin('ensureSignedIn', {
-  only: ['hnetsite', 'composite', 'admin']
+  only: ['hnetsite', 'bc2site', 'composite', 'admin']
 });
 
 // AccountsTemplates.configureRoute('changePwd');
