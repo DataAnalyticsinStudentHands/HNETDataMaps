@@ -12,7 +12,7 @@ const SitesSchema = new SimpleSchema({
   },
   siteGroup: {
     type: String,
-    label: 'Site Name',
+    label: 'Site Group',
     max: 10,
     autoform: {
       options: [
