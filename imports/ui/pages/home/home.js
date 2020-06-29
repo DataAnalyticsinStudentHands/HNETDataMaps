@@ -16,14 +16,13 @@ Template.home.onRendered(function() {
     marker.addTo(AQmap).on('click', onClick);
   });
 
-  $('#displayMap').css('height', window.innerHeight - 20);
-  $('#displayMap').css('width', window.innerWidth /2 - 20);
+  $('#displayMap').css('height', $('.col-md-6').height() * 2);
+  $('#displayMap').css('width', $('.col-md-6').width());
   L.Icon.Default.imagePath = 'packages/bevanhunt_leaflet/images';
 
   AQmap.setView([
     latude, lngtude
   ], 9);
-
 
   L.tileLayer.provider('Esri.WorldStreetMap').addTo(AQmap);
 });
