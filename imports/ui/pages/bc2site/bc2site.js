@@ -30,7 +30,7 @@ Highcharts.setOptions({
 });
 
 // placeholder for EditPoints in modal
-const EditPoints = new Mongo.Collection(null);
+const BC2EditPoints = new Mongo.Collection(null);
 
 // placeholder for dynamic chart containers
 const Charts = new Meteor.Collection(null);
@@ -62,7 +62,7 @@ function selectPointsByDrag(e) {
  */
 function selectedPoints(e) {
   // reset variables
-  EditPoints.remove({});
+  BC2EditPoints.remove({});
   selectedFlag.set(null);
   note.set('');
 
@@ -77,7 +77,7 @@ function selectedPoints(e) {
       selectedPoint.measurement = point.series.name.split(/[_]+/)[0];
       selectedPoint.id = `${point.series.chart.title.textStr}_${point.series.name.split(/[_]+/)[0]}_${point.x}`;
       point.id = selectedPoint.id;
-      EditPoints.insert(selectedPoint);
+      BC2EditPoints.insert(selectedPoint);
     }
   });
 
@@ -90,7 +90,7 @@ function selectedPoints(e) {
 
     // Query the local selected points db for that point, and remove it
     // This triggers a reactive render of the EditPoints
-    EditPoints.remove({id: pointId});
+    BC2EditPoints.remove({id: pointId});
 
     // Also remove the point from the HighCharts selection
     // (so it doesn't change color temporarily on approval)
@@ -318,7 +318,7 @@ Template.editPoints.events({
   'click button#btnPush'(event) {
     event.preventDefault();
     // Push Edited points in TCEQ format
-    const pushPoints = EditPoints.find({});
+    const pushPoints = BC2EditPoints.find({});
 
     const listPushPoints = [];
     pushPoints.forEach(function(point) {
@@ -344,7 +344,7 @@ Template.editPoints.events({
   'click button#btnChange' (event) {
     event.preventDefault();
 
-    const updatedPoints = EditPoints.find({}).fetch();
+    const updatedPoints = BC2EditPoints.find({}).fetch();
 
     // add edit to the edit collection
     Meteor.call('insertEdits', updatedPoints, flagsHash[selectedFlag.get()].val, note.get());
@@ -361,7 +361,7 @@ Template.editPoints.events({
 
 Template.editPoints.helpers({
   points() {
-    return EditPoints.find({}, {
+    return BC2EditPoints.find({}, {
       // sort: {
       //   'x': -1,
       // },
@@ -378,14 +378,14 @@ Template.editPoints.helpers({
     if (newFlag === null || isNaN(newFlag)) {
       return 0;
     }
-    return EditPoints.find({
+    return BC2EditPoints.find({
       'flag.val': {
         $not: newFlag
       }
     }).count();
   },
   numPointsSelected() {
-    return EditPoints.find().count();
+    return BC2EditPoints.find().count();
   },
   formatDataValue(val) {
     return val.toFixed(3);
