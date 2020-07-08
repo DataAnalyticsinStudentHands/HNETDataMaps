@@ -38,15 +38,15 @@ const SitesSchema = new SimpleSchema({
     type: Object,
     optional: true
   },
-  'Channels.$.Name': {
-    type: String,
-    optional: true,
-    label: 'Channel Name:'
-  },
   'Channels.$.Header': {
     type: String,
     optional: true,
-    label: 'Channel Header:'
+    label: 'Channel Header (instrument):'
+  },
+  'Channels.$.Name': {
+    type: String,
+    optional: true,
+    label: 'Channel Name (measurement):'
   },
   'Channels.$.Status': {
     type: String,
@@ -77,18 +77,23 @@ const SitesSchema = new SimpleSchema({
     label: 'Coordinates array'
   },
   'GMT offset': {
+    optional: true,
     type: String
   },
   'site code': {
+    optional: true,
     type: String
   },
   agencyID: {
+    optional: true,
     type: String
   },
   country: {
+    optional: true,
     type: String
   },
   state: {
+    optional: true,
     type: String
   },
   city: {
@@ -101,10 +106,12 @@ const SitesSchema = new SimpleSchema({
     optional: true
   },
   'externalLink.href': {
+    optional: true,
     type: String,
     label: 'href, e.g. http://site.com/page'
   },
   'externalLink.name': {
+    optional: true,
     type: String,
     label: 'Label'
   },
@@ -146,12 +153,15 @@ const SitesSchema = new SimpleSchema({
     type: String
   },
   lastPushEpoch: {
+    optional: true,
     type: SimpleSchema.Integer
   },
   lastUpdateEpoch: {
+    optional: true,
     type: SimpleSchema.Integer
   },
   lastManualPushEpoch: {
+    optional: true,
     type: SimpleSchema.Integer
   },
   footerText: {
