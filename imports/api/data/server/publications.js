@@ -663,11 +663,7 @@ Meteor.publish('aggregateEdits', function(siteName) {
 
 // pushed data time stamps
 Meteor.publish('exports', function() {
-  return Exports.find({
-    startEpoch: {
-      $type: 'int'
-    }
-  });
+  return Exports.find({});
 });
 
 Meteor.publish('liveSites', function() {
