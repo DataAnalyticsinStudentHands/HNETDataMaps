@@ -12,3 +12,6 @@ export const CompositeCampusDataSeries = new Mongo.Collection('compositeCampusDa
 
 // collection used for charts only (public data in the right format)
 export const PublicDataSeries = new Mongo.Collection('publicDataSeries');
+
+// placeholder for EditPoints in modal
+export const EditPoints = new Mongo.Collection(null);

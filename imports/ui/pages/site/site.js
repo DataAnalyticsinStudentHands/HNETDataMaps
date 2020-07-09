@@ -5,20 +5,19 @@ import { moment } from 'meteor/momentjs:moment';
 import { Template } from 'meteor/templating';
 import { Router } from 'meteor/iron:router';
 import { _ } from 'meteor/underscore';
-import { sAlert } from 'meteor/juliancwirko:s-alert';
+import { Session } from 'meteor/session';
 
 import './site.html';
-import '../editPoints.html';
+import '../../components/editPoints.html';
+import '../../components/editPoints.js';
 
 import { LiveSites } from '../../../api/collections_both';
-import { DataSeries } from '../../../api/collections_client';
+import { DataSeries, EditPoints } from '../../../api/collections_client';
 import { flagsHash } from '../../../api/constants';
 import { DataExporter } from '../../components/dataexporter';
 
 // 1 day
 const startEpoch = new ReactiveVar(moment().subtract(1440, 'minutes').unix());
-const selectedFlag = new ReactiveVar(null);
-const note = new ReactiveVar(null);
 
 Meteor.subscribe('liveSites');
 
@@ -28,9 +27,6 @@ Highcharts.setOptions({
   },
   colors: ['#DDDF00', '#4F525C', '#24CBE5', '#64E572', '#FF9655']
 });
-
-// placeholder for EditPoints in modal
-const EditPoints = new Mongo.Collection(null);
 
 // placeholder for dynamic chart containers
 const Charts = new Meteor.Collection(null);
@@ -63,8 +59,8 @@ function selectPointsByDrag(e) {
 function selectedPoints(e) {
   // reset variables
   EditPoints.remove({});
-  selectedFlag.set(null);
-  note.set('');
+  Session.set('selectedFlag', null);
+  Session.set('note', null);
 
   _.each(e.points, function (point) {
     if (point.series.name !== 'Navigator') {
@@ -112,10 +108,11 @@ function unselectByClick() {
 
   if (points.length > 0) {
     Highcharts.each(points, function(point) {
-      if (selectedFlag.get() !== null) {
+      if (Session.get('selectedFlag') !== null) {
+        const flagReturned = Session.get('selectedFlag');
         point.update({
-          color: flagsHash[selectedFlag.get()].color,
-          name: flagsHash[selectedFlag.get()].val
+          color: flagsHash[flagReturned].color,
+          name: flagsHash[flagReturned].val
         }, true);
       }
       point.select(false);
@@ -304,106 +301,6 @@ Template.site.onCreated(function() {
   }); // end autorun
   Router.current().params.query.startEpoch = undefined;
 }); // end of onCreated
-
-Template.editPoints.events({
-  'click .dropdown-menu li a'(event) {
-    event.preventDefault();
-    selectedFlag.set(parseInt($(event.currentTarget).attr('data-value'), 10));
-  },
-  'click button#btnCancel'(event) {
-    event.preventDefault();
-    selectedFlag.set(null);
-  },
-  // Handle the button "Push" event
-  'click button#btnPush'(event) {
-    event.preventDefault();
-    // Push Edited points in TCEQ format
-    const pushPoints = EditPoints.find({});
-
-    const listPushPoints = [];
-    pushPoints.forEach(function(point) {
-      listPushPoints.push(point.x / 1000);
-    });
-
-    Meteor.call('pushEdits', Router.current().params._id, listPushPoints, (error, result) => {
-      if (error) {
-        sAlert.error(`Error during push. ${error}`);
-      }
-      if (result) {
-        sAlert.success(`Pushed file ${result} successful!`);
-      }
-    });
-  },
-  // Handle the note filed change event (update note)
-  'input #editNote'(event) {
-    // Get value from editNote element
-    const text = event.currentTarget.value;
-    note.set(text);
-  },
-  // Handle the button "Change Flag" event
-  'click button#btnChange' (event) {
-    event.preventDefault();
-
-    const updatedPoints = EditPoints.find({}).fetch();
-
-    // add edit to the edit collection
-    Meteor.call('insertEdits', updatedPoints, flagsHash[selectedFlag.get()].val, note.get());
-
-    // update the edited points with the selected flag and note on the server
-    updatedPoints.forEach(function(point) {
-      Meteor.call('insertEditFlag', point.site, point.x, point.instrument, point.measurement, flagsHash[selectedFlag.get()].val, note.get());
-    });
-
-    // Clear note field
-    $('#editNote').val('');
-  }
-});
-
-Template.editPoints.helpers({
-  points() {
-    return EditPoints.find({}, {
-      // sort: {
-      //   'x': -1,
-      // },
-    });
-  },
-  availableFlags() {
-    return _.where(flagsHash, { selectable: true });
-  },
-  flagSelected() {
-    return flagsHash[selectedFlag.get()];
-  },
-  numFlagsWillChange() {
-    const newFlag = selectedFlag.get();
-    if (newFlag === null || isNaN(newFlag)) {
-      return 0;
-    }
-    return EditPoints.find({
-      'flag.val': {
-        $not: newFlag
-      }
-    }).count();
-  },
-  numPointsSelected() {
-    return EditPoints.find().count();
-  },
-  formatDataValue(val) {
-    return val.toFixed(3);
-  },
-  isValid() {
-    let flagSelection = false;
-    let noteWritten = false;
-    if (note.get() !== null) {
-      if (note.get() !== '') {
-        noteWritten = true;
-      }
-    }
-    if (selectedFlag.get() !== null) {
-      flagSelection = true;
-    }
-    return (flagSelection && noteWritten);
-  }
-});
 
 Template.registerHelper('formatDate', function(epoch) {
   // convert epoch (long) format to readable
