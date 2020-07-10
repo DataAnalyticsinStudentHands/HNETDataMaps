@@ -52,7 +52,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     }
   ];
 
-  LiveData.aggregate(pipeline, { allowDiskUse: true });
+  LiveData.aggregate(pipeline, { allowDiskUse: true, cursor: {} });
 
   // create new structure for data series to be used for charts
   AggrResults.find({}).forEach((e) => {
@@ -588,7 +588,7 @@ const readFile = Meteor.bindEnvironment((path) => {
   const siteId = fileName.split(/[_]+/)[1];
   const fileType = fileName.split(/[_]+/)[2];
   const parentDir = pathArray[pathArray.length - 2];
-  const test = parentDir.substring(parentDir.lastIndexOf('UH') + 2, parentDir.lastIndexOf('_'));
+  const test = parentDir.split(/[_]+/)[1];
   if (siteId === test) {
     fs.readFile(path, 'utf-8', (err, output) => {
       let secondIteration = false;
