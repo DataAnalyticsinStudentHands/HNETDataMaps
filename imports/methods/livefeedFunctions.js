@@ -2,6 +2,7 @@ import chokidar from 'chokidar';
 import fs from 'fs-extra';
 import pathModule from 'path';
 import { Meteor } from 'meteor/meteor';
+import { Promise } from 'meteor/promise';
 import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
 import { moment } from 'meteor/momentjs:moment';
@@ -52,7 +53,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     }
   ];
 
-  LiveData.aggregate(pipeline, { allowDiskUse: true, cursor: {} });
+  Promise.await(LiveData.rawCollection().aggregate(pipeline).toArray());
 
   // create new structure for data series to be used for charts
   AggrResults.find({}).forEach((e) => {
