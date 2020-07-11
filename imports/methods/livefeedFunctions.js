@@ -582,6 +582,153 @@ var batchMetDataUpsert = Meteor.bindEnvironment(function(parsedLines, path) {
   }
 });
 
+const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
+  // find the site information using the location of the file that is being read
+  const pathArray = path.split(pathModule.sep);
+  const parentDir = pathArray[pathArray.length - 2];
+  const site = LiveSites.findOne({ incoming: parentDir });
+
+  if (site.AQSID) {
+    // update the timestamp for the last update for the site
+    const stats = fs.statSync(path);
+    const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
+    if (site.lastUpdateEpoch < fileModified) {
+      LiveSites.update({
+        // Selector
+        AQSID: `${site.AQSID}`
+      }, {
+        // Modifier
+        $set: {
+          lastUpdateEpoch: fileModified
+        }
+      }, { validate: false });
+    }
+
+    // create objects from parsed lines
+    const allObjects = [];
+    for (let k = 0; k < parsedLines.length; k++) {
+      const singleObj = {};
+      singleObj.subTypes = {};
+      singleObj.subTypes.TAP = [];
+
+      singleObj.subTypes.TAP[0] = {};
+      singleObj.subTypes.TAP[0].metric = 'Flag';
+      singleObj.subTypes.TAP[0].val = 1;
+      singleObj.subTypes.TAP[1] = {};
+      singleObj.subTypes.TAP[1].metric = 'ActiveSpot';
+      singleObj.subTypes.TAP[1].val = parsedLines[k][2];
+      singleObj.subTypes.TAP[1].unit = '';
+      singleObj.subTypes.TAP[2] = {};
+      singleObj.subTypes.TAP[2].metric = 'RefSpot';
+      singleObj.subTypes.TAP[2].val = parsedLines[k][3];
+      singleObj.subTypes.TAP[2].unit = '';
+      singleObj.subTypes.TAP[3] = {};
+      singleObj.subTypes.TAP[3].metric = 'LPF';
+      singleObj.subTypes.TAP[3].val = parsedLines[k][4];
+      singleObj.subTypes.TAP[3].unit = '';
+      singleObj.subTypes.TAP[4] = {};
+      singleObj.subTypes.TAP[4].metric = 'AvgTime';
+      singleObj.subTypes.TAP[4].val = parsedLines[k][5];
+      singleObj.subTypes.TAP[4].unit = '';
+      singleObj.subTypes.TAP[5] = {};
+      singleObj.subTypes.TAP[5].metric = 'RedAbsCoef';
+      singleObj.subTypes.TAP[5].val = parsedLines[k][6];
+      singleObj.subTypes.TAP[5].unit = '';
+      singleObj.subTypes.TAP[6] = {};
+      singleObj.subTypes.TAP[6].metric = 'GreenAbsCoef';
+      singleObj.subTypes.TAP[6].val = parsedLines[k][7];
+      singleObj.subTypes.TAP[6].unit = '';
+      singleObj.subTypes.TAP[7] = {};
+      singleObj.subTypes.TAP[7].metric = 'BlueAbsCoef';
+      singleObj.subTypes.TAP[7].val = parsedLines[k][8];
+      singleObj.subTypes.TAP[7].unit = '';
+      singleObj.subTypes.TAP[8] = {};
+      singleObj.subTypes.TAP[8].metric = 'SampleFlow';
+      singleObj.subTypes.TAP[8].val = parsedLines[k][9];
+      singleObj.subTypes.TAP[8].unit = '';
+      singleObj.subTypes.TAP[9] = {};
+      singleObj.subTypes.TAP[9].metric = 'HeaterSetPoint';
+      singleObj.subTypes.TAP[9].val = parsedLines[k][10];
+      singleObj.subTypes.TAP[9].unit = '';
+      singleObj.subTypes.TAP[10] = {};
+      singleObj.subTypes.TAP[10].metric = 'SampleAirTemp';
+      singleObj.subTypes.TAP[10].val = parsedLines[k][11];
+      singleObj.subTypes.TAP[10].unit = '';
+      singleObj.subTypes.TAP[11] = {};
+      singleObj.subTypes.TAP[11].metric = 'CaseTemp';
+      singleObj.subTypes.TAP[11].val = parsedLines[k][12];
+      singleObj.subTypes.TAP[11].unit = '';
+      singleObj.subTypes.TAP[12] = {};
+      singleObj.subTypes.TAP[12].metric = 'RedRatio';
+      singleObj.subTypes.TAP[12].val = parsedLines[k][13];
+      singleObj.subTypes.TAP[12].unit = '';
+      singleObj.subTypes.TAP[13] = {};
+      singleObj.subTypes.TAP[13].metric = 'GreenRatio';
+      singleObj.subTypes.TAP[13].val = parsedLines[k][14];
+      singleObj.subTypes.TAP[13].unit = '';
+      singleObj.subTypes.TAP[14] = {};
+      singleObj.subTypes.TAP[14].metric = 'BlueRatio';
+      singleObj.subTypes.TAP[14].val = parsedLines[k][15];
+      singleObj.subTypes.TAP[14].unit = '';
+      singleObj.subTypes.TAP[15] = {};
+      singleObj.subTypes.TAP[15].metric = 'Dark';
+      singleObj.subTypes.TAP[15].val = parsedLines[k][16];
+      singleObj.subTypes.TAP[15].unit = '';
+      singleObj.subTypes.TAP[16] = {};
+      singleObj.subTypes.TAP[16].metric = 'Red';
+      singleObj.subTypes.TAP[16].val = parsedLines[k][17];
+      singleObj.subTypes.TAP[16].unit = '';
+      singleObj.subTypes.TAP[17] = {};
+      singleObj.subTypes.TAP[17].metric = 'Green';
+      singleObj.subTypes.TAP[17].val = parsedLines[k][18];
+      singleObj.subTypes.TAP[17].unit = '';
+      singleObj.subTypes.TAP[18] = {};
+      singleObj.subTypes.TAP[18].metric = 'Blue';
+      singleObj.subTypes.TAP[18].val = parsedLines[k][19];
+      singleObj.subTypes.TAP[18].unit = '';
+      singleObj.subTypes.TAP[19] = {};
+      singleObj.subTypes.TAP[19].metric = 'DarkRef';
+      singleObj.subTypes.TAP[19].val = parsedLines[k][20];
+      singleObj.subTypes.TAP[19].unit = '';
+      singleObj.subTypes.TAP[20] = {};
+      singleObj.subTypes.TAP[20].metric = 'RedRef';
+      singleObj.subTypes.TAP[20].val = parsedLines[k][21];
+      singleObj.subTypes.TAP[20].unit = '';
+      singleObj.subTypes.TAP[21] = {};
+      singleObj.subTypes.TAP[21].metric = 'GreenRef';
+      singleObj.subTypes.TAP[21].val = parsedLines[k][22];
+      singleObj.subTypes.TAP[21].unit = '';
+      singleObj.subTypes.TAP[22] = {};
+      singleObj.subTypes.TAP[22].metric = 'BlueRef';
+      singleObj.subTypes.TAP[22].val = parsedLines[k][23];
+      singleObj.subTypes.TAP[22].unit = '';
+
+      // add 6 hours to timestamp and then parse as UTC before converting to epoch
+      const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
+      let epoch = timeStamp.unix();
+      epoch -= (epoch % 1); // rounding down
+      singleObj.epoch = epoch;
+      singleObj.epoch5min = epoch - (epoch % 300);
+      singleObj.TimeStamp = `${parsedLines[k][0]}_${parsedLines[k][1]}`;
+      singleObj.site = site.AQSID;
+      singleObj.file = pathArray[pathArray.length - 1];
+      singleObj._id = `${site.AQSID}_${epoch}_tap`;
+      allObjects.push(singleObj);
+    }
+
+    // using bulkCollectionUpdate
+    bulkCollectionUpdate(LiveData, allObjects, {
+      callback: function() {
+        const nowEpoch = moment().unix();
+        const agoEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
+
+        logger.info(`LiveData tap updated from: ${path} for: ${site.siteName}, now calling aggr for epochs: ${agoEpoch} - ${nowEpoch} ${moment.unix(agoEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(nowEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
+        perform5minAggregat(site.AQSID, agoEpoch, nowEpoch);
+      }
+    });
+  }
+});
+
 const readFile = Meteor.bindEnvironment((path) => {
   // test whether the siteId in the file name matches the directory
   const pathArray = path.split(pathModule.sep);
@@ -604,6 +751,23 @@ const readFile = Meteor.bindEnvironment((path) => {
               // remove the first 4 lines - headers
               results.data.splice(0, 4);
               batchMetDataUpsert(results.data, path);
+              secondIteration = true;
+            } else {
+              return;
+            }
+          }
+        });
+      } else if (fileType.endsWith('tap')) {
+        Papa.parse(output, {
+          header: false,
+          delimiter: '\t',
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete(results) {
+            if (!secondIteration) {
+              // remove the first lines - headers (this is without the empty lines)
+              results.data.splice(0, 28);
+              batchTapDataUpsert(results.data, path);
               secondIteration = true;
             } else {
               return;
