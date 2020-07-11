@@ -7,3 +7,4 @@ npm-shrinkwrap.json
 npm-debug.log
 .idea
 *.iml
+package-lock.json
