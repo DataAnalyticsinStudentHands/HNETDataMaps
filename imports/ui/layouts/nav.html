@@ -75,14 +75,16 @@
                 </ul>
             </li>
         {{/if}}
-	    {{#if isInRole 'operator,admin' }}
+	    {{#if isInRole 'editor,operator,admin' }}
             <li class="dropdown">
                 <a href="#" data-toggle="dropdown" class="dropdown-toggle">Data Management<b class="caret"></b></a>
                 <ul class="dropdown-menu">
                     <li><a href="{{pathFor 'listEdits'}}">List Edited Data</a></li>
                     <li><a href="{{pathFor 'listAutomaticPushes'}}">List Automatic Push Data</a></li>
                     <li><a href="{{pathFor 'listManualPushes'}}">List Manual Push Data</a></li>
-                    <li><a href="{{pathFor 'datamanagement'}}">Actions</a></li>
+                    {{#if isInRole 'operator,admin' }}
+                        <li><a href="{{pathFor 'datamanagement'}}">Actions</a></li>
+                    {{/if}}
                 </ul>
             </li>
 	    {{/if}}
