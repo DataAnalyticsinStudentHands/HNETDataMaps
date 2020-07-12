@@ -76,7 +76,7 @@ Router.route('hnetsite', {
     if (start) {
       this.state.set('fromRouter', (start));
     } else {
-      this.state.set('fromRouter', moment().subtract(4320, 'minutes').unix());
+      this.state.set('fromRouter', moment().subtract(1440, 'minutes').unix());
     }
     this.render();
   }
@@ -93,7 +93,7 @@ Router.route('bc2site', {
     if (start) {
       this.state.set('fromRouter', (start));
     } else {
-      this.state.set('fromRouter', moment().subtract(4320, 'minutes').unix());
+      this.state.set('fromRouter', moment().subtract(1440, 'minutes').unix());
     }
     this.render();
   }
