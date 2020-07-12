@@ -1,23 +1,25 @@
-import { LiveSites } from '../../api/collections_both'
+import { Meteor } from 'meteor/meteor';
+import { moment } from 'meteor/momentjs:moment';
+import { sAlert } from 'meteor/juliancwirko:s-alert';
+import { LiveSites } from '../../api/collections_both';
 
 // Call for exporting data in certain formats and download client side
 export const DataExporter = {
-  getDataTCEQ: function(aqsid, startEpoch, endEpoch, activeOnly) {
+  getDataTCEQ(aqsid, startEpoch, endEpoch, activeOnly) {
     // Return a new promise.
-    return new Promise(function(resolve, reject) {
+    return new Promise(() => {
       Meteor.subscribe('liveSites');
 
-			let fileFormat = 'tceq';
-			if (!activeOnly) {
-				fileFormat = 'tceq_allchannels';
-			}
+      let fileFormat = 'tceq';
+      if (!activeOnly) {
+        fileFormat = 'tceq_allchannels';
+      }
 
       // get TCEQ export formated data
-      Meteor.call('exportData', aqsid, startEpoch, endEpoch, fileFormat, function(error, data) {
-
-        if (error) {
-          sAlert.error(`Error:\n ${error.reason}`);
-          return false;
+      Meteor.call('exportData', aqsid, startEpoch, endEpoch, fileFormat, (err, response) => {
+        if (err) {
+          sAlert.error(`Error:\n ${err.reason}`);
+          return;
         }
 
         const site = LiveSites.findOne({ AQSID: `${aqsid}` });
@@ -25,28 +27,30 @@ export const DataExporter = {
         // download the data as csv file
         if (site !== undefined) {
           const csv = Papa.unparse({
-            data: data.data,
-            fields: data.fields
+            data: response.data,
+            fields: response.fields
           });
 
-          // create site name from incoming folder
-          const siteName = (site.incoming.match(new RegExp('UH' +
-          '(.*)' +
-          '_')))[1].slice(-2);
-          DataExporter._downloadCSV(csv, `${siteName.toLowerCase()}${moment().format('YYMMDDHHmmss')}.txt`);
+          try {
+            // get short site name from incoming folder
+            const siteName = site.incoming.split(/[_]+/)[1];
+            DataExporter._downloadCSV(csv, `${siteName.toLowerCase()}${moment().format('YYMMDDHHmmss')}.txt`);
+          } catch (error) {
+            sAlert.error(`Error:\n ${error.reason}`);
+          }
         } else {
-          resolve(data);
+          sAlert.error('Error:\n Site is undefined.');
         }
       });
     });
   },
-  _downloadCSV: function(csv, fileName) {
+  _downloadCSV(csv, fileName) {
     const blob = new Blob([csv]);
     const a = window.document.createElement('a');
-    a.href = window.URL.createObjectURL(blob, {type: 'text/csv'});
+    a.href = window.URL.createObjectURL(blob, { type: 'text/csv' });
     a.download = fileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  },
+  }
 };

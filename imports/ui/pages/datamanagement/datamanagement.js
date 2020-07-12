@@ -3,7 +3,6 @@ import { ReactiveVar } from 'meteor/reactive-var';
 import { Template } from 'meteor/templating';
 import { moment } from 'meteor/momentjs:moment';
 import { sAlert } from 'meteor/juliancwirko:s-alert';
-import { datetimepicker } from 'meteor/hujhax:bootstrap3-datetimepicker';
 import { LiveSites } from '../../../api/collections_both';
 import { DataExporter } from '../../components/dataexporter';
 
@@ -17,7 +16,7 @@ Template.datamanagement.onCreated(function () {
 });
 
 Template.datamanagement.onRendered(function () {
-  // setup date picker
+  // setup date picker for reimport data
   this.$('#datetimepicker1').datetimepicker({
     format: 'MM/DD/YYYY',
     widgetPositioning: {
@@ -39,9 +38,6 @@ Template.datamanagement.helpers({
   },
   endEpoch() {
     return endEpoch.get();
-  },
-  startDate() {
-    return startDate.get();
   },
   availableSites() {
     return LiveSites.find();
