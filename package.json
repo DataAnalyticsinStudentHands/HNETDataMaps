@@ -91,6 +91,9 @@
         {
           "allowForLoopAfterthoughts": true
         }
+      ],
+      "meteor/no-session": [
+        0
       ]
     },
     "settings": {
