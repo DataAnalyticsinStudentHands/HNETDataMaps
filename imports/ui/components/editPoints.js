@@ -3,8 +3,9 @@ import { Template } from 'meteor/templating';
 import { sAlert } from 'meteor/juliancwirko:s-alert';
 import { Session } from 'meteor/session';
 import { flagsHash } from '../../api/constants';
-
 import { EditPoints } from '../../api/collections_client';
+import { LiveSites } from '../../api/collections_both';
+
 
 Template.editPoints.helpers({
   points() {
@@ -49,6 +50,15 @@ Template.editPoints.helpers({
       flagSelection = true;
     }
     return (flagSelection && noteWritten);
+  },
+  pushAllowed() {
+    const site = LiveSites.findOne({ AQSID: Router.current().params._id });
+    if (site) {
+      if (site.siteGroup === 'HNET') {
+        return true;
+      }
+    }
+    return false;
   }
 });
 

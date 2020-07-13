@@ -60,7 +60,9 @@
                         Flags will be changed for <span>{{numFlagsWillChange}}</span>/<span>{{numPointsSelected}}</span> points.
                         <button type="button" class="btn btn-default" aria-label="Close" data-dismiss="modal" id="btnCancel"><i class="fa fa-times"></i> Cancel</button>
                         {{#if isInRole 'editor, operator,admin' }}
-                            <button type="button" class="btn btn-primary active {{#if isValid}} disabled{{/if}}" data-dismiss="modal" id="btnPush"><i class="fa fa-check"></i> Push Data Points</button>
+                            {{#if pushAllowed}}
+                                <button type="button" class="btn btn-primary active {{#if isValid}} disabled{{/if}}" data-dismiss="modal" id="btnPush"><i class="fa fa-check"></i> Push Data Points</button>
+                            {{/if}}
                         {{/if}}
                         <button type="button" class="btn btn-primary active {{#unless isValid}} disabled{{/unless}}" data-dismiss="modal" id="btnChange"><i class="fa fa-check"></i> Change Flag</button>
 
