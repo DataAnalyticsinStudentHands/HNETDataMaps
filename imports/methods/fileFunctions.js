@@ -217,18 +217,15 @@ export const exportDataAsCSV = function exportDataAsCSV(aqsid, startEpoch, endEp
 };
 
 // writes a TCEQ input formatted output file to the local outgoing folder
-export const createTCEQData = function createTCEQData(aqsid, data) {
+export const createTCEQPushData = function createTCEQData(aqsid, data) {
   const site = LiveSites.find({ AQSID: `${aqsid}` }).fetch()[0];
 
   if (site === undefined) {
     throw new Meteor.Error('Could not find AQSID: ', aqsid, ' in LiveSites.');
   }
 
-  // create site name from incoming folder
-  // TODO use siteGroup instead of UH
-  const siteName = (site.incoming.match(new RegExp('UH' +
-  '(.*)' +
-  '_')))[1].slice(-2);
+  // get site name from incoming folder
+  const siteName = site.incoming.split(/[_]+/)[1];
   // ensure whether output dir exists
   const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
   fs.ensureDirSync(outputDir, (err) => {

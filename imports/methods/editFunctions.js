@@ -4,7 +4,7 @@ import Future from 'fibers/future';
 import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
-import { exportDataAsCSV, createTCEQData } from './fileFunctions';
+import { exportDataAsCSV, createTCEQPushData } from './fileFunctions';
 import { AggrData } from '../api/collections_both';
 import { AggrEdits } from '../api/collections_client';
 
@@ -49,7 +49,7 @@ export const pushEdits = function pushEdits(aqsid, pushPointsEpochs) {
     if (data === undefined) {
       throw new Meteor.Error('pushEdits', 'Could not find data for selected site/period.');
     }
-    pushFile = createTCEQData(aqsid, data);
+    pushFile = createTCEQPushData(aqsid, data);
 
     const ftps = new FTPS({ host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps', port: 990 });
     // Set up a future

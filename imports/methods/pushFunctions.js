@@ -6,7 +6,7 @@ import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
 import { moment } from 'meteor/momentjs:moment';
 import { LiveSites, Exports } from '../api/collections_both';
-import { exportDataAsCSV, createTCEQData } from './fileFunctions';
+import { exportDataAsCSV, createTCEQPushData } from './fileFunctions';
 
 // reading ftps password from environment
 const hnetsftp = process.env.hnetsftp;
@@ -22,7 +22,7 @@ export const pushData = function pushData(aqsid, startEpoch, endEpoch, manualPus
     const startTimeStamp = `${data.data[0].dateGMT} ${data.data[0].timeGMT}`;
     const endTimeStamp = `${_.last(data.data).dateGMT} ${_.last(data.data).timeGMT}`;
 
-    const outputFile = createTCEQData(aqsid, data);
+    const outputFile = createTCEQPushData(aqsid, data);
 
     const ftps = new FTPS({ host: 'ftps.tceq.texas.gov', username: 'jhflynn@central.uh.edu', password: hnetsftp, protocol: 'ftps', port: 990 });
 
@@ -92,7 +92,7 @@ export const pushMultipleData = function pushMultipleData() {
       if (Object.keys(data).length === 0 && data.constructor === Object) {
         logger.error('No data.', `Could not find data for automatic push ${site.siteName} ${startEpoch}/${endEpoch}.`);
       } else {
-        const outputFile = createTCEQData(site.AQSID, data);
+        const outputFile = createTCEQPushData(site.AQSID, data);
         // create entry for pushing site
         pushingSites.push({
           aqsid: site.AQSID,
