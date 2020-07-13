@@ -92,3 +92,7 @@ code {
 .loading-wrapper {
   display: initial;
 }
+
+.s-alert-success {
+  word-wrap: break-word;
+}
