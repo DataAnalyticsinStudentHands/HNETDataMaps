@@ -19,6 +19,9 @@ AdminConfig = {
           label: 'Name',
           name: 'siteName'
         }, {
+          label: 'Site Group',
+          name: 'siteGroup'
+        }, {
           label: 'Incoming folder',
           name: 'incoming'
         }, {

@@ -37,6 +37,12 @@ Template.pushStatusCell.helpers({
       return true;
     }
     return false;
+  },
+  HNETGroup() {
+    if (this.item.siteGroup === 'HNET') {
+      return true;
+    }
+    return false;
   }
 });
 

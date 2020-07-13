@@ -179,6 +179,7 @@ new Tabular.Table({
       }
     }
   ],
+  extraFields: ['siteGroup'],
   selector() {
     return { status: 'Active' };
   }
