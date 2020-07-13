@@ -6,7 +6,8 @@ import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
 import { moment } from 'meteor/momentjs:moment';
 import { LiveSites, Exports } from '../api/collections_both';
-import { exportDataAsCSV, createTCEQPushData } from './fileFunctions';
+import { exportDataAsCSV } from './fileFunctions';
+import { createTCEQPushData } from './commonFunctions';
 
 // reading ftps password from environment
 const hnetsftp = process.env.hnetsftp;

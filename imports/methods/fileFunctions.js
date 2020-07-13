@@ -216,41 +216,6 @@ export const exportDataAsCSV = function exportDataAsCSV(aqsid, startEpoch, endEp
   return dataObject;
 };
 
-// writes a TCEQ input formatted output file to the local outgoing folder
-export const createTCEQPushData = function createTCEQData(aqsid, data) {
-  const site = LiveSites.find({ AQSID: `${aqsid}` }).fetch()[0];
-
-  if (site === undefined) {
-    throw new Meteor.Error('Could not find AQSID: ', aqsid, ' in LiveSites.');
-  }
-
-  // get site name from incoming folder
-  const siteName = site.incoming.split(/[_]+/)[1];
-  // ensure whether output dir exists
-  const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
-  fs.ensureDirSync(outputDir, (err) => {
-    return logger.error(err); // => null
-    // outputdir has now been created, including the directory it is to be placed in
-  });
-  // create csv file and store in outgoing folder
-  const outputFile = `${outputDir}/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
-  const csvComplete = Papa.unparse({
-    data: data.data,
-    fields: data.fields
-  });
-  // removing header from csv string
-  const n = csvComplete.indexOf('\n');
-  const csv = csvComplete.substring(n + 1);
-
-  try {
-    fs.writeFileSync(outputFile, csv);
-    return outputFile;
-  } catch (error) {
-    logger.error('Could not write TCEQ push file.', `Could not write TCEQ push file. Error: ${error}`);
-    throw new Meteor.Error('Could not write TCEQ push file.', `Could not write TCEQ push file. Error: ${error}`);
-  }
-};
-
 export const loadFile = function loadFile(path) {
   const fut = new Future();
 

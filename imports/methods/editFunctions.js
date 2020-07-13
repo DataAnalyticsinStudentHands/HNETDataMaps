@@ -4,7 +4,8 @@ import Future from 'fibers/future';
 import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
-import { exportDataAsCSV, createTCEQPushData } from './fileFunctions';
+import { exportDataAsCSV } from './fileFunctions';
+import { createTCEQPushData } from './commonFunctions';
 import { AggrData } from '../api/collections_both';
 import { AggrEdits } from '../api/collections_client';
 

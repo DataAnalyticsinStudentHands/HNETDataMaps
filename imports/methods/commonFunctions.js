@@ -1,7 +1,8 @@
 import { Meteor } from 'meteor/meteor';
 import { Promise } from 'meteor/promise';
 import { logger } from 'meteor/votercircle:winston';
-import { AggrData, LiveData } from '../api/collections_both';
+import fs from 'fs-extra';
+import { AggrData, LiveData, LiveSites } from '../api/collections_both';
 
 function perform5minAggregat(siteId, startEpoch, endEpoch) {
   logger.info(`Called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}`);
@@ -324,6 +325,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   AggrResults.rawCollection().drop();
 }
 
+// creates objects from input files following HNET format
 function makeObj(keys, startIndex, previousObject) {
   const obj = {};
   obj.subTypes = {};
@@ -404,4 +406,39 @@ function makeObj(keys, startIndex, previousObject) {
   return obj;
 }
 
-export { perform5minAggregat, makeObj };
+// writes a TCEQ input formatted output file to the local outgoing folder
+function createTCEQPushData(aqsid, data) {
+  const site = LiveSites.find({ AQSID: `${aqsid}` }).fetch()[0];
+
+  if (site === undefined) {
+    throw new Meteor.Error('Could not find AQSID: ', aqsid, ' in LiveSites.');
+  }
+
+  // get site name from incoming folder
+  const siteName = site.incoming.split(/[_]+/)[1];
+  // ensure whether output dir exists
+  const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
+  fs.ensureDirSync(outputDir, (err) => {
+    return logger.error(err); // => null
+    // outputdir has now been created, including the directory it is to be placed in
+  });
+  // create csv file and store in outgoing folder
+  const outputFile = `${outputDir}/${siteName.toLowerCase()}${moment.utc().format('YYMMDDHHmmss')}.uh`;
+  const csvComplete = Papa.unparse({
+    data: data.data,
+    fields: data.fields
+  });
+  // removing header from csv string
+  const n = csvComplete.indexOf('\n');
+  const csv = csvComplete.substring(n + 1);
+
+  try {
+    fs.writeFileSync(outputFile, csv);
+    return outputFile;
+  } catch (error) {
+    logger.error('Could not write TCEQ push file.', `Could not write TCEQ push file. Error: ${error}`);
+    throw new Meteor.Error('Could not write TCEQ push file.', `Could not write TCEQ push file. Error: ${error}`);
+  }
+}
+
+export { perform5minAggregat, makeObj, createTCEQPushData };
