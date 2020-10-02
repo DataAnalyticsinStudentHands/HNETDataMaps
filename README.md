@@ -1,6 +1,6 @@
 # HNETDataMaps (Server)
 
-This is server part for for a data processing framework for atmospheric sensors. Each site has it's own instance of a serve running to process incoming files.
+This is server part for for a data processing framework for atmospheric sensors. Each site has it's own instance of a server running to process incoming files.
 
 The following instructions are for developers who want to setup their own version. This is a [meteor](https://www.meteor.com/) based framework.
 
@@ -10,7 +10,7 @@ The following instructions are for developers who want to setup their own versio
 
 * We are running with a local [MongoDB](https://docs.mongodb.org/manual/installation/)
 
-to install e.g on Mac OS install via [homebrew](http://brew.sh/):
+to install e.g. on Mac OS install via [homebrew](http://brew.sh/):
 
 `brew install mongodb`
 
@@ -32,7 +32,7 @@ Clone and run: `meteor npm install`
 
 ## Testing in local development environment
 
-If you are testing while the client is also running, you may need to use a diifernt port, e.g.
+If you are testing while the client is also running, you may need to use a different port, e.g.
 `MONGO_URL=mongodb://localhost:27017/DataMaps meteor --port 3001`
 
 For debugging with node inspector run `MONGO_URL=mongodb://localhost:27017/DataMaps meteor debug` and open the app in Chrome with the port listed once the app has started.
