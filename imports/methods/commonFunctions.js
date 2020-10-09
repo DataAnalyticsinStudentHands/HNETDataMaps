@@ -865,10 +865,8 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       }, { validate: false });
     }
 
-    // use settings for TAP instrument identifier
-    let metron;
-
-    metron = 'TAP01';
+    // use file name for TAP instrument identifier
+    const metron = `tap_${path.split(/[_]+/)[3]}`;
 
     // create objects from parsed lines
     const allObjects = [];
@@ -978,7 +976,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.TimeStamp = `${parsedLines[k][0]}_${parsedLines[k][1]}`;
       singleObj.site = site.AQSID;
       singleObj.file = pathArray[pathArray.length - 1];
-      singleObj._id = `${site.AQSID}_${epoch}_tap`;
+      singleObj._id = `${site.AQSID}_${epoch}_metron`;
       allObjects.push(singleObj);
     }
 
