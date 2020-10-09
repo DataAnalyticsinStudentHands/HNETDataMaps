@@ -11,7 +11,7 @@ import './bc2site.html';
 import '../../components/editPoints.html';
 import '../../components/editPoints';
 
-import { LiveSites } from '../../../api/collections_both';
+import { LiveSites } from '../../../api/collections_server';
 import { DataSeries, EditPoints } from '../../../api/collections_client';
 import { flagsHash } from '../../../api/constants';
 import { DataExporter } from '../../components/dataexporter';
@@ -230,6 +230,7 @@ Template.bc2site.onCreated(function() {
       mySub.stop();
     }
     // Subscribe
+    // need to subscribe to new Bc2DataSeries
     mySub = Meteor.subscribe('dataSeries', Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(1440, 'minutes').unix());
 
     Charts.remove({});

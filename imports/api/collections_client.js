@@ -4,6 +4,9 @@ export const AggrEdits = new Mongo.Collection('aggregateEdits');
 // collection used for charts only (aggregation of data in the right format)
 export const DataSeries = new Mongo.Collection('dataSeries');
 
+// collection used for bc2 charts only (aggregation of data in the right format)
+export const Bc2DataSeries = new Mongo.Collection('Bc2DataSeries');
+
 // collection used for charts only (composite data in the right format)
 export const CompositeDataSeries = new Mongo.Collection('compositeDataSeries');
 
