@@ -1,4 +1,4 @@
-import { LiveSites } from '../../../api/collections_both'
+import { LiveSites } from '../../../api/collections_server'
 
 import './about.html';
 

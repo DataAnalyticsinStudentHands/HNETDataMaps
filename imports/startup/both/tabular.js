@@ -1,6 +1,6 @@
 import { Tabular } from 'meteor/aldeed:tabular';
 
-import { LiveSites, Exports } from '../../api/collections_both';
+import { LiveSites, Exports } from '../../api/collections_server';
 import { AggrEdits } from '../../api/collections_client';
 
 // TabularTables = {};

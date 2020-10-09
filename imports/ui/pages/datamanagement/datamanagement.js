@@ -3,7 +3,7 @@ import { ReactiveVar } from 'meteor/reactive-var';
 import { Template } from 'meteor/templating';
 import { moment } from 'meteor/momentjs:moment';
 import { sAlert } from 'meteor/juliancwirko:s-alert';
-import { LiveSites } from '../../../api/collections_both';
+import { LiveSites } from '../../../api/collections_server';
 import { DataExporter } from '../../components/dataexporter';
 
 import './datamanagement.html';

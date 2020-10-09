@@ -11,7 +11,7 @@ import './site.html';
 import '../../components/editPoints.html';
 import '../../components/editPoints.js';
 
-import { LiveSites } from '../../../api/collections_both';
+import { LiveSites } from '../../../api/collections_server';
 import { DataSeries, EditPoints } from '../../../api/collections_client';
 import { flagsHash } from '../../../api/constants';
 import { DataExporter } from '../../components/dataexporter';

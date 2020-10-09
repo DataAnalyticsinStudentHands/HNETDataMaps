@@ -1,7 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import { moment } from 'meteor/momentjs:moment';
 import { sAlert } from 'meteor/juliancwirko:s-alert';
-import { LiveSites } from '../../api/collections_both';
+import { LiveSites } from '../../api/collections_server';
 
 // Call for exporting data in certain formats and download client side
 export const DataExporter = {

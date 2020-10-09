@@ -5,7 +5,7 @@ import './layout.html';
 import './loading.html';
 import './nav.html';
 
-import { LiveSites } from '../../api/collections_both';
+import { LiveSites } from '../../api/collections_server';
 
 Meteor.subscribe('liveSites');
 

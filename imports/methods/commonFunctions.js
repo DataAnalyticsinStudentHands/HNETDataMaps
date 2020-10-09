@@ -8,8 +8,9 @@ import { Papa } from 'meteor/harrison:papa-parse';
 import { bulkCollectionUpdate } from 'meteor/udondan:bulk-collection-update';
 import fs from 'fs-extra';
 import pathModule from 'path';
-import { AggrData, LiveData, LiveSites } from '../api/collections_both';
+import { AggrData, LiveData, LiveSites } from '../api/collections_server';
 import { channelHash, flagsHash } from '../api/constants';
+import { globalsite } from '../startup/server/startup';
 
 // Export csv data file in defined format, default: TCEQ format
 function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
@@ -221,7 +222,6 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
 
 // performs the creation of 5 minute aggregate data points
 function perform5minAggregat(siteId, startEpoch, endEpoch) {
-  logger.info(`Called 5minAgg for site: ${siteId} start: ${startEpoch} end: ${endEpoch}`);
   // create temp collection as placeholder for aggreagation results
   const aggrResultsName = `aggr${moment().valueOf()}`;
   const AggrResults = new Meteor.Collection(aggrResultsName);
@@ -548,7 +548,7 @@ function makeObj(keys, startIndex, previousObject) {
   let metron = [];
   for (const key in keys) {
     if (keys.hasOwnProperty(key)) {
-            // Fix for wrong headers _Wind
+      // Fix for wrong headers _Wind
       let newKey = key;
       if (key.indexOf('_Wind') >= 0) {
         newKey = key.replace('_Wind', '');
@@ -584,7 +584,7 @@ function makeObj(keys, startIndex, previousObject) {
     if (obj.subTypes.hasOwnProperty(subType)) {
       // fix automatic flagging of 03 values to be flagged with 9(N)
       if (subType === 'O3' || subType === '49i') {
-                // condition: O3 value above 250
+        // condition: O3 value above 250
         if (obj.subTypes[subType][1].val > 250) {
           obj.subTypes[subType][0].val = 9;
         }
@@ -598,7 +598,7 @@ function makeObj(keys, startIndex, previousObject) {
       }
       // fix for RH values
       if (subType === 'TRH' || subType === 'HMP60') {
-                // find index for RH channel
+        // find index for RH channel
         let rhIndex = 0;
         obj.subTypes[subType].forEach((item, index) => {
           if (item.metric === 'RH') {
@@ -657,12 +657,23 @@ function createTCEQPushData(aqsid, data) {
   }
 }
 
+// call bulkupdate for 10s data points
 const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEpoch, endEpoch) => {
-  // using bulkCollectionUpdate
+  let startAggrEpoch = startEpoch;
+  let endAggrEpoch = endEpoch;
+
+  // for backend create start/end epoch for call to data aggregation
+  if (globalsite !== undefined) {
+    // use modified timestamp of file to figure out how far back to go
+    const stats = fs.statSync(path);
+    const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
+    startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
+    endAggrEpoch = moment().unix();
+  }
   bulkCollectionUpdate(LiveData, allObjects, {
-    callback: function() {
-      logger.info(`LiveData imported from: ${path} for: ${site.siteName}`);
-      perform5minAggregat(site.AQSID, startEpoch, endEpoch);
+    callback() {
+      logger.info(`LiveData updated from: ${path} for: ${site.siteName} - ${site.AQSID}, now calling 5minAgg for epochs: ${startAggrEpoch} - ${endAggrEpoch} ${moment.unix(startAggrEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(endAggrEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
+      perform5minAggregat(site.AQSID, startAggrEpoch, endAggrEpoch);
     }
   });
 });
@@ -674,6 +685,23 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const site = LiveSites.findOne({ incoming: parentDir });
 
   if (site.AQSID) {
+    // update the timestamp for the last update for the site
+    if (globalsite !== undefined) {
+      const stats = fs.statSync(path);
+      const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
+      if (site.lastUpdateEpoch < fileModified) {
+        LiveSites.update({
+          // Selector
+          AQSID: `${site.AQSID}`
+        }, {
+          // Modifier
+          $set: {
+            lastUpdateEpoch: fileModified
+          }
+        }, { validate: false });
+      }
+    }
+
     // create objects from parsed lines
     const allObjects = [];
     let previousObject = {};
@@ -961,10 +989,11 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 });
 
 const readFile = Meteor.bindEnvironment((path) => {
-  // find out whether we have to read DAQFactory or Loggernet data
+  // find out which file type
   const pathArray = path.split(pathModule.sep);
   const fileName = pathArray[pathArray.length - 1];
   const fileType = fileName.split(/[_]+/)[2];
+
   fs.readFile(path, 'utf-8', (err, output) => {
     let secondIteration = false;
     // HNET special treatment of data files from loggernet (met data)

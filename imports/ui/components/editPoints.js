@@ -4,7 +4,7 @@ import { sAlert } from 'meteor/juliancwirko:s-alert';
 import { Session } from 'meteor/session';
 import { flagsHash } from '../../api/constants';
 import { EditPoints } from '../../api/collections_client';
-import { LiveSites } from '../../api/collections_both';
+import { LiveSites } from '../../api/collections_server';
 
 
 Template.editPoints.helpers({

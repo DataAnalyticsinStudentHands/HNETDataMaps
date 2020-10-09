@@ -5,12 +5,10 @@ import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
 import { moment } from 'meteor/momentjs:moment';
-import { LiveSites, Exports } from '../api/collections_both';
+import { LiveSites, Exports } from '../api/collections_server';
 import { exportDataAsCSV } from './fileFunctions';
 import { createTCEQPushData } from './commonFunctions';
-
-// reading ftps password from environment
-const hnetsftp = process.env.hnetsftp;
+import { hnetsftp } from '../startup/server/startup';
 
 export const pushData = function pushData(aqsid, startEpoch, endEpoch, manualPush) {
   try {

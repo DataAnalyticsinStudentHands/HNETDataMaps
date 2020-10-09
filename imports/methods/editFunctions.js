@@ -5,11 +5,9 @@ import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
 import { exportDataAsCSV, createTCEQPushData } from './commonFunctions';
-import { AggrData } from '../api/collections_both';
+import { AggrData } from '../api/collections_server';
 import { AggrEdits } from '../api/collections_client';
-
-// reading ftps password from environment
-const hnetsftp = process.env.hnetsftp;
+import { hnetsftp } from '../startup/server/startup';
 
 export const deleteAggregates = function deleteAggregates(aqsid, startEpoch, endEpoch) {
   return AggrData.remove({

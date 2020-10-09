@@ -1,7 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import { _ } from 'meteor/underscore';
 import { Promise } from 'meteor/promise';
-import { LiveSites, AggrData, LiveData, Exports } from '../../collections_both';
+import { LiveSites, AggrData, LiveData, Exports } from '../../collections_server';
 import { AggrEdits } from '../../collections_client';
 import { flagsHash } from '../../constants';
 

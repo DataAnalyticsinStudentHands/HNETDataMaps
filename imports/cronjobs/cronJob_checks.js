@@ -4,7 +4,7 @@ import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { moment } from 'meteor/momentjs:moment';
 import { Nodemailer } from 'meteor/epaminond:nodemailer';
-import { LiveSites } from '../api/collections_both';
+import { LiveSites } from '../api/collections_server';
 
 // structure to hold current/before status information
 const statusObject = {};
@@ -90,7 +90,7 @@ Meteor.setInterval(() => {
   Object.keys(statusObject).forEach((site) => {
     if (Object.prototype.hasOwnProperty.call(statusObject, site)) {
       if (statusObject[site].sendUpdateReport) {
-        // logger.info(`would send ... ${reportString}`);
+        logger.info(`would send ... ${reportString}`);
         sendEmail(`${os.hostname()} ${statusObject[site].current}`, reportString);
       }
     }

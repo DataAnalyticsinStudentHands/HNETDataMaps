@@ -40,7 +40,9 @@
   "eslintConfig": {
     "env": {
       "browser": true,
-      "jquery": true
+      "jquery": true,
+      "node": true,
+      "meteor": true
     },
     "parser": "babel-eslint",
     "parserOptions": {
@@ -53,6 +55,16 @@
       "airbnb",
       "plugin:meteor/recommended"
     ],
+    "globals": {
+      "Meteor": false,
+      "Session": false,
+      "sAlert": true,
+      "moment": false,
+      "Papa": true,
+      "Package": true,
+      "Cordova": true,
+      "Npm": true
+    },
     "rules": {
       "import/no-extraneous-dependencies": "off",
       "no-underscore-dangle": "off",

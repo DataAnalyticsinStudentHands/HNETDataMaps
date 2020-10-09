@@ -17,7 +17,7 @@ import '../../ui/pages/bc2site/bc2site';
 import '../../ui/pages/admin/versionInfo.html';
 import '../../ui/pages/about/project.html';
 
-import { LiveSites, AggrData } from '../../api/collections_both';
+import { LiveSites, AggrData } from '../../api/collections_server';
 
 Router.configure({
   layoutTemplate: 'layout' // whole template fra

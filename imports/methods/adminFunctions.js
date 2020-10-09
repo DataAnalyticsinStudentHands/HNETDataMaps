@@ -1,6 +1,6 @@
 import { logger } from 'meteor/votercircle:winston';
 import { moment } from 'meteor/momentjs:moment';
-import { LiveSites } from '../api/collections_both';
+import { LiveSites } from '../api/collections_server';
 
 // resets the last push epoch for a site
 export const resetLastPushDate = function resetLastPushDate(aqsid) {
