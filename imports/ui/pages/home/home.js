@@ -29,7 +29,6 @@ Template.home.onRendered(function() {
 
 Template.pushStatusCell.helpers({
   pushTimeStamp() {
-    console.log(this.item.TCEQPushing);
     if (this.item.TCEQPushing === 'Active') {
       return moment.unix(this.item.lastPushEpoch).format('YYYY/MM/DD HH:mm');
     }
