@@ -976,7 +976,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.TimeStamp = `${parsedLines[k][0]}_${parsedLines[k][1]}`;
       singleObj.site = site.AQSID;
       singleObj.file = pathArray[pathArray.length - 1];
-      singleObj._id = `${site.AQSID}_${epoch}_metron`;
+      singleObj._id = `${site.AQSID}_${epoch}_${metron}`;
       allObjects.push(singleObj);
     }
 
