@@ -179,7 +179,7 @@ new Tabular.Table({
       }
     }
   ],
-  extraFields: ['siteGroup'],
+  extraFields: ['siteGroup', 'TCEQPushing'],
   selector() {
     return { status: 'Active' };
   }

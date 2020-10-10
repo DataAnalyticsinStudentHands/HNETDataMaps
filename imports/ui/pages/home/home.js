@@ -29,11 +29,15 @@ Template.home.onRendered(function() {
 
 Template.pushStatusCell.helpers({
   pushTimeStamp() {
-    return moment.unix(this.item.lastPushEpoch).format('YYYY/MM/DD HH:mm');
+    console.log(this.item.TCEQPushing);
+    if (this.item.TCEQPushing === 'Active') {
+      return moment.unix(this.item.lastPushEpoch).format('YYYY/MM/DD HH:mm');
+    }
+    return 'Push turned off';
   },
   isActualPush() {
     const checkEpoch = moment().subtract(1, 'days').unix();
-    if (this.item.lastPushEpoch > checkEpoch) {
+    if (this.item.lastPushEpoch > checkEpoch || this.item.TCEQPushing === 'Inactive') {
       return true;
     }
     return false;
