@@ -1,37 +1,52 @@
 <template name="bc2site">
- <div class="container-fluid">
-	<div class="panel panel-default">
-		<div class="panel-heading">
-			<h3 class="panel-title">Site: {{sitename}}</h3>
-		</div>
-		<div class="panel-body">
-			<h5>Select Date:</h5>
-			<input type="date" value="{{selectedDate}}" id="datepicker">
-			<button class="btn btn-primary btn-sm" id="downloadCurrent"
-			data-toggle="tooltip" data-placement="bottom" title="All channels TCEQ format">
-				Download Current Data
-			</button>
-		</div>
-	</div>
+  <div class="container-fluid">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Composite Plots</h3>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-xs-2">
+            <label for="datetimepicker1">Select Date:</label>
+            <div class="form-group">
+              <div class='input-group date' id='datetimepicker1'>
+                  <input type='text' class="form-control" id='selectedDate'/>
+                  <span class="input-group-addon">
+                      <span class="glyphicon glyphicon-calendar"></span>
+                  </span>
+              </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
 
-	<!-- container for charts -->
-	{{#each charts}}
-	<form class="adjust" id="{{_id}}">
-  <div id="container-chart-{{_id}}" style="min-width: 310px; height: 500px; margin: 0 auto"></div>
-  <div class="input-group pull-right" style="margin-top:-450px;">
-    <input type="text" name="min" placeholder="min" value={{min}} style="margin-right: 5px;" />
+  {{> loader_for_composite}}
 
-    <input type="text" name="max" placeholder="max" value={{max}} style="margin-right: 5px;" />
+  {{#if Template.subscriptionsReady}}
+    <div class="loading-wrapper">
+        <!-- container for charts   -->
+        {{#with charts}}
+            {{#if this.count}}
+              {{#each this}}
+              <form class="adjust" id="{{_id}}">
+              <div id="container-chart-{{_id}}" style="height: 500px; margin: 0">{{createChart _id}}</div>
+              <div class="input-group pull-right" style="margin-top:-450px;">
+                <input type="text" name="min" placeholder="min" value={{min}} style="margin-right: 5px;" />
 
-    <input class="btn btn-default btn-xs" type="submit" value="Adjust min/max y-Axis" />
+                <input type="text" name="max" placeholder="max" value={{max}} style="margin-right: 5px;" />
+
+                <input class="btn btn-default btn-xs" type="submit" value="Adjust min/max y-Axis" />
+              </div>
+              </form>
+              {{/each}}
+            {{else}}
+               <h4><span class="label label-default">No data found</span></h4>
+            {{/if}}
+          {{/with}}
+    </div>
+  {{/if}}
   </div>
-</form>
-	{{else}}
-	<div class="alert alert-info" role="alert">Found no data for the selected date.</div>
-
-	{{/each}}
-<!-- placeholder for editPoints modal -->
-     {{> editPoints}}
-</div>
 </template>
+
 

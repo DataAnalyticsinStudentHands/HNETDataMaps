@@ -88,6 +88,15 @@ export const flagsHash = {
     color: 'black',
     color10: 'black',
     labelcolor: 'label-default'
+  },
+  10: {
+    val: 10,
+    description: '2TAPs',
+    label: 'K',
+    selectable: true,
+    color: '#BF0B23',
+    color10: 'black',
+    labelcolor: 'label-danger'
   }
 };
 
