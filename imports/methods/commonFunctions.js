@@ -658,7 +658,7 @@ function createTCEQPushData(aqsid, data) {
 }
 
 // call bulkupdate for 10s data points
-const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEpoch, endEpoch) => {
+const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEpoch, endEpoch, daqFactory) => {
   let startAggrEpoch = startEpoch;
   let endAggrEpoch = endEpoch;
 
@@ -672,8 +672,12 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
   }
   bulkCollectionUpdate(LiveData, allObjects, {
     callback() {
-      logger.info(`LiveData updated from: ${path} for: ${site.siteName} - ${site.AQSID}, now calling 5minAgg for epochs: ${startAggrEpoch} - ${endAggrEpoch} ${moment.unix(startAggrEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(endAggrEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
-      perform5minAggregat(site.AQSID, startAggrEpoch, endAggrEpoch);
+      logger.info(`LiveData updated from: ${path} for: ${site.siteName} - ${site.AQSID}`);
+      // call aggregation function only if we got new data from DAQFactory
+      if (daqFactory && globalsite !== undefined) {
+        logger.info(`Now calling 5minAgg for epochs: ${startAggrEpoch} - ${endAggrEpoch} ${moment.unix(startAggrEpoch).format('YYYY/MM/DD HH:mm:ss')} - ${moment.unix(endAggrEpoch).format('YYYY/MM/DD HH:mm:ss')}`);
+        perform5minAggregat(site.AQSID, startAggrEpoch, endAggrEpoch);
+      }
     }
   });
 });
@@ -729,7 +733,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     startEpoch -= (startEpoch % 1); // rounding down
     let endEpoch = ((parsedLines[parsedLines.length - 1].TheTime - 25569) * 86400) + (6 * 3600);
     endEpoch -= (endEpoch % 1); // rounding down
-    callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch);
+    callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch, true);
   }
 });
 
@@ -740,21 +744,6 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const site = LiveSites.findOne({ incoming: parentDir });
 
   if (site.AQSID) {
-    // update the timestamp for the last update for the site
-    const stats = fs.statSync(path);
-    const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
-    if (site.lastUpdateEpoch < fileModified) {
-      LiveSites.update({
-        // Selector
-        AQSID: `${site.AQSID}`
-      }, {
-        // Modifier
-        $set: {
-          lastUpdateEpoch: fileModified
-        }
-      }, { validate: false });
-    }
-
     // create objects from parsed lines
     const allObjects = [];
     for (let k = 0; k < parsedLines.length; k++) {
@@ -839,7 +828,7 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     const endTimeStamp = moment.utc(parsedLines[parsedLines.length - 1][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
     let endEpoch = endTimeStamp.unix();
     endEpoch -= (endEpoch % 1); // rounding down
-    callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch);
+    callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch, false);
   }
 });
 
@@ -850,21 +839,6 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const site = LiveSites.findOne({ incoming: parentDir });
 
   if (site.AQSID) {
-    // update the timestamp for the last update for the site
-    const stats = fs.statSync(path);
-    const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
-    if (site.lastUpdateEpoch < fileModified) {
-      LiveSites.update({
-        // Selector
-        AQSID: `${site.AQSID}`
-      }, {
-        // Modifier
-        $set: {
-          lastUpdateEpoch: fileModified
-        }
-      }, { validate: false });
-    }
-
     // use file name for TAP instrument identifier
     const metron = `tap_${path.split(/[_]+/)[3]}`;
 
@@ -987,7 +961,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     const endTimeStamp = moment.utc(`${parsedLines[parsedLines.length - 1][0]}_${parsedLines[parsedLines.length - 1][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
     let endEpoch = endTimeStamp.unix();
     endEpoch -= (endEpoch % 1); // rounding down
-    callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch);
+    callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch, false);
   }
 });
 
@@ -997,7 +971,6 @@ const readFile = Meteor.bindEnvironment((path) => {
   const fileName = pathArray[pathArray.length - 1];
   let fileType = fileName.split(/[_]+/)[2];
   if (fileName.startsWith('TAP')) {
-    logger.info(fileType);
     fileType = 'TAP';
   }
 
