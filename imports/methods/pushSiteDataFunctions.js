@@ -34,7 +34,7 @@ export const pushSiteData = function pushSiteData(aqsid) {
 
         logger.info(`Trying to get data for ${startEpoch} - ${endEpoch}`);
 
-        const data = exportDataAsCSV(aqsid, startEpoch, endEpoch);
+        const data = exportDataAsCSV(aqsid, startEpoch, endEpoch, 'tceq');
 
         if (Object.keys(data).length === 0 && data.constructor === Object) {
           throw new Error(`Could not find data for ${startEpoch} - ${endEpoch}`);
