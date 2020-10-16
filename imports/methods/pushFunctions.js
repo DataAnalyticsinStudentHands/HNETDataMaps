@@ -6,8 +6,7 @@ import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
 import { moment } from 'meteor/momentjs:moment';
 import { LiveSites, Exports } from '../api/collections_server';
-import { exportDataAsCSV } from './fileFunctions';
-import { createTCEQPushData } from './commonFunctions';
+import { createTCEQPushData, exportDataAsCSV } from './commonFunctions';
 import { hnetsftp } from '../startup/server/startup';
 
 export const pushData = function pushData(aqsid, startEpoch, endEpoch, manualPush) {
