@@ -630,8 +630,15 @@ function createTCEQPushData(aqsid, data) {
     throw new Meteor.Error('Could not find AQSID: ', aqsid, ' in LiveSites.');
   }
 
-  // get site name from incoming folder
-  const siteName = site.incoming.split(/[_]+/)[1];
+  // get site name from incoming folder (TODO: take out check after we have renamed all folders)
+  let siteName = (site.incoming.match(new RegExp('UH' +
+      '(.*)' +
+      '_')))[1].slice(-2);
+
+  if (!(siteName === 'WL' || siteName === 'MT' || siteName === 'SP' || siteName === 'JF')) {
+    siteName = site.incoming.split(/[_]+/)[1];
+  }
+  
   // ensure whether output dir exists
   const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
   fs.ensureDirSync(outputDir, (err) => {
