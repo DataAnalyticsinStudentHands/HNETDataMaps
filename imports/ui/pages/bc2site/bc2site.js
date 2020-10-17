@@ -3,8 +3,9 @@ import { Meteor } from 'meteor/meteor';
 import { ReactiveVar } from 'meteor/reactive-var';
 import { moment } from 'meteor/momentjs:moment';
 import { Template } from 'meteor/templating';
-import { CompositeDataSeries } from '../../../api/collections_client';
+import { Bc2DataSeries } from '../../../api/collections_client';
 import { unitsHash } from '../../../api/constants';
+import { LiveSites } from '../../../api/collections_server';
 
 import './bc2site.html';
 
@@ -22,7 +23,7 @@ Highcharts.setOptions({
   }
 });
 
-Template.composite.onRendered(() => {
+Template.bc2site.onRendered(() => {
   // setup date picker
   this.$('#datetimepicker1').datetimepicker({
     format: 'MM/DD/YYYY',
@@ -35,9 +36,10 @@ Template.composite.onRendered(() => {
   });
 });
 
-Template.composite.onCreated(function () {
+Template.bc2site.onCreated(function () {
   this.autorun(() => {
-    this.subscribe('compositeDataSeries', startEpoch.get(), endEpoch.get(), () => {
+    console.log(Router.current().params._id);
+    this.subscribe('bc2DataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get(), () => {
       $('svg').delay(750).fadeIn();
       $('.loader').delay(1000).fadeOut('slow', () => {
         $('.loading-wrapper').fadeIn('slow');
@@ -46,15 +48,19 @@ Template.composite.onCreated(function () {
   });
 });
 
-Template.composite.helpers({
+Template.bc2site.helpers({
+  sitename() {
+    const site = LiveSites.findOne({ AQSID: Router.current().params._id });
+    return site && site.siteName;
+  },
   selectedDate() {
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
   },
   charts() {
-    return CompositeDataSeries.find();
+    return Bc2DataSeries.find();
   },
   createChart(measurement) {
-    const data = CompositeDataSeries.find({ _id: measurement }).fetch();
+    const data = Bc2DataSeries.find({ _id: measurement }).fetch();
 
     // Use Meteor.defer() to create chart after DOM is ready:
     Meteor.defer(() => {
@@ -148,9 +154,9 @@ Template.composite.helpers({
   }
 });
 
-Template.composite.events({
+Template.bc2site.events({
   // set y-axis min/max from form
-  'submit .adjust' (event) {
+  'submit .adjust': function (event) {
     // Prevent default browser form submit
     event.preventDefault();
     // find axis of graph
@@ -161,7 +167,7 @@ Template.composite.events({
     // Set value from form element
     yAxis.setExtremes(target.min.value, target.max.value);
   },
-  'dp.change #datetimepicker1'(event) {
+  'dp.change #datetimepicker1': function (event) {
     // Get the selected date
     startEpoch.set(moment(event.date, 'YYYY-MM-DD').unix());
     endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
