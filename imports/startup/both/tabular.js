@@ -65,6 +65,7 @@ new Tabular.Table({
 new Tabular.Table({
   name: 'AutomaticPushes',
   collection: Exports,
+  pub: 'exports',
   skipCount: true,
   pagingType: 'simple',
   info: false,

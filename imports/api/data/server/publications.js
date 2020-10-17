@@ -663,7 +663,8 @@ Meteor.publish('aggregateEdits', function(siteName) {
 
 // pushed data time stamps
 Meteor.publish('exports', function() {
-  return Exports.find({});
+  const weekAgo = moment().subtract(1, 'weeks').unix();
+  return Exports.find({ pushEpoch: { $gte: parseInt(weekAgo, 10) } });
 });
 
 Meteor.publish('liveSites', function() {
