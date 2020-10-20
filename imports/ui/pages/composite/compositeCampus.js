@@ -52,7 +52,6 @@ Template.compositeCampus.helpers({
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
   },
   charts() {
-    console.log("hello");
     return CompositeCampusDataSeries.find();
   },
   createChart(measurement) {

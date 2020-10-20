@@ -3,7 +3,6 @@ import { Meteor } from 'meteor/meteor';
 import { ReactiveVar } from 'meteor/reactive-var';
 import { moment } from 'meteor/momentjs:moment';
 import { Template } from 'meteor/templating';
-import { _ } from 'meteor/underscore';
 import { CompositeDataSeries } from '../../../api/collections_client';
 import { unitsHash } from '../../../api/constants';
 
@@ -52,7 +51,6 @@ Template.composite.helpers({
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
   },
   charts() {
-    console.log("hello from all");
     return CompositeDataSeries.find();
   },
   createChart(measurement) {

@@ -38,7 +38,6 @@ Template.bc2site.onRendered(() => {
 
 Template.bc2site.onCreated(function () {
   this.autorun(() => {
-    console.log(Router.current().params._id);
     this.subscribe('bc2DataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get(), () => {
       $('svg').delay(750).fadeIn();
       $('.loader').delay(1000).fadeOut('slow', () => {
