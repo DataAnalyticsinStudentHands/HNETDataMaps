@@ -631,9 +631,13 @@ function createTCEQPushData(aqsid, data) {
   }
 
   // get site name from incoming folder (TODO: take out check after we have renamed all folders)
-  let siteName = (site.incoming.match(new RegExp('UH' +
+  let siteName;
+  try {
+    siteName = (site.incoming.match(new RegExp('UH' +
       '(.*)' +
       '_')))[1].slice(-2);
+  } catch (e) {
+  }
   if (!(siteName === 'WL' || siteName === 'MT' || siteName === 'SP' || siteName === 'JF')) {
     siteName = site.incoming.split(/[_]+/)[1];
   }
