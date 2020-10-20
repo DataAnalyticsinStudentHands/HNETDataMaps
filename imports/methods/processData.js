@@ -7,8 +7,20 @@ import { readFile } from './commonFunctions';
 
 export const reimportLiveData = function reimportLiveData(incomingFolder, selectedDate, selectedType) {
   // get short site name from incoming folder
-  const siteGroup = incomingFolder.split(/[_]+/)[0];
-  const shortSiteName = incomingFolder.split(/[_]+/)[1];
+  // get site name from incoming folder (TODO: take out check after we have renamed all folders)
+  let shortSiteName;
+  try {
+    shortSiteName = (incomingFolder.match(new RegExp('UH' +
+        '(.*)' +
+        '_')))[1].slice(-2);
+  } catch (e) {
+  }
+
+  let siteGroup = 'HNET';
+  if (!(shortSiteName === 'WL' || shortSiteName === 'MT' || shortSiteName === 'SP' || shortSiteName === 'JF')) {
+    shortSiteName = incomingFolder.split(/[_]+/)[1];
+    siteGroup = incomingFolder.split(/[_]+/)[0];
+  }
   let path;
 
   switch (selectedType) {
@@ -20,6 +32,7 @@ export const reimportLiveData = function reimportLiveData(incomingFolder, select
       }
       break;
     case 'TAP':
+      // TODO: find naming pattern for TAP
       path = `/hnet/incoming/current/${incomingFolder}/${siteGroup}_${shortSiteName}_tap_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
       break;
     default: {
@@ -32,8 +45,8 @@ export const reimportLiveData = function reimportLiveData(incomingFolder, select
   }
 
   if (!fs.existsSync(path)) {
-    logger.error('Error in call for reimportLiveData.', `Could not find data file for ${selectedDate} and site ${shortSiteName}.`);
-    throw new Meteor.Error('File does not exists.', `Could not find data file for ${selectedDate} and site ${shortSiteName}.`);
+    logger.error('Error in call for reimportLiveData.', `Could not find data file for ${selectedDate} and site ${siteGroup}_${shortSiteName}.`);
+    throw new Meteor.Error('File does not exists.', `Could not find data file for ${selectedDate} and site ${siteGroup}_${shortSiteName}.`);
   }
 
   readFile(path);
