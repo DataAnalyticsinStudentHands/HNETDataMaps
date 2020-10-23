@@ -630,8 +630,18 @@ function createTCEQPushData(aqsid, data) {
     throw new Meteor.Error('Could not find AQSID: ', aqsid, ' in LiveSites.');
   }
 
-  // get site name from incoming folder
-  const siteName = site.incoming.split(/[_]+/)[1];
+  // get site name from incoming folder (TODO: take out check after we have renamed all folders)
+  let siteName;
+  try {
+    siteName = (site.incoming.match(new RegExp('UH' +
+      '(.*)' +
+      '_')))[1].slice(-2);
+  } catch (e) {
+  }
+  if (!(siteName === 'WL' || siteName === 'MT' || siteName === 'SP' || siteName === 'JF')) {
+    siteName = site.incoming.split(/[_]+/)[1];
+  }
+
   // ensure whether output dir exists
   const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
   fs.ensureDirSync(outputDir, (err) => {
@@ -667,7 +677,13 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
     // use modified timestamp of file to figure out how far back to go
     const stats = fs.statSync(path);
     const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
-    startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
+
+    // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
+    if (site.siteGroup === 'BC2') {
+      startAggrEpoch = moment.unix(fileModified).subtract(1, 'hours').unix();
+    } else {
+      startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
+    }
     endAggrEpoch = moment().unix();
   }
   bulkCollectionUpdate(LiveData, allObjects, {
