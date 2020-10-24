@@ -259,11 +259,20 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         }
       }
     }, {
+      $sort: {
+        epoch: -1
+      }
+    }, {
       $out: aggrResultsName
     }
   ];
 
   Promise.await(LiveData.rawCollection().aggregate(pipeline, { allowDiskUse: true }).toArray());
+
+  // tap switch variables ***MUST*** be viable over iterations of the foreach loop
+  // 1 is online. Assume online unless specified otherwise in TAP switch implementation
+  var TAP01Flag = 1, TAP02Flag = 1;
+  var TAP01Epoch = 0, TAP02Epoch = 0;
 
   // create new structure for data series to be used for charts
   AggrResults.find({}).forEach((e) => {
@@ -280,6 +289,54 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           const data = subTypes[i][subType];
           let numValid = 1;
           var newkey;
+
+          /** Tap flag implementation **/
+
+          // Get flag from DAQ data and save it
+          if (subType.indexOf('TAP01') >= 0) {
+            TAP01Flag = data[0].val;
+            TAP01Epoch = subObj.epoch;
+          } else if (subType.indexOf('TAP02') >= 0) {
+            TAP02Flag = data[0].val;
+            TAP02Epoch = subObj.epoch;
+          }
+
+          // Get flag from TAP0(1+2)Flag and give it to the appropriate instrument
+          if (subType.indexOf('tap_') >= 0) {
+            // TAP01 = even
+            // TAP02 = odd
+            // confusing amirite!?
+            // EXAMPLE:
+            // tap_SN36 <- even goes to TAP01
+            // tap_SN37 <- odd goes to TAP02
+            // This is parsing tap_* string for integer id
+            var subTypeName = subType;
+            let epochDiff;
+            do {
+              subTypeName = subTypeName.slice(1);
+            } while (isNaN(subTypeName));
+            if (parseInt(subTypeName) % 2 === 0) {
+              // Even - Needs flag from TAP01
+              // Make sure that tap data has a corresponding timestamp in DaqFactory file
+              epochDiff = subObj.epoch - TAP01Epoch;
+              if (epochDiff >= 0 && epochDiff < 10) {
+                data[0].val = TAP01Flag;
+              } else {
+                break;
+              }
+            } else {
+              // Odd - Needs flag from TAP02
+              // Make sure that tap data has a corresponding timestamp in DaqFactory file
+              epochDiff = subObj.epoch - TAP02Epoch;
+              if (epochDiff >= 0 && epochDiff < 10) {
+                data[0].val = TAP02Flag;
+              } else {
+                break;
+              }
+            }
+          }
+
+          /**  End of TAP switch implementation **/
 
           // if flag is not existing, put 9 as default, need to ask Jim?
           if (data[0].val === '') {
