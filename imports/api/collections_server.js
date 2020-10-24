@@ -65,6 +65,26 @@ const SitesSchema = new SimpleSchema({
       ]
     }
   },
+  TAPInstruments: {
+    type: Array,
+    optional: true,
+    maxCount: 1,
+    minCount: 1
+  },
+  'TAPInstruments.$': {
+    type: Object,
+    optional: true
+  },
+  'TAPInstruments.$.TAP01': {
+    type: String,
+    optional: true,
+    label: 'Serial for TAP01:'
+  },
+  'TAPInstruments.$.TAP02': {
+    type: String,
+    optional: true,
+    label: 'Serial for TAP02:'
+  },
   'loc.type': {
     type: String,
     autoValue: function() {

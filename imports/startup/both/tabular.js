@@ -1,4 +1,5 @@
 import { Tabular } from 'meteor/aldeed:tabular';
+import { moment } from 'meteor/momentjs:moment';
 
 import { LiveSites, Exports } from '../../api/collections_server';
 import { AggrEdits } from '../../api/collections_client';
@@ -65,10 +66,12 @@ new Tabular.Table({
 new Tabular.Table({
   name: 'AutomaticPushes',
   collection: Exports,
-  pub: 'exports',
   skipCount: true,
   pagingType: 'simple',
   info: false,
+  selector(pushEpoch) {
+    return { 'pushEpoch': { $gte: moment().subtract(1, 'week').unix() } };
+  },
   order: [
     [0, "desc"]
   ],
@@ -113,6 +116,12 @@ new Tabular.Table({
 new Tabular.Table({
   name: 'ManualPushes',
   collection: Exports,
+  skipCount: true,
+  pagingType: 'simple',
+  info: false,
+  selector(pushEpoch) {
+    return { 'pushEpoch': { $gte: moment().subtract(1, 'week').unix() } };
+  },
   order: [
     [0, "desc"]
   ],

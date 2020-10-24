@@ -10,8 +10,7 @@ const dataFilePath = new ReactiveVar();
 
 Template.listAutomaticPushes.helpers({
   selector() {
-    const weekAgo = moment().subtract(1, 'hours').unix();
-    return { pushEpoch: { $gte: parseInt(weekAgo, 10) }, manual: false };
+    return { manual: false };
   }
 });
 
