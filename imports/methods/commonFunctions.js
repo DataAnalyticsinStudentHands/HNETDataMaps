@@ -301,7 +301,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             TAP02Epoch = subObj.epoch;
           }
 
-          // Get flag from TAP0(1+2)Flag and give it to the appropriate instrument
+          // Get flag from TAP0(1|2)Flag and give it to the appropriate instrument
           if (subType.indexOf('tap_') >= 0) {
             // TAP01 = even
             // TAP02 = odd
