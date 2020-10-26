@@ -301,7 +301,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             TAP02Epoch = subObj.epoch;
           }
 
-          // Get flag from TAP0(1+2)Flag and give it to the appropriate instrument
+          // Get flag from TAP0(1|2)Flag and give it to the appropriate instrument
           if (subType.indexOf('tap_') >= 0) {
             // TAP01 = even
             // TAP02 = odd
@@ -318,6 +318,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (parseInt(subTypeName) % 2 === 0) {
               // Even - Needs flag from TAP01
               // Make sure that tap data has a corresponding timestamp in DaqFactory file
+              // If not, break and do not aggregate datapoint
               epochDiff = subObj.epoch - TAP01Epoch;
               if (epochDiff >= 0 && epochDiff < 10) {
                 data[0].val = TAP01Flag;
@@ -327,6 +328,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             } else {
               // Odd - Needs flag from TAP02
               // Make sure that tap data has a corresponding timestamp in DaqFactory file
+              // If not, break and do not aggregate datapoint
               epochDiff = subObj.epoch - TAP02Epoch;
               if (epochDiff >= 0 && epochDiff < 10) {
                 data[0].val = TAP02Flag;
