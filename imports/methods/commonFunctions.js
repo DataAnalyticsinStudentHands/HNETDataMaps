@@ -454,6 +454,11 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
       }
     }
 
+    // Do not recalculate variable **MUST** be viable over the for loop below
+    // Stores whether a tap instrument has been calculated
+    // Using array due to unknown size of tap instruments being read
+    let tapInstrumentCalculated = [];
+
     // transform aggregated data to generic data format using subtypes etc.
     const newaggr = {};
     for (const aggr in aggrSubTypes) {
@@ -482,11 +487,32 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           const majorityFlag = (_.invert(counts))[maxObj];
           obj.Flag = majorityFlag;
         }
+        
+        // Calculations for tap instruments done here
+        if (tapInstrumentCalculated.find(finderValue => finderValue === instrument) === undefined && instrument.indexOf('tap_') > -1) {
+          tapInstrumentCalculated.push(instrument);
+          newaggr[instrument]['SAE'] = [];
+          newaggr[instrument]['SSA'] = [];
+          newaggr[instrument]['AAE'] = [];
+
+
+          newaggr[instrument]['SAE'].push({ metric: 'calc', val: obj.avg });
+          newaggr[instrument]['SAE'].push({ metric: 'unit', val: undefined });
+          newaggr[instrument]['SAE'].push({ metric: 'Flag', val: obj.Flag});
+
+          newaggr[instrument]['SSA'].push({ metric: 'calc', val: obj.avg });
+          newaggr[instrument]['SSA'].push({ metric: 'unit', val: undefined });
+          newaggr[instrument]['SSA'].push({ metric: 'Flag', val: obj.Flag});
+
+          newaggr[instrument]['AAE'].push({ metric: 'calc', val: obj.avg });
+          newaggr[instrument]['AAE'].push({ metric: 'unit', val: undefined});
+          newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
+        }
 
         if (measurement === 'RMY') { // special treatment for wind measurements
           if (!newaggr[instrument].WD) {
             newaggr[instrument].WD = [];
-          }
+          } 
           if (!newaggr[instrument].WS) {
             newaggr[instrument].WS = [];
           }
@@ -503,7 +529,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument].WS.push({ metric: 'avg', val: windSpdAvg });
           newaggr[instrument].WS.push({ metric: 'numValid', val: obj.numValid });
           newaggr[instrument].WS.push({ metric: 'unit', val: obj.WSunit });
-          newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag });
+          newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag }); 
         } else { // all other measurements
           if (!newaggr[instrument][measurement]) {
             newaggr[instrument][measurement] = [];
