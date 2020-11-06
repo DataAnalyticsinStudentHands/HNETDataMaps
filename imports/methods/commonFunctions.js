@@ -11,6 +11,7 @@ import pathModule from 'path';
 import { AggrData, LiveData, LiveSites } from '../api/collections_server';
 import { channelHash, flagsHash } from '../api/constants';
 import { globalsite } from '../startup/server/startup';
+import * as mathjs from 'mathjs';
 
 // Export csv data file in defined format, default: TCEQ format
 function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
@@ -471,8 +472,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         }
 
         const obj = aggrSubTypes[aggr]; // makes it a little bit easier
-
-        // dealing with flags
+        
+				// dealing with flags
         if ((obj.numValid / obj.totalCounter) >= 0.75) {
           obj.Flag = 1; // valid
         } else {
@@ -487,7 +488,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           const majorityFlag = (_.invert(counts))[maxObj];
           obj.Flag = majorityFlag;
         }
-        
         // Calculations for tap instruments done here
         if (tapInstrumentCalculated.find(finderValue => finderValue === instrument) === undefined && instrument.indexOf('tap_') > -1) {
           tapInstrumentCalculated.push(instrument);
@@ -495,17 +495,62 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument]['SSA'] = [];
           newaggr[instrument]['AAE'] = [];
 
+					// flips sign for all variables in array
+					function flipSignForAll(arr) {
+						for (let i = 0; i < arr.length; i++) {
+							arr[i] *= -1;
+						}
+					}
+
+          // SAE calculations begin here 
+          // Lord have mercy on my poor soul
+          // Since we have a predefined length for our arrays / matrices, we can initialize datatypes with assumptions
+          let x = mathjs.matrix([635, 525, 450]); // Matlab code: x=[635,525,450]; %Wavelength values for Nephelometer 
+          let y_Neph = mathjs.matrix( // Matlab code: y_Neph = outdata_Neph(:,2:4); %Scattering coefficient values from Daqfactory for Neph
+            [[aggrSubTypes['Neph_RedScattering'].avg, aggrSubTypes['Neph_GreenScattering'].avg, aggrSubTypes['Neph_BlueScattering'].avg], 
+            [aggrSubTypes['Neph_RedBackScattering'].avg, aggrSubTypes['Neph_GreenBackScattering'].avg, aggrSubTypes['Neph_BlueBackScattering'].avg]]);           
+          let lx = mathjs.log10(x); // Matlab code: lx = log(x); %Taking log of wavelength
+          let ly_Neph = mathjs.log10(y_Neph); // Matlab code: ly_Neph = log(y_Neph); %Taking log of scattering coefficient values
+
+          // I don't want to see this ever again. ever. 
+          // Matlab code: log_Neph = -[lx(:) ones(size(x(:)))] \ ly_Neph(:,:)'; %Step 1- SAE calulation
+          // going to have to break this down a little bit
+          let log_Neph = mathjs.matrix([lx, mathjs.ones(mathjs.size(x))]); // [lx(:) ones(size(x(:)))]
+          // - operator just negates everything in the matrix
+					mathjs.apply(log_Neph, 0, flipSignForAll) // -[...]
+					mathjs.apply(log_Neph, 1, flipSignForAll) // -[...]
+
+					console.log("\n" + lx + "\n" + ly_Neph + "\n" + log_Neph)
+          // ' operator means complex conjugate transpose. 
+          // Fortunately, for my sake, a conjugate transpose with no complex elements is the same as .' operator
+          // .' operator is the transpose operator
+          // I think the ly_Neph(:,:)' is there to get ly_Neph to have the same orientation as -[lx(:) ones(size(x(:)))].
+					// For now, leaving that out
+
+          // \ operator in matlab is for left division. 
+					// If A is a scalar, then A\B is equivalent to A.\B.
+					// If A is a square n-by-n matrix and B is a matrix with n rows, then x = A\B is a solution to the equation A*x = B, if it exists.
+					// if A is a rectangular m-by-n matrix with m ~= n, and B is a matrix with m rows, then A\B returns a least-squares solution to the system of equations A*x= B.
+					// For all cases, m = 3, n = 2
+					// because of that, we need to find least squares solution to solve x
+					// Least squares solution requires a few steps solve:
+					// https://www.youtube.com/watch?v=9UE8-6Jlezw for reference
+					// First we need to find A^T * A and A^T * b
+
 
           newaggr[instrument]['SAE'].push({ metric: 'calc', val: obj.avg });
-          newaggr[instrument]['SAE'].push({ metric: 'unit', val: undefined });
+          newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
           newaggr[instrument]['SAE'].push({ metric: 'Flag', val: obj.Flag});
 
+          //SSA calculations begin here:
           newaggr[instrument]['SSA'].push({ metric: 'calc', val: obj.avg });
-          newaggr[instrument]['SSA'].push({ metric: 'unit', val: undefined });
+          newaggr[instrument]['SSA'].push({ metric: 'unit', val: "undefined" });
           newaggr[instrument]['SSA'].push({ metric: 'Flag', val: obj.Flag});
 
+          // AAE calculations begin here:
+          x = mathjs.matrix([[640, 520, 365]])// x=[640,520,365]; % Wavelengths values
           newaggr[instrument]['AAE'].push({ metric: 'calc', val: obj.avg });
-          newaggr[instrument]['AAE'].push({ metric: 'unit', val: undefined});
+          newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
           newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
         }
 
