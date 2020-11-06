@@ -1,16 +1,16 @@
-import Highcharts from 'highcharts/highstock';
-import { Meteor } from 'meteor/meteor';
-import { ReactiveVar } from 'meteor/reactive-var';
-import { moment } from 'meteor/momentjs:moment';
-import { Template } from 'meteor/templating';
-import { Bc2DataSeries } from '../../../api/collections_client';
-import { unitsHash } from '../../../api/constants';
-import { LiveSites } from '../../../api/collections_server';
+import Highcharts from "highcharts/highstock";
+import { Meteor } from "meteor/meteor";
+import { ReactiveVar } from "meteor/reactive-var";
+import { moment } from "meteor/momentjs:moment";
+import { Template } from "meteor/templating";
+import { Bc2DataSeries } from "../../../api/collections_client";
+import { unitsHash } from "../../../api/constants";
+import { LiveSites } from "../../../api/collections_server";
 
-import './bc2site.html';
+import "./bc2site.html";
 
 // 24 hours ago - seconds
-const startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
+const startEpoch = new ReactiveVar(moment().subtract(1439, "minutes").unix());
 const endEpoch = new ReactiveVar(moment().unix());
 
 Highcharts.setOptions({
@@ -19,31 +19,39 @@ Highcharts.setOptions({
     getTimezoneOffset: (timestamp) => {
       const timezoneOffset = 0;
       return timezoneOffset;
-    }
-  }
+    },
+  },
 });
 
 Template.bc2site.onRendered(() => {
   // setup date picker
-  this.$('#datetimepicker1').datetimepicker({
-    format: 'MM/DD/YYYY',
+  this.$("#datetimepicker1").datetimepicker({
+    format: "MM/DD/YYYY",
     useCurrent: true,
     defaultDate: new Date(),
     widgetPositioning: {
-      horizontal: 'left',
-      vertical: 'auto'
-    }
+      horizontal: "left",
+      vertical: "auto",
+    },
   });
 });
 
 Template.bc2site.onCreated(function () {
   this.autorun(() => {
-    this.subscribe('bc2DataSeries', Router.current().params._id, startEpoch.get(), endEpoch.get(), () => {
-      $('svg').delay(750).fadeIn();
-      $('.loader').delay(1000).fadeOut('slow', () => {
-        $('.loading-wrapper').fadeIn('slow');
-      });
-    });
+    this.subscribe(
+      "bc2DataSeries",
+      Router.current().params._id,
+      startEpoch.get(),
+      endEpoch.get(),
+      () => {
+        $("svg").delay(750).fadeIn();
+        $(".loader")
+          .delay(1000)
+          .fadeOut("slow", () => {
+            $(".loading-wrapper").fadeIn("slow");
+          });
+      }
+    );
   });
 });
 
@@ -53,7 +61,7 @@ Template.bc2site.helpers({
     return site && site.siteName;
   },
   selectedDate() {
-    return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
+    return moment.unix(endEpoch.get()).format("YYYY-MM-DD");
   },
   charts() {
     return Bc2DataSeries.find();
@@ -64,35 +72,35 @@ Template.bc2site.helpers({
     // Use Meteor.defer() to create chart after DOM is ready:
     Meteor.defer(() => {
       if (document.getElementById(`container-chart-${measurement}`) !== null) {
-      // Create standard Highcharts chart with options:
+        // Create standard Highcharts chart with options:
         const chart = Highcharts.StockChart(`container-chart-${measurement}`, {
           chart: {
-            zoomType: 'x'
+            zoomType: "x",
           },
           title: {
-            text: measurement
+            text: measurement,
           },
           xAxis: {
-            type: 'datetime',
+            type: "datetime",
             title: {
-              text: 'Local Time'
+              text: "Local Time",
             },
-            minRange: 3600
+            minRange: 3600,
           },
           navigator: {
             xAxis: {
               dateTimeLabelFormats: {
-                hour: '%e. %b'
-              }
-            }
+                hour: "%e. %b",
+              },
+            },
           },
           yAxis: {
             allowDecimals: false,
             title: {
-              text: unitsHash[measurement]
+              text: unitsHash[measurement],
             },
             min: 0,
-            opposite: false
+            opposite: false,
           },
           series: data[0].charts,
           tooltip: {
@@ -101,74 +109,85 @@ Template.bc2site.helpers({
             positioner(labelWidth, labelHeight, point) {
               let tooltipX;
               let tooltipY;
-              if (point.plotX + this.chart.plotLeft < labelWidth && point.plotY + labelHeight > this.chart.plotHeight) {
+              if (
+                point.plotX + this.chart.plotLeft < labelWidth &&
+                point.plotY + labelHeight > this.chart.plotHeight
+              ) {
                 tooltipX = this.chart.plotLeft;
-                tooltipY = this.chart.plotTop + this.chart.plotHeight - (2 * labelHeight) - 10;
+                tooltipY =
+                  this.chart.plotTop +
+                  this.chart.plotHeight -
+                  2 * labelHeight -
+                  10;
               } else {
                 tooltipX = this.chart.plotLeft;
-                tooltipY = this.chart.plotTop + this.chart.plotHeight - labelHeight;
+                tooltipY =
+                  this.chart.plotTop + this.chart.plotHeight - labelHeight;
               }
               return {
                 x: tooltipX,
-                y: tooltipY
+                y: tooltipY,
               };
             },
             formatter() {
-              let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
+              let s = moment(this.x).format("YYYY/MM/DD HH:mm:ss");
               s += `<br/>${this.series.name} <b>${this.y.toFixed(2)}</b>`;
               return s;
             },
-            shared: false
+            shared: false,
           },
           credits: {
-            enabled: false
+            enabled: false,
           },
           legend: {
             enabled: true,
-            align: 'right',
-            layout: 'vertical',
-            verticalAlign: 'top',
-            y: 100
+            align: "right",
+            layout: "vertical",
+            verticalAlign: "top",
+            y: 100,
           },
           rangeSelector: {
             inputEnabled: false,
             allButtonsEnabled: true,
-            buttons: [{
-              type: 'day',
-              count: 1,
-              text: '1 Day'
-            }, {
-              type: 'minute',
-              count: 60,
-              text: 'Hour'
-            }],
+            buttons: [
+              {
+                type: "day",
+                count: 1,
+                text: "1 Day",
+              },
+              {
+                type: "minute",
+                count: 60,
+                text: "Hour",
+              },
+            ],
             buttonTheme: {
-              width: 60
+              width: 60,
             },
-            selected: 0
-          }
+            selected: 0,
+          },
         });
       }
     });
-  }
+  },
 });
 
 Template.bc2site.events({
   // set y-axis min/max from form
-  'submit .adjust': function (event) {
+  "submit .adjust": function (event) {
     // Prevent default browser form submit
     event.preventDefault();
     // find axis of graph
     const target = event.target;
-    const index = $(`#container-chart-${target.id}`).data('highchartsChart');
+    const index = $(`#container-chart-${target.id}`).data("highchartsChart");
     const chart = Highcharts.charts[index];
     const yAxis = chart.yAxis[0];
     // Set value from form element
     yAxis.setExtremes(target.min.value, target.max.value);
   },
-  'dp.change #datetimepicker1': function (event) {
+  "dp.change #datetimepicker1": function (event) {
     // Get the selected date
-    startEpoch.set(moment(event.date, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
-  }
+    startEpoch.set(moment(event.date, "YYYY-MM-DD").unix());
+    endEpoch.set(moment.unix(startEpoch.get()).add(1439, "minutes").unix());
+  },
 });
