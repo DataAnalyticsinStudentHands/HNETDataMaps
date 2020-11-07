@@ -118,6 +118,45 @@ export const flagsHash = {
   },
 };
 
+export const colorsHash = {
+  1: {
+    val: 1,
+    description: "RedCoeff",
+    label: "R",
+    selectable: true,
+    color: "#BF0B23",
+    color10: "black",
+    labelcolor: "label-danger",
+  },
+  2: {
+    val: 2,
+    description: "BlueCoeff",
+    label: "B",
+    selectable: true,
+    color: "#3333ff",
+    color10: "black",
+    labelcolor: "label-danger",
+  },
+  3: {
+    val: 3,
+    description: "GreenCoeff",
+    label: "G",
+    selectable: true,
+    color: "#00cc00",
+    color10: "black",
+    labelcolor: "label-danger",
+  },
+  4: {
+    val: 4,
+    description: "Black",
+    label: "BL",
+    selectable: true,
+    color: "black",
+    color10: "black",
+    labelcolor: "label-danger",
+  },
+};
+
 export const channelHash = {
   RMY_WS: 1,
   RMY_WD: 2,

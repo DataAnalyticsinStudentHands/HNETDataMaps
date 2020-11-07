@@ -3,7 +3,7 @@ import { _ } from "meteor/underscore";
 import { check, Match } from "meteor/check";
 import { Promise } from "meteor/promise";
 import { AggrData } from "../../collections_server";
-import { flagsHash } from "../../constants";
+import { flagsHash, colorsHash } from "../../constants";
 
 // aggregation bc2 data to be plotted with highstock
 Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
@@ -92,25 +92,25 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                 modifiedData = {
                   x: epoch * 1000, // milliseconds
                   y: points[1].val, // average
-                  color: flagsHash[1].color,
+                  color: colorsHash[1].color,
                 };
               } else if (measurement.includes("Blue")) {
                 modifiedData = {
                   x: epoch * 1000, // milliseconds
                   y: points[1].val, // average
-                  color: flagsHash[11].color,
+                  color: colorsHash[2].color,
                 };
               } else if (measurement.includes("Green")) {
                 modifiedData = {
                   x: epoch * 1000, // milliseconds
                   y: points[1].val, // average
-                  color: flagsHash[12].color,
+                  color: colorsHash[3].color,
                 };
               } else if (measurement.includes("CO")) {
                 modifiedData = {
                   x: epoch * 1000, // milliseconds
                   y: points[1].val, // average
-                  color: flagsHash[8].color,
+                  color: colorsHash[4].color,
                 };
               } else if (measurement.includes("AirTemp")) {
                 modifiedData = {
