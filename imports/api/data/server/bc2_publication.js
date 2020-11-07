@@ -3,6 +3,7 @@ import { _ } from "meteor/underscore";
 import { check, Match } from "meteor/check";
 import { Promise } from "meteor/promise";
 import { AggrData } from "../../collections_server";
+import { flagsHash, colorsHash } from "../../constants";
 
 // aggregation bc2 data to be plotted with highstock
 Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
@@ -11,7 +12,6 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
   check(endEpoch, Match.Integer);
   const subscription = this;
   const bc2siteData = {};
-
   const aggBc2Pipe = [
     {
       $match: {
@@ -55,10 +55,12 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
             chart = `${instrument} Back Scattering`;
           } else if (chart.includes("ABSCOEF")) {
             chart = `${instrument.substring(0, 3)} Absolute Coefficients`;
-          } else if (instrument.includes("tap")) {
-            chart = `${instrument.substring(0, 3)} Abs Coeff`;
-          } else {
+          } else if (!instrument.includes("tap")) {
             chart = `${instrument} Scattering`;
+          } else if (chart.includes("AIRTEMP")) {
+            chart = `${measurement}`;
+          } else {
+            chart = [];
           }
           if (!bc2siteData[chart]) {
             // create placeholder for measurement
@@ -84,11 +86,45 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                 },
               };
             }
+            // console.log("points: ", points);
             if (points[1].val) {
-              modifiedData = {
-                x: epoch * 1000, // milliseconds
-                y: points[1].val, // average
-              };
+              if (measurement.includes("Red")) {
+                modifiedData = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[1].val, // average
+                  color: colorsHash[1].color,
+                };
+              } else if (measurement.includes("Blue")) {
+                modifiedData = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[1].val, // average
+                  color: colorsHash[2].color,
+                };
+              } else if (measurement.includes("Green")) {
+                modifiedData = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[1].val, // average
+                  color: colorsHash[3].color,
+                };
+              } else if (measurement.includes("CO")) {
+                modifiedData = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[1].val, // average
+                  color: colorsHash[4].color,
+                };
+              } else if (measurement.includes("AirTemp")) {
+                modifiedData = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[1].val, // average
+                  color: flagsHash[9].color,
+                };
+              } else {
+                modifiedData = {
+                  x: epoch * 1000, // milliseconds
+                  y: points[1].val, // average
+                  color: flagsHash[_.last(points).val].color,
+                };
+              }
             }
             bc2siteData[chart][measurement].push(modifiedData);
             // console.log("Modified Data: ", modifiedData);
