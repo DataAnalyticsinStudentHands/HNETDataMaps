@@ -472,8 +472,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         }
 
         const obj = aggrSubTypes[aggr]; // makes it a little bit easier
-        
-				// dealing with flags
+
+        // dealing with flags
         if ((obj.numValid / obj.totalCounter) >= 0.75) {
           obj.Flag = 1; // valid
         } else {
@@ -488,70 +488,215 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           const majorityFlag = (_.invert(counts))[maxObj];
           obj.Flag = majorityFlag;
         }
+
         // Calculations for tap instruments done here
         if (tapInstrumentCalculated.find(finderValue => finderValue === instrument) === undefined && instrument.indexOf('tap_') > -1) {
           tapInstrumentCalculated.push(instrument);
           newaggr[instrument]['SAE'] = [];
-          newaggr[instrument]['SSA'] = [];
+          newaggr[instrument]['SSA_R'] = [];
+          newaggr[instrument]['SSA_G'] = [];
+          newaggr[instrument]['SSA_B'] = [];
           newaggr[instrument]['AAE'] = [];
 
-					// flips sign for all variables in array
-					function flipSignForAll(arr) {
-						for (let i = 0; i < arr.length; i++) {
-							arr[i] *= -1;
-						}
-					}
+          // flips sign for all variables in array
+          function flipSignForAll(arr) {
+            for (let i = 0; i < arr.length; i++) {
+              arr[i] *= -1;
+            }
+          }
+
 
           // SAE calculations begin here 
-          // Lord have mercy on my poor soul
-          // Since we have a predefined length for our arrays / matrices, we can initialize datatypes with assumptions
           let x = mathjs.matrix([635, 525, 450]); // Matlab code: x=[635,525,450]; %Wavelength values for Nephelometer 
-          let y_Neph = mathjs.matrix( // Matlab code: y_Neph = outdata_Neph(:,2:4); %Scattering coefficient values from Daqfactory for Neph
-            [[aggrSubTypes['Neph_RedScattering'].avg, aggrSubTypes['Neph_GreenScattering'].avg, aggrSubTypes['Neph_BlueScattering'].avg], 
-            [aggrSubTypes['Neph_RedBackScattering'].avg, aggrSubTypes['Neph_GreenBackScattering'].avg, aggrSubTypes['Neph_BlueBackScattering'].avg]]);           
-          let lx = mathjs.log10(x); // Matlab code: lx = log(x); %Taking log of wavelength
-          let ly_Neph = mathjs.log10(y_Neph); // Matlab code: ly_Neph = log(y_Neph); %Taking log of scattering coefficient values
+          let y_Neph = mathjs.matrix([ // Matlab code: y_Neph = outdata_Neph(:,2:4); %Scattering coefficient values from Daqfactory for Neph
+            [aggrSubTypes['Neph_RedScattering'].avg, aggrSubTypes['Neph_GreenScattering'].avg, aggrSubTypes['Neph_BlueScattering'].avg]
+          ]); 
+          let lx = mathjs.log(x); // Matlab code: lx = log(x); %Taking log of wavelength
+          let ly_Neph = mathjs.log(y_Neph); // Matlab code: ly_Neph = log(y_Neph); %Taking log of scattering coefficient values
 
-          // I don't want to see this ever again. ever. 
           // Matlab code: log_Neph = -[lx(:) ones(size(x(:)))] \ ly_Neph(:,:)'; %Step 1- SAE calulation
           // going to have to break this down a little bit
-          let log_Neph = mathjs.matrix([lx, mathjs.ones(mathjs.size(x))]); // [lx(:) ones(size(x(:)))]
+          let log_Neph = mathjs.matrix([ // [lx(:) ones(size(x(:)))]
+            lx, 
+            mathjs.ones(mathjs.size(x))
+          ]); 
           // - operator just negates everything in the matrix
-					mathjs.apply(log_Neph, 0, flipSignForAll) // -[...]
-					mathjs.apply(log_Neph, 1, flipSignForAll) // -[...]
+          mathjs.apply(log_Neph, 0, flipSignForAll); // -[...]
+          mathjs.apply(log_Neph, 1, flipSignForAll); // -[...]
 
-					console.log("\n" + lx + "\n" + ly_Neph + "\n" + log_Neph)
-          // ' operator means complex conjugate transpose. 
-          // Fortunately, for my sake, a conjugate transpose with no complex elements is the same as .' operator
-          // .' operator is the transpose operator
-          // I think the ly_Neph(:,:)' is there to get ly_Neph to have the same orientation as -[lx(:) ones(size(x(:)))].
-					// For now, leaving that out
+          /*
+           * if A is a rectangular m-by-n matrix with m ~= n, and B is a matrix with m rows, then A\B returns a least-squares solution to the system of equations A*x= B.
+           * Least squares solution approximation formula: X = (A^T*A)-1*A^T*B
+           *
+           * To note:
+           *   A = -[lx(:) ones(size(x(:)))] OR A = log_Neph
+           *   B = ly_Neph(:,:)' OR B = ly_Neph
+           *   X = log_Neph
+           *
+           */
 
-          // \ operator in matlab is for left division. 
-					// If A is a scalar, then A\B is equivalent to A.\B.
-					// If A is a square n-by-n matrix and B is a matrix with n rows, then x = A\B is a solution to the equation A*x = B, if it exists.
-					// if A is a rectangular m-by-n matrix with m ~= n, and B is a matrix with m rows, then A\B returns a least-squares solution to the system of equations A*x= B.
-					// For all cases, m = 3, n = 2
-					// because of that, we need to find least squares solution to solve x
-					// Least squares solution requires a few steps solve:
-					// https://www.youtube.com/watch?v=9UE8-6Jlezw for reference
-					// First we need to find A^T * A and A^T * b
+          // Might be a little hard to look at, but trust me, this is what the line is doing
+          // X = (A^T*A)-1*A^T*B
 
+          // Matlab code: A \ B
+          let A = [];
+          let B = [];
+          log_Neph = mathjs.transpose(mathjs.multiply(mathjs.inv(mathjs.multiply(mathjs.transpose(log_Neph), log_Neph)), mathjs.transpose(log_Neph)));
 
-          newaggr[instrument]['SAE'].push({ metric: 'calc', val: obj.avg });
+          let m = mathjs.size(log_Neph).get([0]);
+          let n = mathjs.size(log_Neph).get([1]);
+
+          for (let i = 0; i < m; i++) {
+            A[i] = [];
+            for (let j = 0; j < n; j++) {
+              A[i][j] = log_Neph.get([i,j]);
+            }
+          }
+
+          m = mathjs.size(ly_Neph).get([0]);
+
+          for (let i = 0; i < m; i++) {
+            B[i] = ly_Neph.get([0, i]);
+          }
+
+          log_Neph = [];
+          // Last step, multiply A and B
+          for (let i = 0; i < A.length; i++) {
+            log_Neph[i] = [];
+            for (let j = 0; j < A[i].length; j++) {
+              log_Neph[i][j] = A[i][j] * B[j];
+            }
+          }
+
+          function ifGT5MakeNaN(arr) {
+            for (let i = 0; i < arr.length; i++) {
+              if (arr[i] > 5) {
+                arr[i] = 'NaN';
+              }
+            }
+          }
+
+          mathjs.apply(log_Neph, 0, ifGT5MakeNaN);
+          mathjs.apply(log_Neph, 1, ifGT5MakeNaN);
+
+          let SAE_Neph = log_Neph[0][0]; // SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
+
+          newaggr[instrument]['SAE'].push({ metric: 'calc', val: SAE_Neph });
           newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
           newaggr[instrument]['SAE'].push({ metric: 'Flag', val: obj.Flag});
+          newaggr[instrument]['SAE'].push({ metric: 'filler1', val: "undefined" });
+          newaggr[instrument]['SAE'].push({ metric: 'filler2', val: "undefined"});
+
+
 
           //SSA calculations begin here:
-          newaggr[instrument]['SSA'].push({ metric: 'calc', val: obj.avg });
-          newaggr[instrument]['SSA'].push({ metric: 'unit', val: "undefined" });
-          newaggr[instrument]['SSA'].push({ metric: 'Flag', val: obj.Flag});
+          let TotalExtinction_R = aggrSubTypes['Neph_RedScattering'].avg + aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg; // Matlab code: TotalExtinction_R = AC_R_Combined + outdata_Neph(:,2); %Total Extinction calculation for Red wavelength
+          let TotalExtinction_G = aggrSubTypes['Neph_GreenScattering'].avg + aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg; // Matlab code: TotalExtinction_G = AC_G_Combined + outdata_Neph(:,3); %Total Extinction calculation for Green wavelength
+          let TotalExtinction_B = aggrSubTypes['Neph_BlueScattering'].avg + aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg; // Matlab code: TotalExtinction_B = AC_B_Combined + outdata_Neph(:,4); %Total Extinction calculation for Blue wavelength
+
+          let SSA_R = aggrSubTypes['Neph_RedScattering'].avg / TotalExtinction_R; // Matlab code: SSA_R = outdata_Neph(:,2)./TotalExtinction_R; % SSA calculation for Red Wavelength
+          let SSA_G = aggrSubTypes['Neph_GreenScattering'].avg / TotalExtinction_G; // Matlab code: SSA_G = outdata_Neph(:,3)./TotalExtinction_G; % SSA calculation for Green Wavelength
+          let SSA_B = aggrSubTypes['Neph_BlueScattering'].avg / TotalExtinction_B; // Matlab code: SSA_B = outdata_Neph(:,4)./TotalExtinction_B; % SSA calculation for Blue Wavelength
+          SSA_R = (SSA_R < 0 || SSA_R == 1) ? 'NaN' : SSA_R; // Matlab code: SSA_R (SSA_R < 0 | SSA_R ==1)=NaN; 
+          SSA_G = (SSA_G < 0 || SSA_G == 1) ? 'NaN' : SSA_G; // Matlab code: SSA_G (SSA_G < 0 | SSA_G ==1)=NaN; 
+          SSA_B = (SSA_B < 0 || SSA_B == 1) ? 'NaN' : SSA_B; // Matlab code: SSA_B (SSA_B < 0 | SSA_B ==1)=NaN; 
+
+          newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: SSA_R });
+          newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
+          newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: obj.Flag});
+          newaggr[instrument]['SSA_R'].push({ metric: 'filler1', val: "undefined" });
+          newaggr[instrument]['SSA_R'].push({ metric: 'filler2', val: "undefined"});
+
+          newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: SSA_G });
+          newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
+          newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: obj.Flag});
+          newaggr[instrument]['SSA_G'].push({ metric: 'filler1', val: "undefined" });
+          newaggr[instrument]['SSA_G'].push({ metric: 'filler2', val: "undefined"});
+
+          newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: SSA_B });
+          newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
+          newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: obj.Flag});
+          newaggr[instrument]['SSA_B'].push({ metric: 'filler1', val: "undefined" });
+          newaggr[instrument]['SSA_B'].push({ metric: 'filler2', val: "undefined"});
+
+
 
           // AAE calculations begin here:
-          x = mathjs.matrix([[640, 520, 365]])// x=[640,520,365]; % Wavelengths values
-          newaggr[instrument]['AAE'].push({ metric: 'calc', val: obj.avg });
+
+          x = mathjs.matrix([640, 520, 365]); // Matlab code: x=[640,520,365]; % Wavelengths values
+          let y_TAP = mathjs.matrix( // Matlab code: y_TAP_01 = outdata1_TAP_01(:,6:8); %Absorption coefficients from TAP01
+            [aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg, aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg, aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg]
+          ); 
+          lx = mathjs.log(x); // Matlab code: lx = log(x); %Taking log of the wavelengths
+          // let ly_TAP = mathjs.log(y_TAP); // Matlab code: ly_TAP_01 = log(y_TAP_01); %Taking log of the absorption coefficients for TAP01
+          // Erroneous errors occur when tap data is invalid. Check for proper tap data before pushing log. Return itself if tap is turned off
+          var ly_TAP;
+          if (obj.Flag === 1) {
+            ly_TAP = mathjs.log(y_TAP);
+          } else {
+            ly_TAP = y_TAP;
+          }
+
+          // Going to have to break this matlab code down a bit, again:
+          // Matlab code: log_TAP_01 = -[lx(:) ones(size(x(:)))] \ ly_TAP_01(:,:)'; %Step 1 -AAE from TAP 01 data
+          let log_TAP = mathjs.matrix([ // Matlab code: [lx(:) ones(size(x(:)))] 
+            lx,
+            mathjs.ones(mathjs.size(x))
+          ]);
+          // - operator just negates everything in the matrix
+          mathjs.apply(log_TAP, 0, flipSignForAll); // -[...]
+          mathjs.apply(log_TAP, 1, flipSignForAll); // -[...]
+
+          /* Information on how I came to the line below is in the SAE calculations. 
+           * Essentially, we are finding the least squares solution to the system of equations:
+           * A*x=B
+           * There is a proof to solve x where you can solve X as so:
+           * X = (A^T*A)-1*A^T*B
+           * A = log_TAP
+           * B = y_TAP
+           *
+           */
+
+          // Matlab code: A \ B
+          A = [];
+          B = [];
+          log_TAP = mathjs.transpose(mathjs.multiply(mathjs.inv(mathjs.multiply(mathjs.transpose(log_TAP), log_TAP)), mathjs.transpose(log_TAP)));
+
+          m = mathjs.size(log_TAP).get([0]);
+          n = mathjs.size(log_TAP).get([1]);
+
+          for (let i = 0; i < m; i++) {
+            A[i] = [];
+            for (let j = 0; j < n; j++) {
+              A[i][j] = log_TAP.get([i,j]);
+            }
+          }
+
+          m = mathjs.size(ly_TAP).get([0]);
+
+          for (let i = 0; i < m; i++) {
+            B[i] = ly_TAP.get([i]);
+          }
+
+          log_TAP = [];
+          // Last step, multiply A and B
+          for (let i = 0; i < A.length; i++) {
+            log_TAP[i] = [];
+            for (let j = 0; j < A[i].length; j++) {
+              log_TAP[i][j] = A[i][j] * B[j];
+            }
+          }
+
+          // Matlab code: SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
+          // Pretty sure this just means to get the one row of calculations form matrix
+          // Matlab says this: A(m,:) is the mth row of matrix A.
+          var AAE_TAP = log_TAP[1][0];
+
+          newaggr[instrument]['AAE'].push({ metric: 'calc', val: AAE_TAP });
           newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
           newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
+          newaggr[instrument]['AAE'].push({ metric: 'filler1', val: "undefined" });
+          newaggr[instrument]['AAE'].push({ metric: 'filler2', val: "undefined"});
         }
 
         if (measurement === 'RMY') { // special treatment for wind measurements
@@ -576,8 +721,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument].WS.push({ metric: 'unit', val: obj.WSunit });
           newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag }); 
         } else { // all other measurements
-          if (!newaggr[instrument][measurement]) {
-            newaggr[instrument][measurement] = [];
+          if (!newaggr[instrument][measurement]) { newaggr[instrument][measurement] = [];
           }
 
           // automatic flagging of aggregated values that are out of range for NO2 to be flagged with 9(N)
@@ -810,7 +954,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
 
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
-      startAggrEpoch = moment.unix(fileModified).subtract(1, 'hours').unix();
+      startAggrEpoch = moment.unix(fileModified).subtract(9999999, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     }
