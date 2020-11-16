@@ -512,22 +512,12 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             }
           }
 
-          // returns nth row from matrix
-          function getNthRowFromMatrix(M, n) {
-            let N = [];
-            for (let i = 0; i < M.length; i++) {
-
-            }
-
-            return N;
-          }
-
           // returns row reduced echelon form of given matrix
           // if vector, return rref vector
-          // if inscalarid, do nothing
+          // if invalid, do nothing
           function rref(M) {
-            var rows = M.length;
-            var columns = M[0].length;
+            let rows = M.length;
+            let columns = M[0].length;
             if (((rows === 1 || rows === undefined) && columns > 0) || ((columns === 1 || columns === undefined) && rows > 0)) {
               M = [];
               let vectorSize = Math.max(isNaN(columns) ? 0 : columns, isNaN(rows) ? 0 : rows);
@@ -693,13 +683,13 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           // AAE calculations begin here:
           // Make sure tap instrument is valid
           if (obj.Flag === 1) {
-            x = [640, 520, 365]; // Matlab code: x=[640,520,365]; % Wavelengths values
+            let x = [640, 520, 365]; // Matlab code: x=[640,520,365]; % Wavelengths values
             let y_TAP = [ // Matlab code: y_TAP_01 = outdata1_TAP_01(:,6:8); %Absorption coefficients from TAP01
               isNaN(aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg) ? 0 : aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg, 
               isNaN(aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg) ? 0 : aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg, 
               isNaN(aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg) ? 0 : aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg
             ];
-            lx = mathjs.log(x); // Matlab code: lx = log(x); %Taking log of the wavelengths
+            let lx = mathjs.log(x); // Matlab code: lx = log(x); %Taking log of the wavelengths
             let ly_TAP = mathjs.log(y_TAP);// Matlab code: ly_TAP_01 = log(y_TAP_01); %Taking log of the absorption coefficients for TAP01
             for (let i = 0; i < ly_TAP.length; i++) {
               if (isNaN(ly_TAP[i]) || ly_TAP[i] < 0) {
@@ -718,21 +708,23 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             flipSignForAll2D(log_TAP);
 
 
-            /* Information on how I came to the line below is in the SAE calculations. 
+            /* More information on how I came to the lines below is in the SAE calculations. 
              * Essentially, we are finding the least squares solution to the system of equations:
              * A*x=b
              */
 
             // A \ b
-            ATA = mathjs.multiply(mathjs.transpose(log_TAP), log_TAP);
-            ATb = mathjs.multiply(mathjs.transpose(log_TAP), ly_TAP);
+            let ATA = mathjs.multiply(mathjs.transpose(log_TAP), log_TAP);
+            let ATb = mathjs.multiply(mathjs.transpose(log_TAP), ly_TAP);
             
             // Create augmented matrix to solve for least squares solution
             ATA[0].push(ATb[0]);
             ATA[1].push(ATb[1]);
             
             log_TAP = rref(ATA);
-            var AAE_TAP = log_TAP[0][2]; // Matlab code: SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
+            // Reason for index 0,2 is because I am skipping a step in the least squares approximation.
+            // It is supposed to return a vector with 2 values, but I just shortcut it straight to the correct answer from the 3x2 rref matrix
+            let AAE_TAP = log_TAP[0][2]; // Matlab code: SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
 
             // AAE ranges: .5 - 3.5
             newaggr[instrument]['AAE'].push({ metric: 'calc', val: AAE_TAP });
@@ -1004,7 +996,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
 
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
-      startAggrEpoch = moment.unix(fileModified).subtract(9999999, 'hours').unix();
+      startAggrEpoch = moment.unix(fileModified).subtract(1, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     }
