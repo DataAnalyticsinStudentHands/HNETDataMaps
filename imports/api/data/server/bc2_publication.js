@@ -36,11 +36,12 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
         _id: { subTypes: "$subTypes", epoch: "$epoch" },
       },
     },
+    
   ];
 
   // create new structure for bc2 data series to be used for charts
   const results = Promise.await(
-    AggrData.rawCollection().aggregate(aggBc2Pipe).toArray()
+    AggrData.rawCollection().aggregate(aggBc2Pipe, { allowDiskUse: true }).toArray()
   );
   let modifiedData = {};
   if (results.length > 0) {

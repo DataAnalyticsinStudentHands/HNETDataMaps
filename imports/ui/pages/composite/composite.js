@@ -9,7 +9,7 @@ import { unitsHash } from '../../../api/constants';
 import './composite.html';
 
 // 24 hours ago - seconds
-const startEpoch = new ReactiveVar(moment().subtract(1439, 'minutes').unix());
+const startEpoch = new ReactiveVar(moment().subtract(3, 'days').unix());
 const endEpoch = new ReactiveVar(moment().unix());
 
 Highcharts.setOptions({
@@ -136,6 +136,10 @@ Template.composite.helpers({
               type: 'minute',
               count: 60,
               text: 'Hour'
+            }, {
+              type: 'day',
+              count: 3,
+              text: '3 days'
             }],
             buttonTheme: {
               width: 60
@@ -164,6 +168,6 @@ Template.composite.events({
   'dp.change #datetimepicker1'(event) {
     // Get the selected date
     startEpoch.set(moment(event.date, 'YYYY-MM-DD').unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(1439, 'minutes').unix());
+    endEpoch.set(moment.unix(startEpoch.get()).add(3, 'days').unix());
   }
 });

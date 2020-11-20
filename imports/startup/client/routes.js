@@ -152,7 +152,7 @@ Router.route('about', {
     if (start) {
       this.state.set('fromRouter', (start));
     } else {
-      this.state.set('fromRouter', moment().subtract(4320, 'minutes').unix());
+      this.state.set('fromRouter', moment().subtract(7, 'days').unix());
     }
     this.render();
   }

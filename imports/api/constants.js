@@ -98,24 +98,6 @@ export const flagsHash = {
     color10: "black",
     labelcolor: "label-danger",
   },
-  11: {
-    val: 11,
-    description: "BlueCoeff",
-    label: "B",
-    selectable: true,
-    color: "#3333ff",
-    color10: "black",
-    labelcolor: "label-danger",
-  },
-  12: {
-    val: 12,
-    description: "GreenCoeff",
-    label: "G",
-    selectable: true,
-    color: "#00cc00",
-    color10: "black",
-    labelcolor: "label-danger",
-  },
 };
 
 export const colorsHash = {
