@@ -137,6 +137,22 @@ export const colorsHash = {
     color10: "black",
     labelcolor: "label-danger",
   },
+  5: {
+    val: 5,
+    description: "Dark Red",
+    label: "DR",
+    selectable: true,
+    color: "#3f007a",
+    labelcolor: "label-danger",
+  },
+  6: {
+    val: 6,
+    description: "Glossy Red",
+    label: "GR",
+    selectable: true,
+    color: "#007a55",
+    labelcolor: "label-danger",
+  },
 };
 
 export const channelHash = {

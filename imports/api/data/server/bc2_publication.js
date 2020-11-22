@@ -36,12 +36,13 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
         _id: { subTypes: "$subTypes", epoch: "$epoch" },
       },
     },
-    
   ];
 
   // create new structure for bc2 data series to be used for charts
   const results = Promise.await(
-    AggrData.rawCollection().aggregate(aggBc2Pipe, { allowDiskUse: true }).toArray()
+    AggrData.rawCollection()
+      .aggregate(aggBc2Pipe, { allowDiskUse: true })
+      .toArray()
   );
   let modifiedData = {};
   if (results.length > 0) {
@@ -58,77 +59,85 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
             chart = `${instrument.substring(0, 3)} Absolute Coefficients`;
           } else if (!instrument.includes("tap")) {
             chart = `${instrument} Scattering`;
-          } else if (chart.includes("AIRTEMP")) {
+          } else if (chart.includes("REFSPOT")) {
             chart = `${measurement}`;
           } else {
-            chart = [];
+            chart = ``;
           }
-          if (!bc2siteData[chart]) {
-            // create placeholder for measurement
-            bc2siteData[chart] = {};
-          }
-          if (!bc2siteData[chart][measurement]) {
-            // create placeholder for series if not exists
-            bc2siteData[chart][measurement] = [];
-          }
-          // get all measurements where flag == 1
-          if (_.last(points).val === 1) {
-            if (modifiedData[epoch * 1000]) {
-              modifiedData[epoch * 1000] = {
-                ...modifiedData[epoch * 1000],
-                [instrument]: {
-                  [measurement]: points[1],
-                },
-              };
-            } else {
-              modifiedData[epoch * 1000] = {
-                [instrument]: {
-                  [measurement]: points[1],
-                },
-              };
+          if (chart !== ``) {
+            if (!bc2siteData[chart]) {
+              // create placeholder for measurement
+              bc2siteData[chart] = {};
             }
-            // console.log("points: ", points);
-            if (points[1].val) {
-              if (measurement.includes("Red")) {
-                modifiedData = {
-                  x: epoch * 1000, // milliseconds
-                  y: points[1].val, // average
-                  color: colorsHash[1].color,
-                };
-              } else if (measurement.includes("Blue")) {
-                modifiedData = {
-                  x: epoch * 1000, // milliseconds
-                  y: points[1].val, // average
-                  color: colorsHash[2].color,
-                };
-              } else if (measurement.includes("Green")) {
-                modifiedData = {
-                  x: epoch * 1000, // milliseconds
-                  y: points[1].val, // average
-                  color: colorsHash[3].color,
-                };
-              } else if (measurement.includes("CO")) {
-                modifiedData = {
-                  x: epoch * 1000, // milliseconds
-                  y: points[1].val, // average
-                  color: colorsHash[4].color,
-                };
-              } else if (measurement.includes("AirTemp")) {
-                modifiedData = {
-                  x: epoch * 1000, // milliseconds
-                  y: points[1].val, // average
-                  color: flagsHash[9].color,
+            if (!bc2siteData[chart][measurement]) {
+              // create placeholder for series if not exists
+              bc2siteData[chart][measurement] = [];
+            }
+            // get all measurements where flag == 1
+            if (_.last(points).val === 1) {
+              if (modifiedData[epoch * 1000]) {
+                modifiedData[epoch * 1000] = {
+                  ...modifiedData[epoch * 1000],
+                  [instrument]: {
+                    [measurement]: points[1],
+                  },
                 };
               } else {
-                modifiedData = {
-                  x: epoch * 1000, // milliseconds
-                  y: points[1].val, // average
-                  color: flagsHash[_.last(points).val].color,
+                modifiedData[epoch * 1000] = {
+                  [instrument]: {
+                    [measurement]: points[1],
+                  },
                 };
               }
+              if (points[1].val) {
+                if (measurement.includes("Red")) {
+                  modifiedData = {
+                    x: epoch * 1000, // milliseconds
+                    y: points[1].val, // average
+                    color: colorsHash[1].color,
+                  };
+                } else if (measurement.includes("Blue")) {
+                  modifiedData = {
+                    x: epoch * 1000, // milliseconds
+                    y: points[1].val, // average
+                    color: colorsHash[2].color,
+                  };
+                } else if (measurement.includes("Green")) {
+                  modifiedData = {
+                    x: epoch * 1000, // milliseconds
+                    y: points[1].val, // average
+                    color: colorsHash[3].color,
+                  };
+                } else if (measurement.includes("CO")) {
+                  modifiedData = {
+                    x: epoch * 1000, // milliseconds
+                    y: points[1].val, // average
+                    color: colorsHash[4].color,
+                  };
+                } else if (measurement.includes("RefSpot")) {
+                  if (points[1].val > 2) {
+                    modifiedData = {
+                      x: epoch * 1000, // milliseconds
+                      y: points[1].val, // average
+                      color: colorsHash[5].color,
+                    };
+                  } else {
+                    modifiedData = {
+                      x: epoch * 1000, // milliseconds
+                      y: points[1].val, // average
+                      color: colorsHash[6].color,
+                    };
+                  }
+                } else {
+                  modifiedData = {
+                    x: epoch * 1000, // milliseconds
+                    y: points[1].val, // average
+                    color: flagsHash[_.last(points).val].color,
+                  };
+                }
+              }
+              bc2siteData[chart][measurement].push(modifiedData);
             }
-            bc2siteData[chart][measurement].push(modifiedData);
-            // console.log("Modified Data: ", modifiedData);
           }
         });
       });
