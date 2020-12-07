@@ -9,7 +9,7 @@
     "fibers": "^1.0.15",
     "fs-extra": "^0.30.0",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
-    "highcharts": "^4.2.7",
+    "highcharts": "^8.2.2",
     "meteor-node-stubs": "^0.3.2"
   },
   "scripts": {
