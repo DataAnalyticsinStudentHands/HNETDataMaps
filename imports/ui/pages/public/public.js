@@ -1,5 +1,6 @@
 import Highcharts from 'highcharts';
 import { PublicDataSeries } from '../../../api/collections_client';
+import { DataExporter } from '../../components/dataexporter';
 
 import './public.html';
 
@@ -365,5 +366,9 @@ Template.public.events({
   'change #datepicker'(event) {
     // update reactive var whith selected date
     startEpoch.set(moment(event.target.value, 'YYYY-MM-DD').unix());
-  }
+},
+'click #downloadCurrent' () {
+  // call export and download
+  DataExporter.getDataTCEQ(Router.current().params._id, startEpoch.get(), moment.unix(startEpoch.get()).add(1440, 'minutes').unix(), false);
+}
 });
