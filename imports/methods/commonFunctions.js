@@ -609,10 +609,18 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             let SAE_Neph = log_Neph[0][2]; // SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
 
 
-            // SAE ranges: -1 - 4
-            newaggr[instrument]['SAE'].push({ metric: 'calc', val: ((SAE_Neph === undefined) ? 'NaN' : SAE_Neph) });
+            // SAE ranges should be: -1 - 5
+            // Matlab code: SAE_Neph(SAE_Neph > 5)= NaN;
+            // Sujan said this ^^^
+            if (SAE_Neph === undefined || SAE_Neph < -1 || SAE_Neph > 5) { 
+              newaggr[instrument]['SAE'].push({ metric: 'calc', val: ((SAE_Neph === undefined) ? 'NaN' : SAE_Neph) });
+              newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 10});
+            } else {
+            newaggr[instrument]['SAE'].push({ metric: 'calc', val:  SAE_Neph });
             newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SAE'].push({ metric: 'Flag', val: obj.Flag});
+            }
           } else {
             newaggr[instrument]['SAE'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
@@ -632,8 +640,14 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           if (aggrSubTypes['Neph_RedScattering'].Flag === 1 && obj.Flag === 1) {
             let TotalExtinction_R = aggrSubTypes['Neph_RedScattering'].avg + aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg; // Matlab code: TotalExtinction_R = AC_R_Combined + outdata_Neph(:,2); %Total Extinction calculation for Red wavelength
             let SSA_R = aggrSubTypes['Neph_RedScattering'].avg / TotalExtinction_R; // Matlab code: SSA_R = outdata_Neph(:,2)./TotalExtinction_R; % SSA calculation for Red Wavelength
-            SSA_R = (SSA_R < 0 || SSA_R == 1) ? 'NaN' : SSA_R; // Matlab code: SSA_R (SSA_R < 0 | SSA_R ==1)=NaN; 
-            newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
+            // Matlab code: SSA_R (SSA_R < 0 | SSA_R ==1)=NaN;
+            // decided > 1 because I have no idea why he used == and not >
+            if (SSA_R === undefined || SSA_R < 0 || SSA_R > 1) {
+              newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
+              newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: 10});
+            }
+            newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: SSA_R });
             newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: obj.Flag});
           } else {
@@ -645,8 +659,15 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           if (aggrSubTypes['Neph_GreenScattering'].Flag === 1 && obj.Flag === 1) {
             let TotalExtinction_G = aggrSubTypes['Neph_GreenScattering'].avg + aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg; // Matlab code: TotalExtinction_G = AC_G_Combined + outdata_Neph(:,3); %Total Extinction calculation for Green wavelength
             let SSA_G = aggrSubTypes['Neph_GreenScattering'].avg / TotalExtinction_G; // Matlab code: SSA_G = outdata_Neph(:,3)./TotalExtinction_G; % SSA calculation for Green Wavelength
-            SSA_G = (SSA_G < 0 || SSA_G == 1) ? 'NaN' : SSA_G; // Matlab code: SSA_G (SSA_G < 0 | SSA_G ==1)=NaN; 
-            newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
+            // Matlab code: SSA_G (SSA_G < 0 | SSA_G ==1)=NaN;
+            // decided > 1 because I have no idea why he used == and not >
+            if (SSA_G === undefined || SSA_G < 0 || SSA_G > 1) {
+              newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
+              newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: 10 });
+            }
+
+            newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: SSA_G });
             newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: obj.Flag});
           } else {
@@ -658,8 +679,14 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           if (aggrSubTypes['Neph_BlueScattering'].Flag === 1 && obj.Flag === 1) {
             let TotalExtinction_B = aggrSubTypes['Neph_BlueScattering'].avg + aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg; // Matlab code: TotalExtinction_B = AC_B_Combined + outdata_Neph(:,4); %Total Extinction calculation for Blue wavelength
             let SSA_B = aggrSubTypes['Neph_BlueScattering'].avg / TotalExtinction_B; // Matlab code: SSA_B = outdata_Neph(:,4)./TotalExtinction_B; % SSA calculation for Blue Wavelength
-            SSA_B = (SSA_B < 0 || SSA_B == 1) ? 'NaN' : SSA_B; // Matlab code: SSA_B (SSA_B < 0 | SSA_B ==1)=NaN; 
-            newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
+            // Matlab code: SSA_B (SSA_B < 0 | SSA_B ==1)=NaN; 
+            // decided > 1 because I have no idea why he used == and not >
+            if (SSA_B === undefined || (SSA_B < 0 || SSA_B == 1)) {
+              newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
+              newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: 10});
+            }
+            newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: SSA_B });
             newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: obj.Flag});
           } else {
@@ -715,10 +742,18 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // It is supposed to return a vector with 2 values, but I just shortcut it straight to the correct answer from the 3x2 rref matrix
             let AAE_TAP = log_TAP[0][2]; // Matlab code: SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
 
-            // AAE ranges: .5 - 3.5
-            newaggr[instrument]['AAE'].push({ metric: 'calc', val: ((AAE_TAP === undefined) ? 'NaN' : AAE_TAP) });
+            // AAE normal ranges: .5 - 3.5
+            // Sujan said this ^^^
+            // matlab comment: % AAE__TAP_A(AAE__TAP_A < 0)= NaN;
+            if (AAE_TAP === undefined || AAE_TAP < 0 || AAE_TAP > 3.5) {
+              newaggr[instrument]['AAE'].push({ metric: 'calc', val: ((AAE_TAP === undefined) ? 'NaN' : AAE_TAP) });
+              newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
+              newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 10 });
+            } else {
+            newaggr[instrument]['AAE'].push({ metric: 'calc', val: AAE_TAP });
             newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
             newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
+            }
           } else {
             newaggr[instrument]['AAE'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
@@ -802,36 +837,51 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
                 new: true
               });
             } else {
+              // Some aggregations will have less than 5 parts to it. 
+              // Need if statements to make sure it doesn't generate errors.
+              // I really think that this whole thing should change, but I have no idea how it works.
+              // So just leave this be and it will keep working.
+              let newaggrLength = newaggr[newInstrument][newMeasurement].length;
+              if (newaggrLength > 1) {
               const query0 = {};
               query0._id = subObj._id;
               query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
               const $set0 = {};
               $set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
               AggrData.update(query0, { $set: $set0 });
+              }
+              if (newaggrLength > 1) {
               const query1 = {};
               query1._id = subObj._id;
               query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
               const $set1 = {};
               $set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
               AggrData.update(query1, { $set: $set1 });
+              }
+              if (newaggrLength > 2) {
               const query2 = {};
               query2._id = subObj._id;
               query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
               const $set2 = {};
               $set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
               AggrData.update(query2, { $set: $set2 });
+              }
+              if (newaggrLength > 3) {
               const query3 = {};
               query3._id = subObj._id;
               query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
               const $set3 = {};
               $set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
               AggrData.update(query3, { $set: $set3 });
+              }
+              if (newaggrLength > 4) {
               const query4 = {};
               query4._id = subObj._id;
               query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
               const $set4 = {};
               $set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
               AggrData.update(query4, { $set: $set4 });
+              }
             }
           });
         });
@@ -1259,7 +1309,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.subTypes[metron][22].unit = '';
 
       // add 6 hours to timestamp and then parse as UTC before converting to epoch
-      const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
+      const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
       let epoch = timeStamp.unix();
       epoch -= (epoch % 1); // rounding down
       singleObj.epoch = epoch;
@@ -1272,10 +1322,10 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     }
 
     // gathering time stamps and then call to bulkUpdate
-    const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
+    const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
     let startEpoch = startTimeStamp.unix();
     startEpoch -= (startEpoch % 1); // rounding down
-    const endTimeStamp = moment.utc(`${parsedLines[parsedLines.length - 1][0]}_${parsedLines[parsedLines.length - 1][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
+    const endTimeStamp = moment.utc(`${parsedLines[parsedLines.length - 1][0]}_${parsedLines[parsedLines.length - 1][1]}`, 'YYMMDD_HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
     let endEpoch = endTimeStamp.unix();
     endEpoch -= (endEpoch % 1); // rounding down
     callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch, false);
