@@ -612,10 +612,11 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // SAE ranges should be: -1 - 5
             // Matlab code: SAE_Neph(SAE_Neph > 5)= NaN;
             // Sujan said this ^^^
+						// Unsure If I want to check for zero value
             if (SAE_Neph === undefined || SAE_Neph < -1 || SAE_Neph > 5) { 
               newaggr[instrument]['SAE'].push({ metric: 'calc', val: ((SAE_Neph === undefined) ? 'NaN' : SAE_Neph) });
               newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 10});
+              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 10 });
             } else {
             newaggr[instrument]['SAE'].push({ metric: 'calc', val:  SAE_Neph });
             newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
@@ -642,7 +643,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             let SSA_R = aggrSubTypes['Neph_RedScattering'].avg / TotalExtinction_R; // Matlab code: SSA_R = outdata_Neph(:,2)./TotalExtinction_R; % SSA calculation for Red Wavelength
             // Matlab code: SSA_R (SSA_R < 0 | SSA_R ==1)=NaN;
             // decided > 1 because I have no idea why he used == and not >
-            if (SSA_R === undefined || SSA_R < 0 || SSA_R > 1) {
+						// I decided to make it SSA_R <= 0 to because javascript sends error values to zero by default
+            if (SSA_R === undefined || SSA_R <= 0 || SSA_R > 1) {
               newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
               newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
               newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: 10});
@@ -661,7 +663,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             let SSA_G = aggrSubTypes['Neph_GreenScattering'].avg / TotalExtinction_G; // Matlab code: SSA_G = outdata_Neph(:,3)./TotalExtinction_G; % SSA calculation for Green Wavelength
             // Matlab code: SSA_G (SSA_G < 0 | SSA_G ==1)=NaN;
             // decided > 1 because I have no idea why he used == and not >
-            if (SSA_G === undefined || SSA_G < 0 || SSA_G > 1) {
+						// I decided to make it SSA_G <= 0 to because javascript sends error values to zero by default
+            if (SSA_G === undefined || SSA_G <= 0 || SSA_G > 1) {
               newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
               newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
               newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: 10 });
@@ -681,7 +684,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             let SSA_B = aggrSubTypes['Neph_BlueScattering'].avg / TotalExtinction_B; // Matlab code: SSA_B = outdata_Neph(:,4)./TotalExtinction_B; % SSA calculation for Blue Wavelength
             // Matlab code: SSA_B (SSA_B < 0 | SSA_B ==1)=NaN; 
             // decided > 1 because I have no idea why he used == and not >
-            if (SSA_B === undefined || (SSA_B < 0 || SSA_B == 1)) {
+						// I decided to make it SSA_B <= 0 to because javascript sends error values to zero by default
+            if (SSA_B === undefined || (SSA_B <= 0 || SSA_B == 1)) {
               newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
               newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
               newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: 10});
@@ -745,7 +749,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // AAE normal ranges: .5 - 3.5
             // Sujan said this ^^^
             // matlab comment: % AAE__TAP_A(AAE__TAP_A < 0)= NaN;
-            if (AAE_TAP === undefined || AAE_TAP < 0 || AAE_TAP > 3.5) {
+						// I decided to make it AAE_TAP <= 0 to because javascript sends error values to zero by default
+            if (AAE_TAP === undefined || AAE_TAP <= 0 || AAE_TAP > 3.5) {
               newaggr[instrument]['AAE'].push({ metric: 'calc', val: ((AAE_TAP === undefined) ? 'NaN' : AAE_TAP) });
               newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
               newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 10 });
@@ -1176,7 +1181,7 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.subTypes.Rain[1].unit = 'inch';
 
       // add 6 hours to timestamp and then parse as UTC before converting to epoch
-      const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+      const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
       let epoch = timeStamp.unix();
       epoch -= (epoch % 1); // rounding down
       singleObj.epoch = epoch;
@@ -1189,7 +1194,7 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     }
 
     // gathering time stamps and then call to bulkUpdate
-    const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+    const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
     let startEpoch = startTimeStamp.unix();
     startEpoch -= (startEpoch % 1); // rounding down
     const endTimeStamp = moment.utc(parsedLines[parsedLines.length - 1][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
