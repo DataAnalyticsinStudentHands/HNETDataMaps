@@ -1036,7 +1036,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
 
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
-      startAggrEpoch = moment.unix(fileModified).subtract(1000000, 'hours').unix();
+      startAggrEpoch = moment.unix(fileModified).subtract(1, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     }
