@@ -1036,7 +1036,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
 
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
-      startAggrEpoch = moment.unix(fileModified).subtract(1, 'hours').unix();
+      startAggrEpoch = moment.unix(fileModified).subtract(1000000, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     }
@@ -1061,7 +1061,6 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const site = LiveSites.findOne({ incoming: parentDir });
   // Get the timezone offset into one nice variable
   // let siteTimeZone = site['GMT offset'] * -1 * 3600;
-  console.log(siteTimeZone);
 
   if (site.AQSID) {
     // update the timestamp for the last update for the site
