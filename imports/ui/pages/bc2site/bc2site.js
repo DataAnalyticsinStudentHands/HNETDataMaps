@@ -4,13 +4,14 @@ import { ReactiveVar } from "meteor/reactive-var";
 import { moment } from "meteor/momentjs:moment";
 import { Template } from "meteor/templating";
 import { Bc2DataSeries } from "../../../api/collections_client";
+import { DataExporter } from "../../components/dataexporter";
 import { unitsHash } from "../../../api/constants";
 import { LiveSites } from "../../../api/collections_server";
 
 import "./bc2site.html";
 
 // 24 hours ago - seconds
-const startEpoch = new ReactiveVar(moment().subtract(1439, "minutes").unix());
+const startEpoch = new ReactiveVar(moment().subtract(7, "days").unix());
 const endEpoch = new ReactiveVar(moment().unix());
 
 Highcharts.setOptions({
@@ -103,6 +104,11 @@ Template.bc2site.helpers({
             opposite: false,
           },
           series: data[0].charts,
+          plotOptions: {
+            series: {
+              turboThreshold: 5000, // added this to increase the limit of data extraction
+            },
+          },
           tooltip: {
             enabled: true,
             crosshairs: [true],
@@ -160,6 +166,11 @@ Template.bc2site.helpers({
                 count: 60,
                 text: "Hour",
               },
+              {
+                type: "week",
+                count: 7,
+                text: "1 Week",
+              }
             ],
             buttonTheme: {
               width: 60,
@@ -188,6 +199,7 @@ Template.bc2site.events({
   "dp.change #datetimepicker1": function (event) {
     // Get the selected date
     startEpoch.set(moment(event.date, "YYYY-MM-DD").unix());
-    endEpoch.set(moment.unix(startEpoch.get()).add(1439, "minutes").unix());
+    // endEpoch.set(moment.unix(startEpoch.get()).subtract(7, "days").unix());
+    // endEpoch.set(moment(event.date, "YYYY-MM-DD").unix());
   },
 });

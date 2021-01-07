@@ -4,6 +4,7 @@ import { check, Match } from "meteor/check";
 import { Promise } from "meteor/promise";
 import { AggrData } from "../../collections_server";
 import { flagsHash, colorsHash } from "../../constants";
+import { LiveSites } from "../../collections_server";
 
 // aggregation bc2 data to be plotted with highstock
 Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
@@ -40,9 +41,14 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
 
   // create new structure for bc2 data series to be used for charts
   const results = Promise.await(
-    AggrData.rawCollection().aggregate(aggBc2Pipe).toArray()
+    AggrData.rawCollection()
+      .aggregate(aggBc2Pipe, { allowDiskUse: true })
+      .toArray()
   );
+
   let modifiedData = {};
+  const allSites = LiveSites.find({});
+
   if (results.length > 0) {
     results.forEach((line) => {
       const epoch = line._id.epoch;
@@ -56,13 +62,17 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
           } else if (chart.includes("ABSCOEF")) {
             chart = `${instrument.substring(0, 3)} Absolute Coefficients`;
           } else if (!instrument.includes("tap")) {
-            chart = `${instrument} Scattering`;
-          } else if (chart.includes("AIRTEMP")) {
-            chart = `${measurement}`;
+            if(!measurement.includes("SAE")) {
+              chart = `${instrument} Scattering`;
+            }
+          } else if (chart.includes("AAE")) {
+            chart = `${chart}`;
+          } else if (chart.includes("SSA")) {
+            chart = `${chart}`;
           } else {
             chart = ``;
           }
-          if(chart !== ``) {
+          if (chart !== ``) {
             if (!bc2siteData[chart]) {
               // create placeholder for measurement
               bc2siteData[chart] = {};
@@ -87,7 +97,6 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                   },
                 };
               }
-              // console.log("points: ", points);
               if (points[1].val) {
                 if (measurement.includes("Red")) {
                   modifiedData = {
@@ -107,23 +116,61 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                     y: points[1].val, // average
                     color: colorsHash[3].color,
                   };
+                } else if (measurement.includes("SSA")) {
+                  modifiedData = {
+                    x: epoch * 1000, // milliseconds
+                    y: points[0].val, // average
+                    color: colorsHash[4].color,
+                  };
+                } else if (measurement.includes("SAE")) {
+                  allSites.forEach((site) => {
+                    _.each(site.Channels, (subChannels) => {
+                      _.each(subChannels, (subData) => {
+                        if (typeof subChannels.Threshold !== "undefined") { // does not loop if you have undefined thresholds
+                          if (points[0].val >= subChannels.Threshold.Value) {
+                            modifiedData = {
+                              x: epoch * 1000, // milliseconds
+                              y: points[0].val, // average
+                              color: colorsHash[5].color, // biomass burning color
+                            };
+                          } else {
+                            modifiedData = {
+                              x: epoch * 1000, // milliseconds
+                              y: points[0].val, // average
+                              color: colorsHash[2].color, // red color
+                            };
+                          }
+                        }
+                      });
+                    });
+                  });
+                } else if (measurement.includes("AAE")) {
+                  allSites.forEach((site) => {
+                    _.each(site.Channels, (subChannels) => {
+                      _.each(subChannels, (subData) => {
+                        if (typeof subChannels.Threshold !== "undefined") { // does not loop if you have undefined thresholds
+                          if (points[0].val >= subChannels.Threshold.Value) {
+                            modifiedData = {
+                              x: epoch * 1000, // milliseconds
+                              y: points[0].val, // average
+                              color: colorsHash[5].color, // biomass burning color
+                            };
+                          } else {
+                            modifiedData = {
+                              x: epoch * 1000, // milliseconds
+                              y: points[0].val, // average
+                              color: colorsHash[4].color, // red color
+                            };
+                          }
+                        }
+                      });
+                    });
+                  });
                 } else if (measurement.includes("CO")) {
                   modifiedData = {
                     x: epoch * 1000, // milliseconds
                     y: points[1].val, // average
-                    color: colorsHash[4].color,
-                  };
-                } else if (measurement.includes("AirTemp")) {
-                  modifiedData = {
-                    x: epoch * 1000, // milliseconds
-                    y: points[1].val, // average
-                    color: flagsHash[9].color,
-                  };
-                } else {
-                  modifiedData = {
-                    x: epoch * 1000, // milliseconds
-                    y: points[1].val, // average
-                    color: flagsHash[_.last(points).val].color,
+                    color: colorsHash[4].color, // red color
                   };
                 }
               }
