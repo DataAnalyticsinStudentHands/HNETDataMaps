@@ -125,7 +125,7 @@ export const colorsHash = {
     label: "R",
     selectable: true,
     color: "#BF0B23",
-    color10: "black",
+    color10: "red",
     labelcolor: "label-danger",
   },
   2: {
@@ -153,6 +153,15 @@ export const colorsHash = {
     selectable: true,
     color: "black",
     color10: "black",
+    labelcolor: "label-danger",
+  },
+  5: {
+    val: 5,
+    description: "Brown",
+    label: "Biomass Burning",
+    selectable: true,
+    color: "#703e00",
+    color10: "#703e00",
     labelcolor: "label-danger",
   },
 };

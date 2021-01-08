@@ -94,8 +94,8 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               text: `${key}[${poll5Data[pub5Key][key].unit.val}]`
             },
             opposite: false,
-            min: 0,
-            max: 250
+            floor: 0,
+            ceiling: 250
           };
         } else if (pub5Key.indexOf('Rain') >= 0) {
           // HNET setting for Rain instrument
@@ -108,7 +108,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               text: `${key}[${poll5Data[pub5Key][key].unit.val}]`
             },
             opposite: false,
-            min: 0
+            floor: 0
           };
         } else if (pub5Key.indexOf('Baro') >= 0) {
           // HNET setting for Baro instrument
@@ -121,8 +121,8 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               text: `${key}[${poll5Data[pub5Key][key].unit.val}]`
             },
             opposite: false,
-            min: 995,
-            max: 1035
+            floor: 995,
+            ceiling: 1035
           };
         } else {
           yAxis = {
@@ -134,7 +134,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
               text: `${key}[${poll5Data[pub5Key][key].unit.val}]`
             },
             opposite: false,
-            min: 0
+            floor: 0
           };
         }
         subscription.added('dataSeries', `${pub5Key}_${key}_5m_${poll5Data[pub5Key][key][0].x}`, {
@@ -243,8 +243,8 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             text: `${key}[${pollData[pubKey][key].unit}]`
           },
           opposite: false,
-          min: 0,
-          max: 250
+          floor: 0,
+          ceiling: 250
         };
       } else if (pubKey.indexOf('Rain') >= 0) {
         // HNET setting for Rain instrument
@@ -270,8 +270,8 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             text: `${key}[${pollData[pubKey][key].unit.val}]`
           },
           opposite: false,
-          min: 995,
-          max: 1035
+          floor: 995,
+          ceiling: 1035
         };
       } else {
         yAxis = {
@@ -283,7 +283,7 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
             text: `${key}[${pollData[pubKey][key].unit}]`
           },
           opposite: false,
-          min: 0
+          floor: 0
         };
       }
 
