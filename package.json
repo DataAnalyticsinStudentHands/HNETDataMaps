@@ -6,9 +6,12 @@
   "dependencies": {
     "bcrypt": "^0.8.7",
     "chokidar": "^1.7.0",
+    "circular-json": "^0.5.9",
+    "eslint": "^3.19.0",
     "fibers": "^1.0.15",
     "fs-extra": "^0.30.0",
-    "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz"
+    "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
+    "mathjs": "^7.6.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
