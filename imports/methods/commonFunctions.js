@@ -1061,7 +1061,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const site = LiveSites.findOne({ incoming: parentDir });
   // Get the timezone offset into one nice variable
   let siteTimeZone = site['GMT offset'] * -1 * 3600;
-  console.log(siteTimeZone);
+
 
   if (site.AQSID) {
     // update the timestamp for the last update for the site
