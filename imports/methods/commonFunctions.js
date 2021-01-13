@@ -1241,32 +1241,32 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.subTypes = {};
       singleObj.subTypes[metron] = [];
 
-			/* Matlab code
-			 * To Note: Comments in matlab are my own comments
-				
-				% Do not aggregate data point if r, g, b is < 0 or > 100 
-				r1=numa(:,7);
-				g1=numa(:,8);
-				b1=numa(:,9);
-				r2(r2 < 0 | r2 > 100) = NaN;
-				g2(g2 < 0 | g2 > 100) = NaN;
-				b2(b2 < 0 | b2 > 100) = NaN;
+      /* Matlab code
+       * To Note: Comments in matlab are my own comments
+        
+        % Do not aggregate data point if r, g, b is < 0 or > 100 
+        r1=numa(:,7);
+        g1=numa(:,8);
+        b1=numa(:,9);
+        r2(r2 < 0 | r2 > 100) = NaN;
+        g2(g2 < 0 | g2 > 100) = NaN;
+        b2(b2 < 0 | b2 > 100) = NaN;
 
 
-				%TAP_02data defined here
-				TAP_02data = [JD2 time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2];
+        %TAP_02data defined here
+        TAP_02data = [JD2 time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2];
 
-				% Don't aggregate data point if SampleFlow / Flow(L/min) is off 5% from 1.7
-				idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
-				TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
+        % Don't aggregate data point if SampleFlow / Flow(L/min) is off 5% from 1.7
+        idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
+        TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
 
 
-				% oof
-				R01 = strfind(isnan(TAP_02data(:,5)).', [1 0]); % Find Indices Of [0 1] Transitions
-				for i=1:100
-				TAP_02data(R01+i,6:8) = NaN; % Replace Appropriate Values With 'NaN '
-				end
-			 */
+        % oof
+        R01 = strfind(isnan(TAP_02data(:,5)).', [1 0]); % Find Indices Of [0 1] Transitions
+        for i=1:100
+        TAP_02data(R01+i,6:8) = NaN; % Replace Appropriate Values With 'NaN '
+        end
+       */
 
       singleObj.subTypes[metron][0] = {};
       singleObj.subTypes[metron][0].metric = 'Flag';
@@ -1375,7 +1375,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       allObjects.push(singleObj);
     }
     
-		// gathering time stamps and then call to bulkUpdate
+    // gathering time stamps and then call to bulkUpdate
     // original line: const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
     // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
     const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
