@@ -1059,7 +1059,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
   // Get the timezone offset into one nice variable
-  let siteTimeZone = site['GMT offset'] * -1 * 3600;
+  let siteTimeZone = site['GMToffset'] * 3600;
 
 
   if (site.AQSID) {
@@ -1129,7 +1129,6 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       // 3600 sec = 1 hour
       // 25569 sec = 7.1025 hours
       // let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + (6 * 3600);
-      // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
       let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + siteTimeZone;
       epoch -= (epoch % 1); // rounding down
       singleObj.epoch = epoch;
@@ -1161,7 +1160,7 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
-  let siteTimeZone = site['GMT offset'] * -1;
+  let siteTimeZone = site['GMToffset'];
 
   if (site.AQSID) {
     // create objects from parsed lines
@@ -1230,7 +1229,6 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 
       // add 6 hours to timestamp and then parse as UTC before converting to epoch
       // original line: const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
-      // Reason why the original is positive, but you have to multiply site['GMT offset'] by 0 is because site['GMT offset'] is signed wrong for our database
       const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(siteTimeZone, 'hour');
       let epoch = timeStamp.unix();
       epoch -= (epoch % 1); // rounding down
@@ -1245,7 +1243,6 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 
     // gathering time stamps and then call to bulkUpdate
     // original line: const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
-    // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
     const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(siteTimeZone, 'hour');
     let startEpoch = startTimeStamp.unix();
     startEpoch -= (startEpoch % 1); // rounding down
@@ -1262,7 +1259,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
-  let siteTimeZone = site['GMT offset'] * -1;
+  let siteTimeZone = site['GMToffset'];
 
   if (site.AQSID) {
     // use file name for TAP instrument identifier
@@ -1369,7 +1366,6 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 
       // add 6 hours to timestamp and then parse as UTC before converting to epoch
       // original line: const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
-      // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
       const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
       let epoch = timeStamp.unix();
       epoch -= (epoch % 1); // rounding down
@@ -1384,7 +1380,6 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     
     // gathering time stamps and then call to bulkUpdate
     // original line: const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
-    // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
     const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
     let startEpoch = startTimeStamp.unix();
     startEpoch -= (startEpoch % 1); // rounding down
