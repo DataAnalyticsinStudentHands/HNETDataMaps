@@ -292,7 +292,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           var newkey;
 
           /** Tap flag implementation **/
-
           // Get flag from DAQ data and save it
           if (subType.indexOf('TAP01') >= 0) {
             TAP01Flag = data[0].val;
@@ -1060,7 +1059,8 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
   // Get the timezone offset into one nice variable
-  // let siteTimeZone = site['GMT offset'] * -1 * 3600;
+  let siteTimeZone = site['GMT offset'] * -1 * 3600;
+
 
   if (site.AQSID) {
     // update the timestamp for the last update for the site
@@ -1079,23 +1079,58 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
         }, { validate: false });
       }
     }
+    
+    // Some BC2 sites do not label their TAP01 and TAP02 flags in their DAQfactory file with TAP01 and TAP02 labels in their csv file.
+    // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
+    // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
+    let siteData = Object.getOwnPropertyNames(parsedLines[0]);
+    let TAP01FlagName = undefined;
+    let TAP02FlagName = undefined;
+
+    siteData.forEach((colName) => {
+      if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
+        let flagNum = colName.substring(colName.indexOf("Flag") - 3, colName.indexOf("Flag") - 1);
+        if (parseInt(flagNum) % 2 == 0) {
+          TAP02FlagName = colName;
+        } else {
+          TAP01FlagName = colName;
+        }
+      }
+    });
 
     // create objects from parsed lines
     const allObjects = [];
     let previousObject = {};
     for (let k = 0; k < parsedLines.length; k++) {
+
+      // The two if statements below take the above information on TAPFlag names and converts them accordingly.
+      // Don't worry! If we aren't working with TAP data, it will just skip that right here. 
+      
+      // Redefines the TAP01Flag label here
+      if (TAP01FlagName !== undefined) {
+        parsedLines[k]['BC2_EP_TAP01_Flag'] = parsedLines[k][TAP01FlagName];
+        delete parsedLines[k][TAP01FlagName];
+      }
+
+      // Redefines the TAP02Flag label here
+      if (TAP02FlagName !== undefined) {
+        parsedLines[k]['BC2_EP_TAP02_Flag'] = parsedLines[k][TAP02FlagName];
+        delete parsedLines[k][TAP02FlagName];
+      }
+
       let singleObj = {};
       if (k === 0) {
         singleObj = makeObj(parsedLines[k], 1);
       } else {
         singleObj = makeObj(parsedLines[k], 1, previousObject);
       }
+      
       // 86400 sec = 1 day
       // 3600 sec = 1 hour
       // 25569 sec = 7.1025 hours
-      let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + (6 * 3600);
+      // let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + (6 * 3600);
       // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
-      // let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + siteTimeZone;
+      let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + siteTimeZone;
       epoch -= (epoch % 1); // rounding down
       singleObj.epoch = epoch;
       singleObj.epoch5min = epoch - (epoch % 300);
@@ -1111,11 +1146,11 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     // 86400 sec = 1 day
     // 3600 sec = 1 hour
     // 25569 sec = 7.1025 hours
-    // let startEpoch = ((parsedLines[0].TheTime - 25569) * 86400) + siteTimeZone;
-    let startEpoch = ((parsedLines[0].TheTime - 25569) * 86400) + (6 * 3600);
+    // original line: let startEpoch = ((parsedLines[0].TheTime - 25569) * 86400) + (6 * 3600);
+    let startEpoch = ((parsedLines[0].TheTime - 25569) * 86400) + siteTimeZone;
     startEpoch -= (startEpoch % 1); // rounding down
-    // let endEpoch = ((parsedLines[parsedLines.length - 1].TheTime - 25569) * 86400) + siteTimeZone;
-    let endEpoch = ((parsedLines[parsedLines.length - 1].TheTime - 25569) * 86400) + (6 * 3600);
+    // original line: let endEpoch = ((parsedLines[parsedLines.length - 1].TheTime - 25569) * 86400) + (6 * 3600);
+    let endEpoch = ((parsedLines[parsedLines.length - 1].TheTime - 25569) * 86400) + siteTimeZone;
     endEpoch -= (endEpoch % 1); // rounding down
     callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch, true);
   }
@@ -1126,6 +1161,7 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
+  let siteTimeZone = site['GMT offset'] * -1;
 
   if (site.AQSID) {
     // create objects from parsed lines
@@ -1193,9 +1229,9 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.subTypes.Rain[1].unit = 'inch';
 
       // add 6 hours to timestamp and then parse as UTC before converting to epoch
-      const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+      // original line: const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
       // Reason why the original is positive, but you have to multiply site['GMT offset'] by 0 is because site['GMT offset'] is signed wrong for our database
-      // const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
+      const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(siteTimeZone, 'hour');
       let epoch = timeStamp.unix();
       epoch -= (epoch % 1); // rounding down
       singleObj.epoch = epoch;
@@ -1208,13 +1244,13 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     }
 
     // gathering time stamps and then call to bulkUpdate
-    const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+    // original line: const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
     // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
-    // const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
+    const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(siteTimeZone, 'hour');
     let startEpoch = startTimeStamp.unix();
     startEpoch -= (startEpoch % 1); // rounding down
-    const endTimeStamp = moment.utc(parsedLines[parsedLines.length - 1][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
-    // const endTimeStamp = moment.utc(parsedLines[parsedLines.length - 1][0], 'YYYY-MM-DD HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
+    // original line: const endTimeStamp = moment.utc(parsedLines[parsedLines.length - 1][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
+    const endTimeStamp = moment.utc(parsedLines[parsedLines.length - 1][0], 'YYYY-MM-DD HH:mm:ss').add(siteTimeZone, 'hour');
     let endEpoch = endTimeStamp.unix();
     endEpoch -= (endEpoch % 1); // rounding down
     callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch, false);
@@ -1226,6 +1262,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
+  let siteTimeZone = site['GMT offset'] * -1;
 
   if (site.AQSID) {
     // use file name for TAP instrument identifier
@@ -1331,9 +1368,9 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.subTypes[metron][22].unit = '';
 
       // add 6 hours to timestamp and then parse as UTC before converting to epoch
-      const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
+      // original line: const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
       // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
-      // const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
+      const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
       let epoch = timeStamp.unix();
       epoch -= (epoch % 1); // rounding down
       singleObj.epoch = epoch;
@@ -1344,15 +1381,15 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj._id = `${site.AQSID}_${epoch}_${metron}`;
       allObjects.push(singleObj);
     }
-
+    
     // gathering time stamps and then call to bulkUpdate
-    const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
+    // original line: const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
     // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
-    // const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
+    const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
     let startEpoch = startTimeStamp.unix();
     startEpoch -= (startEpoch % 1); // rounding down
-    // const endTimeStamp = moment.utc(`${parsedLines[parsedLines.length - 1][0]}_${parsedLines[parsedLines.length - 1][1]}`, 'YYMMDD_HH:mm:ss').add(parseInt(site['GMT offset']) * -1, 'hour');
-    const endTimeStamp = moment.utc(`${parsedLines[parsedLines.length - 1][0]}_${parsedLines[parsedLines.length - 1][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
+    // original line: const endTimeStamp = moment.utc(`${parsedLines[parsedLines.length - 1][0]}_${parsedLines[parsedLines.length - 1][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
+    const endTimeStamp = moment.utc(`${parsedLines[parsedLines.length - 1][0]}_${parsedLines[parsedLines.length - 1][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
     let endEpoch = endTimeStamp.unix();
     endEpoch -= (endEpoch % 1); // rounding down
     callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch, false);
