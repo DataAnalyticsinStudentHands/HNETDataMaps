@@ -413,6 +413,12 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             for (let j = 1; j < data.length; j++) {
               newkey = subType + '_' + data[j].metric;
 
+              // Skip if data points flag (if defined) is 20 (potentially invalid)
+              // This is used for data aggregation to ensure no B.S. data goes into calculations
+              if (data[j].Flag !== undefined && data[j].Flag == 20) {
+                continue;
+              }
+
               if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
                 numValid = 0;
               }
@@ -615,7 +621,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (SAE_Neph === undefined || SAE_Neph < -1 || SAE_Neph > 5) { 
               newaggr[instrument]['SAE'].push({ metric: 'calc', val: ((SAE_Neph === undefined) ? 'NaN' : SAE_Neph) });
               newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 10 });
+              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 20 });
             } else {
               newaggr[instrument]['SAE'].push({ metric: 'calc', val:  SAE_Neph });
               newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
@@ -646,7 +652,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (SSA_R === undefined || SSA_R <= 0 || SSA_R > 1) {
               newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
               newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: 10});
+              newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: 20});
             }
             newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: SSA_R });
             newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
@@ -666,7 +672,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (SSA_G === undefined || SSA_G <= 0 || SSA_G > 1) {
               newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
               newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: 10 });
+              newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: 20 });
             }
 
             newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: SSA_G });
@@ -687,7 +693,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (SSA_B === undefined || (SSA_B <= 0 || SSA_B == 1)) {
               newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
               newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: 10});
+              newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: 20});
             }
             newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: SSA_B });
             newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
@@ -752,7 +758,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (AAE_TAP === undefined || AAE_TAP <= 0 || AAE_TAP > 3.5) {
               newaggr[instrument]['AAE'].push({ metric: 'calc', val: ((AAE_TAP === undefined) ? 'NaN' : AAE_TAP) });
               newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
-              newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 10 });
+              newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 20 });
             } else {
               newaggr[instrument]['AAE'].push({ metric: 'calc', val: AAE_TAP });
               newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
@@ -1275,6 +1281,38 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.subTypes = {};
       singleObj.subTypes[metron] = [];
 
+      /* Matlab code
+       * To Note: Comments in matlab are my own comments
+        
+        % Do not aggregate data point if r, g, b is < 0 or > 100 
+        r1=numa(:,7);
+        g1=numa(:,8);
+        b1=numa(:,9);
+        r2(r2 < 0 | r2 > 100) = NaN;
+        g2(g2 < 0 | g2 > 100) = NaN;
+        b2(b2 < 0 | b2 > 100) = NaN;
+
+
+        %TAP_02data defined here
+        TAP_02data = [JD2 time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2];
+
+        % Don't aggregate data point if SampleFlow / Flow(L/min) is off 5% from 1.7
+        idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
+        TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
+
+
+        % This is for the TAP switching. It was a way to get the TAP switching working in the matlab script.
+        % Probably unneccessary, but leaving it in just in case.
+        R01 = strfind(isnan(TAP_02data(:,5)).', [1 0]); % Find Indices Of [0 1] Transitions
+        for i=1:100
+        TAP_02data(R01+i,6:8) = NaN; % Replace Appropriate Values With 'NaN '
+        end
+
+
+        20 = potentially invalid data
+        1 = valid data
+       */
+
       singleObj.subTypes[metron][0] = {};
       singleObj.subTypes[metron][0].metric = 'Flag';
       singleObj.subTypes[metron][0].val = 1;
@@ -1294,22 +1332,47 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.subTypes[metron][4].metric = 'AvgTime';
       singleObj.subTypes[metron][4].val = parsedLines[k][5];
       singleObj.subTypes[metron][4].unit = '';
+      /** RGB checking
+       *
+       * Relevant matlab code:
+        % Do not aggregate data point if r, g, b is < 0 or > 100 
+        r1=numa(:,7);
+        g1=numa(:,8);
+        b1=numa(:,9);
+        r2(r2 < 0 | r2 > 100) = NaN;
+        g2(g2 < 0 | g2 > 100) = NaN;
+        b2(b2 < 0 | b2 > 100) = NaN;
+       */
       singleObj.subTypes[metron][5] = {};
       singleObj.subTypes[metron][5].metric = 'RedAbsCoef';
       singleObj.subTypes[metron][5].val = parsedLines[k][6];
       singleObj.subTypes[metron][5].unit = '';
+      singleObj.subTypes[metron][5].Flag = parsedLines[k][6] < 0 || parsedLines[k][6] > 100 || isNaN(parsedLines[k][6]) ? 20 : 1;
       singleObj.subTypes[metron][6] = {};
       singleObj.subTypes[metron][6].metric = 'GreenAbsCoef';
       singleObj.subTypes[metron][6].val = parsedLines[k][7];
       singleObj.subTypes[metron][6].unit = '';
+      singleObj.subTypes[metron][6].Flag = parsedLines[k][7] < 0 || parsedLines[k][7] > 100 || isNaN(parsedLines[k][7]) ? 20 : 1;
       singleObj.subTypes[metron][7] = {};
       singleObj.subTypes[metron][7].metric = 'BlueAbsCoef';
       singleObj.subTypes[metron][7].val = parsedLines[k][8];
       singleObj.subTypes[metron][7].unit = '';
+      singleObj.subTypes[metron][7].Flag = parsedLines[k][8] < 0 || parsedLines[k][8] > 100 || isNaN(parsedLines[k][8]) ? 20 : 1;
+      /** End of RGB checking **/
+
+      /* Flow checking
+       *
+       * Relevant matlab code:
+        idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
+        TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
+       */
       singleObj.subTypes[metron][8] = {};
       singleObj.subTypes[metron][8].metric = 'SampleFlow';
       singleObj.subTypes[metron][8].val = parsedLines[k][9];
       singleObj.subTypes[metron][8].unit = '';
+      singleObj.subTypes[metron][8].Flag = parsedLines[k][9] < 1.615 || parsedLines[k][9] > 1.785 ? 20 : 1;
+      /** End of Flow checking **/
+
       singleObj.subTypes[metron][9] = {};
       singleObj.subTypes[metron][9].metric = 'HeaterSetPoint';
       singleObj.subTypes[metron][9].val = parsedLines[k][10];
