@@ -302,7 +302,41 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           }
 
           // Get flag from TAP0(1|2)Flag and give it to the appropriate instrument
-          if (subType.indexOf('tap_') >= 0) {
+          if (subType.includes('tap_')) {
+
+          /* Matlab code
+           * Some data filtration is required. We will not aggregate datapoints (not records) that do not fit our standards.
+           * To Note: Comments in matlab are my own comments
+            
+            % Do not aggregate data point if r, g, b is < 0 or > 100 
+            r1=numa(:,7);
+            g1=numa(:,8);
+            b1=numa(:,9);
+            r2(r2 < 0 | r2 > 100) = NaN;
+            g2(g2 < 0 | g2 > 100) = NaN;
+            b2(b2 < 0 | b2 > 100) = NaN;
+
+
+            %TAP_02data defined here
+            TAP_02data = [JD2 time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2];
+
+            % Don't aggregate data point if SampleFlow / Flow(L/min) is off 5% from 1.7
+            idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
+            TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
+
+
+            % This is for the TAP switching. It was a way to get the TAP switching working in the matlab script.
+            % Probably unneccessary, but leaving it in just in case.
+            R01 = strfind(isnan(TAP_02data(:,5)).', [1 0]); % Find Indices Of [0 1] Transitions
+            for i=1:100
+            TAP_02data(R01+i,6:8) = NaN; % Replace Appropriate Values With 'NaN '
+            end
+
+
+            20 = potentially invalid data
+            1 = valid data
+           */
+
             // TAP01 = even
             // TAP02 = odd
             // confusing amirite!?
@@ -337,6 +371,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               }
             }
           }
+
 
           /**  End of TAP switch implementation **/
 
@@ -413,11 +448,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             for (let j = 1; j < data.length; j++) {
               newkey = subType + '_' + data[j].metric;
 
-              // Skip if data points flag (if defined) is 20 (potentially invalid)
-              // This is used for data aggregation to ensure no B.S. data goes into calculations
-              if (data[j].Flag !== undefined && data[j].Flag == 20) {
-                continue;
-              }
 
               if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
                 numValid = 0;
@@ -1041,6 +1071,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
 
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
+      // Change the 1 to 1000000 to aggregate VERY old data serverside. Remember to change it back to 1 before you commit
       startAggrEpoch = moment.unix(fileModified).subtract(1, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
@@ -1065,7 +1096,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
   // Get the timezone offset into one nice variable
-  let siteTimeZone = site['GMToffset'] * 3600;
+  let siteTimeZone = site['GMT offset'] * 3600;
 
 
   if (site.AQSID) {
@@ -1090,16 +1121,18 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
     // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
     let siteData = Object.getOwnPropertyNames(parsedLines[0]);
-    let TAP01FlagName = undefined;
-    let TAP02FlagName = undefined;
+    let TAP01CurrentFlagName = undefined;
+    let TAP02CurrentFlagName = undefined;
+    let siteInitial = undefined;
 
     siteData.forEach((colName) => {
       if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
         let flagNum = colName.substring(colName.indexOf("Flag") - 3, colName.indexOf("Flag") - 1);
+        siteInitial = colName.substring(colName.lastIndexOf("BC2_") + 4, colName.indexOf("_", colName.indexOf("_") + 1));
         if (parseInt(flagNum) % 2 == 0) {
-          TAP02FlagName = colName;
+          TAP02CurrentFlagName = colName;
         } else {
-          TAP01FlagName = colName;
+          TAP01CurrentFlagName = colName;
         }
       }
     });
@@ -1113,15 +1146,21 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       // Don't worry! If we aren't working with TAP data, it will just skip that right here. 
       
       // Redefines the TAP01Flag label here
-      if (TAP01FlagName !== undefined) {
-        parsedLines[k]['BC2_EP_TAP01_Flag'] = parsedLines[k][TAP01FlagName];
-        delete parsedLines[k][TAP01FlagName];
+      if (TAP01CurrentFlagName !== undefined) {
+        let newFlagName = 'BC2_' + siteInitial + '_TAP01_Flag';
+        parsedLines[k][newFlagName] = parsedLines[k][TAP01CurrentFlagName];
+        if (newFlagName !== TAP01CurrentFlagName) {
+          delete parsedLines[k][TAP01CurrentFlagName];
+        }
       }
 
       // Redefines the TAP02Flag label here
-      if (TAP02FlagName !== undefined) {
-        parsedLines[k]['BC2_EP_TAP02_Flag'] = parsedLines[k][TAP02FlagName];
-        delete parsedLines[k][TAP02FlagName];
+      if (TAP02CurrentFlagName !== undefined) {
+        let newFlagName = 'BC2_' + siteInitial + '_TAP02_Flag';
+        parsedLines[k][newFlagName] = parsedLines[k][TAP02CurrentFlagName];
+        if (newFlagName !== TAP02CurrentFlagName) {
+          delete parsedLines[k][TAP02CurrentFlagName];
+        }
       }
 
       let singleObj = {};
@@ -1166,7 +1205,7 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
-  let siteTimeZone = site['GMToffset'];
+  let siteTimeZone = site['GMT offset'];
 
   if (site.AQSID) {
     // create objects from parsed lines
@@ -1265,7 +1304,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
-  let siteTimeZone = site['GMToffset'];
+  let siteTimeZone = site['GMT offset'];
 
   if (site.AQSID) {
     // use file name for TAP instrument identifier
@@ -1277,38 +1316,6 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       const singleObj = {};
       singleObj.subTypes = {};
       singleObj.subTypes[metron] = [];
-
-      /* Matlab code
-       * To Note: Comments in matlab are my own comments
-        
-        % Do not aggregate data point if r, g, b is < 0 or > 100 
-        r1=numa(:,7);
-        g1=numa(:,8);
-        b1=numa(:,9);
-        r2(r2 < 0 | r2 > 100) = NaN;
-        g2(g2 < 0 | g2 > 100) = NaN;
-        b2(b2 < 0 | b2 > 100) = NaN;
-
-
-        %TAP_02data defined here
-        TAP_02data = [JD2 time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2];
-
-        % Don't aggregate data point if SampleFlow / Flow(L/min) is off 5% from 1.7
-        idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
-        TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
-
-
-        % This is for the TAP switching. It was a way to get the TAP switching working in the matlab script.
-        % Probably unneccessary, but leaving it in just in case.
-        R01 = strfind(isnan(TAP_02data(:,5)).', [1 0]); % Find Indices Of [0 1] Transitions
-        for i=1:100
-        TAP_02data(R01+i,6:8) = NaN; % Replace Appropriate Values With 'NaN '
-        end
-
-
-        20 = potentially invalid data
-        1 = valid data
-       */
 
       singleObj.subTypes[metron][0] = {};
       singleObj.subTypes[metron][0].metric = 'Flag';
@@ -1329,47 +1336,22 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj.subTypes[metron][4].metric = 'AvgTime';
       singleObj.subTypes[metron][4].val = parsedLines[k][5];
       singleObj.subTypes[metron][4].unit = '';
-      /** RGB checking
-       *
-       * Relevant matlab code:
-        % Do not aggregate data point if r, g, b is < 0 or > 100 
-        r1=numa(:,7);
-        g1=numa(:,8);
-        b1=numa(:,9);
-        r2(r2 < 0 | r2 > 100) = NaN;
-        g2(g2 < 0 | g2 > 100) = NaN;
-        b2(b2 < 0 | b2 > 100) = NaN;
-       */
       singleObj.subTypes[metron][5] = {};
       singleObj.subTypes[metron][5].metric = 'RedAbsCoef';
       singleObj.subTypes[metron][5].val = parsedLines[k][6];
       singleObj.subTypes[metron][5].unit = '';
-      singleObj.subTypes[metron][5].Flag = parsedLines[k][6] < 0 || parsedLines[k][6] > 100 || isNaN(parsedLines[k][6]) ? 20 : 1;
       singleObj.subTypes[metron][6] = {};
       singleObj.subTypes[metron][6].metric = 'GreenAbsCoef';
       singleObj.subTypes[metron][6].val = parsedLines[k][7];
       singleObj.subTypes[metron][6].unit = '';
-      singleObj.subTypes[metron][6].Flag = parsedLines[k][7] < 0 || parsedLines[k][7] > 100 || isNaN(parsedLines[k][7]) ? 20 : 1;
       singleObj.subTypes[metron][7] = {};
       singleObj.subTypes[metron][7].metric = 'BlueAbsCoef';
       singleObj.subTypes[metron][7].val = parsedLines[k][8];
       singleObj.subTypes[metron][7].unit = '';
-      singleObj.subTypes[metron][7].Flag = parsedLines[k][8] < 0 || parsedLines[k][8] > 100 || isNaN(parsedLines[k][8]) ? 20 : 1;
-      /** End of RGB checking **/
-
-      /* Flow checking
-       *
-       * Relevant matlab code:
-        idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
-        TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
-       */
       singleObj.subTypes[metron][8] = {};
       singleObj.subTypes[metron][8].metric = 'SampleFlow';
       singleObj.subTypes[metron][8].val = parsedLines[k][9];
       singleObj.subTypes[metron][8].unit = '';
-      singleObj.subTypes[metron][8].Flag = parsedLines[k][9] < 1.615 || parsedLines[k][9] > 1.785 ? 20 : 1;
-      /** End of Flow checking **/
-
       singleObj.subTypes[metron][9] = {};
       singleObj.subTypes[metron][9].metric = 'HeaterSetPoint';
       singleObj.subTypes[metron][9].val = parsedLines[k][10];
