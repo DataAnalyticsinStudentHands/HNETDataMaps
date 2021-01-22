@@ -1096,7 +1096,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
   // Get the timezone offset into one nice variable
-  let siteTimeZone = site['GMT offset'] * 3600;
+  let siteTimeZone = site['GMT offset'] * -1 * 3600;
 
 
   if (site.AQSID) {
@@ -1205,7 +1205,7 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
-  let siteTimeZone = site['GMT offset'];
+  let siteTimeZone = site['GMT offset'] * -1;
 
   if (site.AQSID) {
     // create objects from parsed lines
@@ -1304,7 +1304,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
   const pathArray = path.split(pathModule.sep);
   const parentDir = pathArray[pathArray.length - 2];
   const site = LiveSites.findOne({ incoming: parentDir });
-  let siteTimeZone = site['GMT offset'];
+  let siteTimeZone = site['GMT offset'] * -1;
 
   if (site.AQSID) {
     // use file name for TAP instrument identifier
