@@ -1128,7 +1128,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     siteData.forEach((colName) => {
       if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
         let flagNum = colName.substring(colName.indexOf("Flag") - 3, colName.indexOf("Flag") - 1);
-        siteInitial = colName.substring(colName.lastIndexOf("BC2_") + 4, colName.indexOf("_", colName.indexOf("_") + 1));
+        siteInitial = colName.substring(colName.indexOf("BC2_") + 4, colName.indexOf("_", colName.indexOf("_") + 1));
         if (parseInt(flagNum) % 2 == 0) {
           TAP02CurrentFlagName = colName;
         } else {
