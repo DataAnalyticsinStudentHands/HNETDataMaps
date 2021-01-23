@@ -11,18 +11,8 @@ import { LiveSites } from "../../../api/collections_server";
 import "./bc2site.html";
 
 // 24 hours ago - seconds
-const startEpoch = new ReactiveVar(moment().subtract(7, "days").unix());
+const startEpoch = new ReactiveVar(moment().subtract(1439, "minutes").unix());
 const endEpoch = new ReactiveVar(moment().unix());
-
-Highcharts.setOptions({
-  global: {
-    useUTC: false,
-    getTimezoneOffset: (timestamp) => {
-      const timezoneOffset = 0;
-      return timezoneOffset;
-    },
-  },
-});
 
 Template.bc2site.onRendered(() => {
   // setup date picker
@@ -69,7 +59,8 @@ Template.bc2site.helpers({
   },
   createChart(measurement) {
     const data = Bc2DataSeries.find({ _id: measurement }).fetch();
-
+    const allLiveSites = LiveSites.findOne({ AQSID: Router.current().params._id });
+    
     // Use Meteor.defer() to create chart after DOM is ready:
     Meteor.defer(() => {
       if (document.getElementById(`container-chart-${measurement}`) !== null) {
@@ -84,9 +75,13 @@ Template.bc2site.helpers({
           xAxis: {
             type: "datetime",
             title: {
-              text: "Local Time",
+              text: "Local Time " + allLiveSites.city,
             },
             minRange: 3600,
+          },
+          time: {
+            timezoneOffset: allLiveSites.GMToffset * 60,
+            useUTC: false
           },
           navigator: {
             xAxis: {
@@ -166,11 +161,6 @@ Template.bc2site.helpers({
                 count: 60,
                 text: "Hour",
               },
-              {
-                type: "week",
-                count: 7,
-                text: "1 Week",
-              }
             ],
             buttonTheme: {
               width: 60,
@@ -199,7 +189,6 @@ Template.bc2site.events({
   "dp.change #datetimepicker1": function (event) {
     // Get the selected date
     startEpoch.set(moment(event.date, "YYYY-MM-DD").unix());
-    // endEpoch.set(moment.unix(startEpoch.get()).subtract(7, "days").unix());
-    // endEpoch.set(moment(event.date, "YYYY-MM-DD").unix());
+    endEpoch.set(moment.unix(startEpoch.get()).add(1439, "minutes").unix());
   },
 });

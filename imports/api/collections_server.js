@@ -117,9 +117,9 @@ const SitesSchema = new SimpleSchema({
     decimal: true,
     label: 'Coordinates array'
   },
-  'GMT offset': {
+  'GMToffset': {
     optional: true,
-    type: String
+    type: Number
   },
   'site code': {
     optional: true,
