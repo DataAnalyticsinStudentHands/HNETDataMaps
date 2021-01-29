@@ -275,6 +275,12 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   var TAP01Flag = 1, TAP02Flag = 1;
   var TAP01Epoch = 0, TAP02Epoch = 0;
 
+  // Tap data filtration is required. These variables are simply placeholders for where the rgb abs coef indeces and sampleFlow index is at.
+  // ***MUST*** be viable over for loop
+  let hasCheckedTAPdataSchema = false;
+  let tapDataSchemaIndex = {};
+  tapDataSchemaIndex.RedAbsCoef = undefined, tapDataSchemaIndex.GreenAbsCoef = undefined, tapDataSchemaIndex.BlueAbsCoef = undefined, tapDataSchemaIndex.SampleFlow = undefined;
+
   // create new structure for data series to be used for charts
   AggrResults.find({}).forEach((e) => {
     const subObj = {};
@@ -284,7 +290,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     const subTypes = e.subTypes;
     const aggrSubTypes = {}; // hold aggregated data
 
-    for (let i = 0; i < subTypes.length; i++) {
+    let subTypesLength = subTypes.length
+    for (let i = 0; i < subTypesLength; i++) {
       for (const subType in subTypes[i]) {
         if (subTypes[i].hasOwnProperty(subType)) {
           const data = subTypes[i][subType];
@@ -294,48 +301,15 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           /** Tap flag implementation **/
           // Get flag from DAQ data and save it
           if (subType.indexOf('TAP01') >= 0) {
-            TAP01Flag = data[0].val;
+            TAP01Flag = data[0].val === 10 ? 1 : data[0].val;
             TAP01Epoch = subObj.epoch;
           } else if (subType.indexOf('TAP02') >= 0) {
-            TAP02Flag = data[0].val;
+            TAP02Flag = data[0].val === 10 ? 8 : data[0].val
             TAP02Epoch = subObj.epoch;
           }
 
           // Get flag from TAP0(1|2)Flag and give it to the appropriate instrument
           if (subType.includes('tap_')) {
-
-          /* Matlab code
-           * Some data filtration is required. We will not aggregate datapoints (not records) that do not fit our standards.
-           * To Note: Comments in matlab are my own comments
-            
-            % Do not aggregate data point if r, g, b is < 0 or > 100 
-            r1=numa(:,7);
-            g1=numa(:,8);
-            b1=numa(:,9);
-            r2(r2 < 0 | r2 > 100) = NaN;
-            g2(g2 < 0 | g2 > 100) = NaN;
-            b2(b2 < 0 | b2 > 100) = NaN;
-
-
-            %TAP_02data defined here
-            TAP_02data = [JD2 time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2];
-
-            % Don't aggregate data point if SampleFlow / Flow(L/min) is off 5% from 1.7
-            idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
-            TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
-
-
-            % This is for the TAP switching. It was a way to get the TAP switching working in the matlab script.
-            % Probably unneccessary, but leaving it in just in case.
-            R01 = strfind(isnan(TAP_02data(:,5)).', [1 0]); % Find Indices Of [0 1] Transitions
-            for i=1:100
-            TAP_02data(R01+i,6:8) = NaN; % Replace Appropriate Values With 'NaN '
-            end
-
-
-            20 = potentially invalid data
-            1 = valid data
-           */
 
             // TAP01 = even
             // TAP02 = odd
@@ -349,7 +323,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             do {
               subTypeName = subTypeName.slice(1);
             } while (isNaN(subTypeName));
-            if (parseInt(subTypeName) % 2 === 0) {
+            let subTypeNum = subTypeName;
+            if (parseInt(subTypeNum) % 2 === 0) {
               // Even - Needs flag from TAP01
               // Make sure that tap data has a corresponding timestamp in DaqFactory file
               // If not, break and do not aggregate datapoint
@@ -370,6 +345,119 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
                 break;
               }
             }
+
+            /** Data filtration start **/
+
+            /* Reason for data filtration to be inside this subType.includes is for performance reasons. The less if statements ran, the faster.
+             */
+
+            /* Matlab code
+             * Some data filtration is required. We will not aggregate datapoints (not records) that do not fit our standards.
+             * To Note: Comments in matlab are my own comments
+              
+              % Do not aggregate data point if r, g, b is < 0 or > 100 
+              r1=numa(:,7);
+              g1=numa(:,8);
+              b1=numa(:,9);
+              r2(r2 < 0 | r2 > 100) = NaN;
+              g2(g2 < 0 | g2 > 100) = NaN;
+              b2(b2 < 0 | b2 > 100) = NaN;
+
+
+              %TAP_02data defined here
+              TAP_02data = [JD2 time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2];
+
+              % Don't aggregate data point if SampleFlow / Flow(L/min) is off 5% from 1.7 Min: 1.615, Max: 1.785
+              idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
+              TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
+
+
+              % This is for the TAP switching. It was a way to get the TAP switching working in the matlab script.
+              % Don't aggregate the first 100s after a switch has occured. Let instrument recalibrate. 
+              R01 = strfind(isnan(TAP_02data(:,5)).', [1 0]); % Find Indices Of [0 1] Transitions
+              for i=1:100
+              TAP_02data(R01+i,6:8) = NaN; % Replace Appropriate Values With 'NaN '
+              end
+
+
+              20 = potentially invalid data
+              1 = valid data
+             */
+
+            // Reason for if statement is to speed the code up alot. 
+            // Having to check for the schema every run is VERY significant.
+            // Only having to do it once and assuming the rest will be the same is a very safe assumption.
+            // If this isn't true, then lord help us all
+            if (!hasCheckedTAPdataSchema) {
+              let dataLength = data.length;
+              for (let k = 0; k < dataLength; k++) {
+                if (data[k].metric === 'RedAbsCoef') {
+                  tapDataSchemaIndex.RedAbsCoef = k;
+                }
+                if (data[k].metric === 'GreenAbsCoef') {
+                  tapDataSchemaIndex.GreenAbsCoef = k;
+                }
+                if (data[k].metric === 'BlueAbsCoef') {
+                  tapDataSchemaIndex.BlueAbsCoef = k;
+                }
+                if (data[k].metric === 'SampleFlow') {
+                  tapDataSchemaIndex.SampleFlow = k;
+                }
+              }
+              hasCheckedTAPdataSchema = true;
+            }
+///*
+            // Deletion works best because it allows for less points to be in the database, aggregated, etc...
+            let datapointsDeleted = 0;
+            let indexAdjusted = tapDataSchemaIndex.RedAbsCoef - datapointsDeleted;
+            if (data[indexAdjusted].val < 0 || data[indexAdjusted].val > 100 || isNaN(data[indexAdjusted].val)) {
+              data.splice(indexAdjusted, 1);
+              datapointsDeleted++;
+            }
+
+            indexAdjusted = tapDataSchemaIndex.GreenAbsCoef - datapointsDeleted;
+            if (data[indexAdjusted].val < 0 || data[indexAdjusted].val > 100 || isNaN(data[indexAdjusted].val)) {
+              data.splice(indexAdjusted, 1);
+              datapointsDeleted++;
+            }
+
+            indexAdjusted = tapDataSchemaIndex.BlueAbsCoef - datapointsDeleted;
+            if (data[indexAdjusted].val < 0 || data[indexAdjusted].val > 100 || isNaN(data[indexAdjusted].val)) {
+              data.splice(indexAdjusted, 1);
+              datapointsDeleted++;
+            }
+
+            indexAdjusted = tapDataSchemaIndex.SampleFlow - datapointsDeleted;
+            if (data[indexAdjusted].val < 1.615 || data[indexAdjusted].val > 1.785 || isNaN(data[indexAdjusted].val)) {
+              data.splice(indexAdjusted, 1);
+              datapointsDeleted++;
+            }
+            
+						if (TAP01Flag === 10 && TAP02Flag === 10 && subTypeNum % 2 === 0) {
+              break;
+            }
+
+            //*/
+            /*// Flagging and deletion do the same exact thing due to the way the average works. If you don't want data to go into the avg, then don't let it in. No way around it. Experimental code.
+            // We flag the faulty data. This will not show up in the database
+            if (data[tapDataSchemaIndex.RedAbsCoef].val < 0 || data[tapDataSchemaIndex.RedAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.RedAbsCoef].val)) {
+              data[tapDataSchemaIndex.RedAbsCoef].Flag = 20;
+            }
+            
+            if (data[tapDataSchemaIndex.GreenAbsCoef].val < 0 || data[tapDataSchemaIndex.GreenAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.GreenAbsCoef].val)) {
+              data[tapDataSchemaIndex.GreenAbsCoef].Flag = 20;
+            }
+
+            if (data[tapDataSchemaIndex.BlueAbsCoef].val < 0 || data[tapDataSchemaIndex.BlueAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.BlueAbsCoef].val)) {
+              data[tapDataSchemaIndex.BlueAbsCoef].Flag = 20;
+            }
+
+            if (data[tapDataSchemaIndex.SampleFlow].val < 1.615 || data[tapDataSchemaIndex.SampleFlow].val > 1.785 || isNaN(data[tapDataSchemaIndex.SampleFlow].val)) {
+              data[tapDataSchemaIndex.SampleFlow].Flag = 20;
+            }
+
+
+            /** Data filtration finished **/ 
           }
 
 
@@ -447,7 +535,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           } else { // normal aggreagation for all other subTypes
             for (let j = 1; j < data.length; j++) {
               newkey = subType + '_' + data[j].metric;
-
 
               if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
                 numValid = 0;
