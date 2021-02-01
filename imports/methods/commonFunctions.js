@@ -433,7 +433,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               datapointsDeleted++;
             }
             
-						if (TAP01Flag === 10 && TAP02Flag === 10 && subTypeNum % 2 === 0) {
+            if (TAP01Flag === 10 && TAP02Flag === 10 && subTypeNum % 2 === 0) {
               break;
             }
 
