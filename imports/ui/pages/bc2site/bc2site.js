@@ -169,8 +169,10 @@ Template.bc2site.helpers({
                 events: {
                   click: function () {
                     if(currentEventDate){
-                    startEpoch.set(moment(currentEventDate, "YYYY-MM-DD").subtract(7, 'days').unix());
-                    endEpoch.set(moment(currentEventDate, "YYYY-MM-DD").add(1, 'days').unix());
+                      if(measurement){
+                        startEpoch.set(moment(currentEventDate, "YYYY-MM-DD").subtract(7, 'days').unix());
+                        endEpoch.set(moment(currentEventDate, "YYYY-MM-DD").add(1, 'days').unix());
+                      }
                     }
                   }
                 }
