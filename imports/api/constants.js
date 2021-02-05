@@ -164,6 +164,15 @@ export const colorsHash = {
     color10: "#703e00",
     labelcolor: "label-danger",
   },
+  6: {
+    val: 6,
+    description: "Orange",
+    label: "Burning Color",
+    selectable: true,
+    color: "#ff5a00",
+    color10: "#ff9a00",
+    labelcolor: "label-danger",
+  },
 };
 
 export const channelHash = {

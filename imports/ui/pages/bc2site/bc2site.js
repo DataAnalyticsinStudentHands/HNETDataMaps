@@ -4,7 +4,6 @@ import { ReactiveVar } from "meteor/reactive-var";
 import { moment } from "meteor/momentjs:moment";
 import { Template } from "meteor/templating";
 import { Bc2DataSeries } from "../../../api/collections_client";
-import { DataExporter } from "../../components/dataexporter";
 import { unitsHash } from "../../../api/constants";
 import { LiveSites } from "../../../api/collections_server";
 
@@ -14,15 +13,7 @@ import "./bc2site.html";
 const startEpoch = new ReactiveVar(moment().subtract(7, "days").unix());
 const endEpoch = new ReactiveVar(moment().unix());
 
-Highcharts.setOptions({
-  global: {
-    useUTC: false,
-    getTimezoneOffset: (timestamp) => {
-      const timezoneOffset = 0;
-      return timezoneOffset;
-    },
-  },
-});
+let currentEventDate = null 
 
 Template.bc2site.onRendered(() => {
   // setup date picker
@@ -69,7 +60,8 @@ Template.bc2site.helpers({
   },
   createChart(measurement) {
     const data = Bc2DataSeries.find({ _id: measurement }).fetch();
-
+    const allLiveSites = LiveSites.findOne({ AQSID: Router.current().params._id });
+    
     // Use Meteor.defer() to create chart after DOM is ready:
     Meteor.defer(() => {
       if (document.getElementById(`container-chart-${measurement}`) !== null) {
@@ -84,9 +76,13 @@ Template.bc2site.helpers({
           xAxis: {
             type: "datetime",
             title: {
-              text: "Local Time",
+              text: "Local Time " + allLiveSites.city,
             },
             minRange: 3600,
+          },
+          time: {
+            timezoneOffset: allLiveSites.GMToffset * 60,
+            useUTC: false
           },
           navigator: {
             xAxis: {
@@ -167,13 +163,23 @@ Template.bc2site.helpers({
                 text: "Hour",
               },
               {
-                type: "week",
+                type: "day",
                 count: 7,
-                text: "1 Week",
-              }
+                text: "Load 1 week",
+                events: {
+                  click: function () {
+                    if(currentEventDate){
+                      if(measurement){
+                        startEpoch.set(moment(currentEventDate, "YYYY-MM-DD").subtract(7, 'days').unix());
+                        endEpoch.set(moment(currentEventDate, "YYYY-MM-DD").add(1, 'days').unix());
+                      }
+                    }
+                  }
+                }
+              },
             ],
             buttonTheme: {
-              width: 60,
+              width: 100,
             },
             selected: 0,
           },
@@ -198,8 +204,8 @@ Template.bc2site.events({
   },
   "dp.change #datetimepicker1": function (event) {
     // Get the selected date
+    currentEventDate = event.date;
     startEpoch.set(moment(event.date, "YYYY-MM-DD").unix());
-    // endEpoch.set(moment.unix(startEpoch.get()).subtract(7, "days").unix());
-    // endEpoch.set(moment(event.date, "YYYY-MM-DD").unix());
+    endEpoch.set(moment.unix(startEpoch.get()).add(1439, "minutes").unix());
   },
 });

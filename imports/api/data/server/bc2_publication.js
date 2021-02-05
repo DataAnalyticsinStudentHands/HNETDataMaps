@@ -56,15 +56,12 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
         _.each(data, (points, measurement) => {
           // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
           let chart = measurement.toUpperCase();
-          // organize data by instrument_measurements
           if (chart.includes("BACK")) {
             chart = `${instrument} Back Scattering`;
           } else if (chart.includes("ABSCOEF")) {
             chart = `${instrument.substring(0, 3)} Absolute Coefficients`;
-          } else if (!instrument.includes("tap")) {
-            if(!measurement.includes("SAE")) {
-              chart = `${instrument} Scattering`;
-            }
+          } else if (chart.includes("SAE")) {
+            chart = `${chart}`;
           } else if (chart.includes("AAE")) {
             chart = `${chart}`;
           } else if (chart.includes("SSA")) {
@@ -122,49 +119,93 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                     y: points[0].val, // average
                     color: colorsHash[4].color,
                   };
-                } else if (measurement.includes("SAE")) {
+                } else if (chart.includes("SAE")) { 
+                  let threshold      // initializing threshold
+                  let bounds         // initializing bounds
                   allSites.forEach((site) => {
                     _.each(site.Channels, (subChannels) => {
                       _.each(subChannels, (subData) => {
                         if (typeof subChannels.Threshold !== "undefined") { // does not loop if you have undefined thresholds
-                          if (points[0].val >= subChannels.Threshold.Value) {
-                            modifiedData = {
-                              x: epoch * 1000, // milliseconds
-                              y: points[0].val, // average
-                              color: colorsHash[5].color, // biomass burning color
-                            };
-                          } else {
-                            modifiedData = {
-                              x: epoch * 1000, // milliseconds
-                              y: points[0].val, // average
-                              color: colorsHash[2].color, // red color
-                            };
-                          }
+                          threshold = subChannels.Threshold.Value
+                          bounds = subChannels.Threshold.Bounds
                         }
                       });
                     });
+                    if(bounds == "Lesser"){
+                      if (points[0].val < threshold) {     // compare datapoint with threshold
+                        modifiedData = {
+                          x: epoch * 1000, // milliseconds
+                          y: points[0].val, // average
+                          color: colorsHash[5].color, // biomass burning color
+                        };
+                      }
+                      else {
+                        modifiedData = {
+                          x: epoch * 1000, // milliseconds
+                          y: points[0].val, // average
+                          color: colorsHash[4].color,
+                        };
+                      }
+                    } else {
+                      if (points[0].val > threshold) {     // compare datapoint with threshold
+                        modifiedData = {
+                          x: epoch * 1000, // milliseconds
+                          y: points[0].val, // calc
+                          color: colorsHash[1].color,
+                        };
+                      }
+                      else {
+                        modifiedData = {
+                          x: epoch * 1000, // milliseconds
+                          y: points[0].val, // calc
+                          color: colorsHash[3].color,
+                        };
+                      }
+                    }
                   });
-                } else if (measurement.includes("AAE")) {
+                } else if (measurement.includes("AAE")) { 
+                  let threshold      // initializing threshold
+                  let bounds         // initializing bounds
                   allSites.forEach((site) => {
                     _.each(site.Channels, (subChannels) => {
                       _.each(subChannels, (subData) => {
                         if (typeof subChannels.Threshold !== "undefined") { // does not loop if you have undefined thresholds
-                          if (points[0].val >= subChannels.Threshold.Value) {
-                            modifiedData = {
-                              x: epoch * 1000, // milliseconds
-                              y: points[0].val, // average
-                              color: colorsHash[5].color, // biomass burning color
-                            };
-                          } else {
-                            modifiedData = {
-                              x: epoch * 1000, // milliseconds
-                              y: points[0].val, // average
-                              color: colorsHash[4].color, // red color
-                            };
-                          }
+                          threshold = subChannels.Threshold.Value
+                          bounds = subChannels.Threshold.Bounds
                         }
                       });
                     });
+                    if(bounds == "Lesser"){
+                      if (points[0].val < threshold) {     // compare datapoint with threshold
+                        modifiedData = {
+                          x: epoch * 1000, // milliseconds
+                          y: points[0].val, // calc
+                          color: colorsHash[3].color,
+                        };
+                      }
+                      else {
+                        modifiedData = {
+                          x: epoch * 1000, // milliseconds
+                          y: points[0].val, // calc
+                          color: colorsHash[5].color,
+                        };
+                      }
+                    } else {
+                      if (points[0].val > threshold) {     // compare datapoint with threshold
+                        modifiedData = {
+                          x: epoch * 1000, // milliseconds
+                          y: points[0].val, // calc
+                          color: colorsHash[6].color,
+                        };
+                      }
+                      else {
+                        modifiedData = {
+                          x: epoch * 1000, // milliseconds
+                          y: points[0].val, // calc
+                          color: colorsHash[4].color,
+                        };
+                      }
+                    }
                   });
                 } else if (measurement.includes("CO")) {
                   modifiedData = {
