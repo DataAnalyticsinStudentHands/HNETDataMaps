@@ -754,9 +754,9 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         // Calculations for tap instruments done here
         if (instrument.indexOf('tap_') > -1 && instrumentCalculated.find(finderValue => finderValue === instrument) === undefined) {
           instrumentCalculated.push(instrument);
-          newaggr[instrument]['SSA_R'] = [];
-          newaggr[instrument]['SSA_G'] = [];
-          newaggr[instrument]['SSA_B'] = [];
+          newaggr[instrument]['SSA_Red'] = [];
+          newaggr[instrument]['SSA_Green'] = [];
+          newaggr[instrument]['SSA_Blue'] = [];
           newaggr[instrument]['AAE'] = [];
 
           //SSA calculations begin here:
@@ -767,17 +767,17 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_R <= 0 to because javascript sends error values to zero by default
             if (SSA_R === undefined || SSA_R <= 0 || SSA_R > 1) {
-              newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
-              newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: 20});
+              newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
+              newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: 20});
             }
-            newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: SSA_R });
-            newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: SSA_R });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
           } else {
-            newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: 'NaN' });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
           }
 
           if (aggrSubTypes['Neph_GreenScattering'].Flag === 1 && obj.Flag === 1) {
@@ -787,18 +787,18 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_G <= 0 to because javascript sends error values to zero by default
             if (SSA_G === undefined || SSA_G <= 0 || SSA_G > 1) {
-              newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
-              newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: 20 });
+              newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
+              newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: 20 });
             }
 
-            newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: SSA_G });
-            newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: SSA_G });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
           } else {
-            newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: 'NaN' });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
           }
 
           if (aggrSubTypes['Neph_BlueScattering'].Flag === 1 && obj.Flag === 1) {
@@ -808,17 +808,17 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_B <= 0 to because javascript sends error values to zero by default
             if (SSA_B === undefined || (SSA_B <= 0 || SSA_B == 1)) {
-              newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
-              newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: 20});
+              newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
+              newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: 20});
             }
-            newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: SSA_B });
-            newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: SSA_B });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
           } else {
-            newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: 'NaN' });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
           }
 
 
