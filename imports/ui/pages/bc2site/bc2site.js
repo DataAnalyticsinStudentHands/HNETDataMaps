@@ -4,15 +4,16 @@ import { ReactiveVar } from "meteor/reactive-var";
 import { moment } from "meteor/momentjs:moment";
 import { Template } from "meteor/templating";
 import { Bc2DataSeries } from "../../../api/collections_client";
-import { DataExporter } from "../../components/dataexporter";
 import { unitsHash } from "../../../api/constants";
 import { LiveSites } from "../../../api/collections_server";
 
 import "./bc2site.html";
 
 // 24 hours ago - seconds
-const startEpoch = new ReactiveVar(moment().subtract(1439, "minutes").unix());
+const startEpoch = new ReactiveVar(moment().subtract(7, "days").unix());
 const endEpoch = new ReactiveVar(moment().unix());
+
+let currentEventDate = null 
 
 Template.bc2site.onRendered(() => {
   // setup date picker
@@ -161,9 +162,22 @@ Template.bc2site.helpers({
                 count: 60,
                 text: "Hour",
               },
+              {
+                type: "day",
+                count: 7,
+                text: "Load 1 week",
+                events: {
+                  click: function () {
+                    if(currentEventDate){
+                    startEpoch.set(moment(currentEventDate, "YYYY-MM-DD").subtract(7, 'days').unix());
+                    endEpoch.set(moment(currentEventDate, "YYYY-MM-DD").add(1, 'days').unix());
+                    }
+                  }
+                }
+              },
             ],
             buttonTheme: {
-              width: 60,
+              width: 100,
             },
             selected: 0,
           },
@@ -188,6 +202,7 @@ Template.bc2site.events({
   },
   "dp.change #datetimepicker1": function (event) {
     // Get the selected date
+    currentEventDate = event.date;
     startEpoch.set(moment(event.date, "YYYY-MM-DD").unix());
     endEpoch.set(moment.unix(startEpoch.get()).add(1439, "minutes").unix());
   },
