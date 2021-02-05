@@ -275,6 +275,12 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   var TAP01Flag = 1, TAP02Flag = 1;
   var TAP01Epoch = 0, TAP02Epoch = 0;
 
+  // Tap data filtration is required. These variables are simply placeholders for where the rgb abs coef indeces and sampleFlow index is at.
+  // ***MUST*** be viable over for loop
+  let hasCheckedTAPdataSchema = false;
+  let tapDataSchemaIndex = {};
+  tapDataSchemaIndex.RedAbsCoef = undefined, tapDataSchemaIndex.GreenAbsCoef = undefined, tapDataSchemaIndex.BlueAbsCoef = undefined, tapDataSchemaIndex.SampleFlow = undefined;
+
   // create new structure for data series to be used for charts
   AggrResults.find({}).forEach((e) => {
     const subObj = {};
@@ -284,7 +290,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     const subTypes = e.subTypes;
     const aggrSubTypes = {}; // hold aggregated data
 
-    for (let i = 0; i < subTypes.length; i++) {
+    let subTypesLength = subTypes.length
+    for (let i = 0; i < subTypesLength; i++) {
       for (const subType in subTypes[i]) {
         if (subTypes[i].hasOwnProperty(subType)) {
           const data = subTypes[i][subType];
@@ -294,15 +301,16 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           /** Tap flag implementation **/
           // Get flag from DAQ data and save it
           if (subType.indexOf('TAP01') >= 0) {
-            TAP01Flag = data[0].val;
+            TAP01Flag = data[0].val === 10 ? 1 : data[0].val;
             TAP01Epoch = subObj.epoch;
           } else if (subType.indexOf('TAP02') >= 0) {
-            TAP02Flag = data[0].val;
+            TAP02Flag = data[0].val === 10 ? 8 : data[0].val
             TAP02Epoch = subObj.epoch;
           }
 
           // Get flag from TAP0(1|2)Flag and give it to the appropriate instrument
-          if (subType.indexOf('tap_') >= 0) {
+          if (subType.includes('tap_')) {
+
             // TAP01 = even
             // TAP02 = odd
             // confusing amirite!?
@@ -315,7 +323,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             do {
               subTypeName = subTypeName.slice(1);
             } while (isNaN(subTypeName));
-            if (parseInt(subTypeName) % 2 === 0) {
+            let subTypeNum = subTypeName;
+            if (parseInt(subTypeNum) % 2 === 0) {
               // Even - Needs flag from TAP01
               // Make sure that tap data has a corresponding timestamp in DaqFactory file
               // If not, break and do not aggregate datapoint
@@ -336,7 +345,121 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
                 break;
               }
             }
+
+            /** Data filtration start **/
+
+            /* Reason for data filtration to be inside this subType.includes is for performance reasons. The less if statements ran, the faster.
+             */
+
+            /* Matlab code
+             * Some data filtration is required. We will not aggregate datapoints (not records) that do not fit our standards.
+             * To Note: Comments in matlab are my own comments
+              
+              % Do not aggregate data point if r, g, b is < 0 or > 100 
+              r1=numa(:,7);
+              g1=numa(:,8);
+              b1=numa(:,9);
+              r2(r2 < 0 | r2 > 100) = NaN;
+              g2(g2 < 0 | g2 > 100) = NaN;
+              b2(b2 < 0 | b2 > 100) = NaN;
+
+
+              %TAP_02data defined here
+              TAP_02data = [JD2 time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2];
+
+              % Don't aggregate data point if SampleFlow / Flow(L/min) is off 5% from 1.7 Min: 1.615, Max: 1.785
+              idx = find(TAP_02data (:,5) <1.63 | TAP_02data (:,5) >1.05*1.7); %condition if flow is 5% off 1.7lpm
+              TAP_02data(idx,5:8) = NaN; clear idx time2 A_spot2 R_spot2 flow2 r2 g2 b2 Tr2 Tg2 Tb2
+
+
+              % This is for the TAP switching. It was a way to get the TAP switching working in the matlab script.
+              % Don't aggregate the first 100s after a switch has occured. Let instrument recalibrate. 
+              R01 = strfind(isnan(TAP_02data(:,5)).', [1 0]); % Find Indices Of [0 1] Transitions
+              for i=1:100
+              TAP_02data(R01+i,6:8) = NaN; % Replace Appropriate Values With 'NaN '
+              end
+
+
+              20 = potentially invalid data
+              1 = valid data
+             */
+
+            // Reason for if statement is to speed the code up alot. 
+            // Having to check for the schema every run is VERY significant.
+            // Only having to do it once and assuming the rest will be the same is a very safe assumption.
+            // If this isn't true, then lord help us all
+            if (!hasCheckedTAPdataSchema) {
+              let dataLength = data.length;
+              for (let k = 0; k < dataLength; k++) {
+                if (data[k].metric === 'RedAbsCoef') {
+                  tapDataSchemaIndex.RedAbsCoef = k;
+                }
+                if (data[k].metric === 'GreenAbsCoef') {
+                  tapDataSchemaIndex.GreenAbsCoef = k;
+                }
+                if (data[k].metric === 'BlueAbsCoef') {
+                  tapDataSchemaIndex.BlueAbsCoef = k;
+                }
+                if (data[k].metric === 'SampleFlow') {
+                  tapDataSchemaIndex.SampleFlow = k;
+                }
+              }
+              hasCheckedTAPdataSchema = true;
+            }
+///*
+            // Deletion works best because it allows for less points to be in the database, aggregated, etc...
+            let datapointsDeleted = 0;
+            let indexAdjusted = tapDataSchemaIndex.RedAbsCoef - datapointsDeleted;
+            if (data[indexAdjusted].val < 0 || data[indexAdjusted].val > 100 || isNaN(data[indexAdjusted].val)) {
+              data.splice(indexAdjusted, 1);
+              datapointsDeleted++;
+            }
+
+            indexAdjusted = tapDataSchemaIndex.GreenAbsCoef - datapointsDeleted;
+            if (data[indexAdjusted].val < 0 || data[indexAdjusted].val > 100 || isNaN(data[indexAdjusted].val)) {
+              data.splice(indexAdjusted, 1);
+              datapointsDeleted++;
+            }
+
+            indexAdjusted = tapDataSchemaIndex.BlueAbsCoef - datapointsDeleted;
+            if (data[indexAdjusted].val < 0 || data[indexAdjusted].val > 100 || isNaN(data[indexAdjusted].val)) {
+              data.splice(indexAdjusted, 1);
+              datapointsDeleted++;
+            }
+
+            indexAdjusted = tapDataSchemaIndex.SampleFlow - datapointsDeleted;
+            if (data[indexAdjusted].val < 1.615 || data[indexAdjusted].val > 1.785 || isNaN(data[indexAdjusted].val)) {
+              data.splice(indexAdjusted, 1);
+              datapointsDeleted++;
+            }
+            
+            if (TAP01Flag === 10 && TAP02Flag === 10 && subTypeNum % 2 === 0) {
+              break;
+            }
+
+            //*/
+            /*// Flagging and deletion do the same exact thing due to the way the average works. If you don't want data to go into the avg, then don't let it in. No way around it. Experimental code.
+            // We flag the faulty data. This will not show up in the database
+            if (data[tapDataSchemaIndex.RedAbsCoef].val < 0 || data[tapDataSchemaIndex.RedAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.RedAbsCoef].val)) {
+              data[tapDataSchemaIndex.RedAbsCoef].Flag = 20;
+            }
+            
+            if (data[tapDataSchemaIndex.GreenAbsCoef].val < 0 || data[tapDataSchemaIndex.GreenAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.GreenAbsCoef].val)) {
+              data[tapDataSchemaIndex.GreenAbsCoef].Flag = 20;
+            }
+
+            if (data[tapDataSchemaIndex.BlueAbsCoef].val < 0 || data[tapDataSchemaIndex.BlueAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.BlueAbsCoef].val)) {
+              data[tapDataSchemaIndex.BlueAbsCoef].Flag = 20;
+            }
+
+            if (data[tapDataSchemaIndex.SampleFlow].val < 1.615 || data[tapDataSchemaIndex.SampleFlow].val > 1.785 || isNaN(data[tapDataSchemaIndex.SampleFlow].val)) {
+              data[tapDataSchemaIndex.SampleFlow].Flag = 20;
+            }
+
+
+            /** Data filtration finished **/ 
           }
+
 
           /**  End of TAP switch implementation **/
 
@@ -615,7 +738,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (SAE_Neph === undefined || SAE_Neph < -1 || SAE_Neph > 5) { 
               newaggr[instrument]['SAE'].push({ metric: 'calc', val: ((SAE_Neph === undefined) ? 'NaN' : SAE_Neph) });
               newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 10 });
+              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 20 });
             } else {
               newaggr[instrument]['SAE'].push({ metric: 'calc', val:  SAE_Neph });
               newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
@@ -631,9 +754,9 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         // Calculations for tap instruments done here
         if (instrument.indexOf('tap_') > -1 && instrumentCalculated.find(finderValue => finderValue === instrument) === undefined) {
           instrumentCalculated.push(instrument);
-          newaggr[instrument]['SSA_R'] = [];
-          newaggr[instrument]['SSA_G'] = [];
-          newaggr[instrument]['SSA_B'] = [];
+          newaggr[instrument]['SSA_Red'] = [];
+          newaggr[instrument]['SSA_Green'] = [];
+          newaggr[instrument]['SSA_Blue'] = [];
           newaggr[instrument]['AAE'] = [];
 
           //SSA calculations begin here:
@@ -644,17 +767,17 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_R <= 0 to because javascript sends error values to zero by default
             if (SSA_R === undefined || SSA_R <= 0 || SSA_R > 1) {
-              newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
-              newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: 10});
+              newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
+              newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: 20});
             }
-            newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: SSA_R });
-            newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: SSA_R });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
           } else {
-            newaggr[instrument]['SSA_R'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_R'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_R'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: 'NaN' });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
           }
 
           if (aggrSubTypes['Neph_GreenScattering'].Flag === 1 && obj.Flag === 1) {
@@ -664,18 +787,18 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_G <= 0 to because javascript sends error values to zero by default
             if (SSA_G === undefined || SSA_G <= 0 || SSA_G > 1) {
-              newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
-              newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: 10 });
+              newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
+              newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: 20 });
             }
 
-            newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: SSA_G });
-            newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: SSA_G });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
           } else {
-            newaggr[instrument]['SSA_G'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_G'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_G'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: 'NaN' });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
           }
 
           if (aggrSubTypes['Neph_BlueScattering'].Flag === 1 && obj.Flag === 1) {
@@ -685,17 +808,17 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_B <= 0 to because javascript sends error values to zero by default
             if (SSA_B === undefined || (SSA_B <= 0 || SSA_B == 1)) {
-              newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
-              newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: 10});
+              newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
+              newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+              newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: 20});
             }
-            newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: SSA_B });
-            newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: SSA_B });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
           } else {
-            newaggr[instrument]['SSA_B'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_B'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_B'].push({ metric: 'Flag', val: obj.Flag});
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: 'NaN' });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
           }
 
 
@@ -752,7 +875,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             if (AAE_TAP === undefined || AAE_TAP <= 0 || AAE_TAP > 3.5) {
               newaggr[instrument]['AAE'].push({ metric: 'calc', val: ((AAE_TAP === undefined) ? 'NaN' : AAE_TAP) });
               newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
-              newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 10 });
+              newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 20 });
             } else {
               newaggr[instrument]['AAE'].push({ metric: 'calc', val: AAE_TAP });
               newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
@@ -1035,6 +1158,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
 
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
+      // Change the 1 to 1000000 to aggregate VERY old data serverside. Remember to change it back to 1 before you commit
       startAggrEpoch = moment.unix(fileModified).subtract(1, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
@@ -1084,16 +1208,18 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
     // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
     let siteData = Object.getOwnPropertyNames(parsedLines[0]);
-    let TAP01FlagName = undefined;
-    let TAP02FlagName = undefined;
+    let TAP01CurrentFlagName = undefined;
+    let TAP02CurrentFlagName = undefined;
+    let siteInitial = undefined;
 
     siteData.forEach((colName) => {
       if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
         let flagNum = colName.substring(colName.indexOf("Flag") - 3, colName.indexOf("Flag") - 1);
+        siteInitial = colName.substring(colName.indexOf("BC2_") + 4, colName.indexOf("_", colName.indexOf("_") + 1));
         if (parseInt(flagNum) % 2 == 0) {
-          TAP02FlagName = colName;
+          TAP02CurrentFlagName = colName;
         } else {
-          TAP01FlagName = colName;
+          TAP01CurrentFlagName = colName;
         }
       }
     });
@@ -1107,15 +1233,21 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       // Don't worry! If we aren't working with TAP data, it will just skip that right here. 
       
       // Redefines the TAP01Flag label here
-      if (TAP01FlagName !== undefined) {
-        parsedLines[k]['BC2_EP_TAP01_Flag'] = parsedLines[k][TAP01FlagName];
-        delete parsedLines[k][TAP01FlagName];
+      if (TAP01CurrentFlagName !== undefined) {
+        let newFlagName = 'BC2_' + siteInitial + '_TAP01_Flag';
+        parsedLines[k][newFlagName] = parsedLines[k][TAP01CurrentFlagName];
+        if (newFlagName !== TAP01CurrentFlagName) {
+          delete parsedLines[k][TAP01CurrentFlagName];
+        }
       }
 
       // Redefines the TAP02Flag label here
-      if (TAP02FlagName !== undefined) {
-        parsedLines[k]['BC2_EP_TAP02_Flag'] = parsedLines[k][TAP02FlagName];
-        delete parsedLines[k][TAP02FlagName];
+      if (TAP02CurrentFlagName !== undefined) {
+        let newFlagName = 'BC2_' + siteInitial + '_TAP02_Flag';
+        parsedLines[k][newFlagName] = parsedLines[k][TAP02CurrentFlagName];
+        if (newFlagName !== TAP02CurrentFlagName) {
+          delete parsedLines[k][TAP02CurrentFlagName];
+        }
       }
 
       let singleObj = {};
@@ -1129,7 +1261,6 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       // 3600 sec = 1 hour
       // 25569 sec = 7.1025 hours
       // let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + (6 * 3600);
-      // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
       let epoch = ((parsedLines[k].TheTime - 25569) * 86400) + siteTimeZone;
       epoch -= (epoch % 1); // rounding down
       singleObj.epoch = epoch;
@@ -1230,7 +1361,6 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 
       // add 6 hours to timestamp and then parse as UTC before converting to epoch
       // original line: const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
-      // Reason why the original is positive, but you have to multiply site['GMT offset'] by 0 is because site['GMT offset'] is signed wrong for our database
       const timeStamp = moment.utc(parsedLines[k][0], 'YYYY-MM-DD HH:mm:ss').add(siteTimeZone, 'hour');
       let epoch = timeStamp.unix();
       epoch -= (epoch % 1); // rounding down
@@ -1245,7 +1375,6 @@ const batchMetDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 
     // gathering time stamps and then call to bulkUpdate
     // original line: const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(6, 'hour');
-    // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
     const startTimeStamp = moment.utc(parsedLines[0][0], 'YYYY-MM-DD HH:mm:ss').add(siteTimeZone, 'hour');
     let startEpoch = startTimeStamp.unix();
     startEpoch -= (startEpoch % 1); // rounding down
@@ -1369,7 +1498,6 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 
       // add 6 hours to timestamp and then parse as UTC before converting to epoch
       // original line: const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
-      // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
       const timeStamp = moment.utc(`${parsedLines[k][0]}_${parsedLines[k][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
       let epoch = timeStamp.unix();
       epoch -= (epoch % 1); // rounding down
@@ -1384,7 +1512,6 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
     
     // gathering time stamps and then call to bulkUpdate
     // original line: const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
-    // Reason why the original is positive, but you have to multiply site['GMT offset'] by -1 is because site['GMT offset'] is signed wrong for our database
     const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
     let startEpoch = startTimeStamp.unix();
     startEpoch -= (startEpoch % 1); // rounding down
