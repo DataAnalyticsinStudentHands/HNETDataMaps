@@ -65,7 +65,7 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
           } else if (chart.includes("AAE")) {
             chart = `${chart}`;
           } else if (chart.includes("SSA")) {
-            chart = `${chart}`;
+            chart = `${instrument.substring(0, 3)} SSA`;
           } else {
             chart = ``;
           }
@@ -113,11 +113,23 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                     y: points[1].val, // average
                     color: colorsHash[3].color,
                   };
-                } else if (measurement.includes("SSA")) {
+                } else if (measurement.includes("_R")) {
                   modifiedData = {
                     x: epoch * 1000, // milliseconds
                     y: points[0].val, // average
-                    color: colorsHash[4].color,
+                    color: colorsHash[1].color,
+                  };
+                } else if (measurement.includes("_B")) {
+                  modifiedData = {
+                    x: epoch * 1000, // milliseconds
+                    y: points[0].val, // average
+                    color: colorsHash[2].color,
+                  };
+                } else if (measurement.includes("_G")) {
+                  modifiedData = {
+                    x: epoch * 1000, // milliseconds
+                    y: points[0].val, // average
+                    color: colorsHash[3].color,
                   };
                 } else if (chart.includes("SAE")) { 
                   let threshold      // initializing threshold
