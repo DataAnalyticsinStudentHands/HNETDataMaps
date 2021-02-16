@@ -30,18 +30,9 @@ export const DataExporter = {
             fields: response.fields
           });
           try {
-            // get site name from incoming folder (TODO: take out check after we have renamed all folders)
-              if (site.siteGroup == 'HNET') {
-                groupName = 'HNET'
-              } else if (site.siteGroup == 'BC2') {
-                groupName = 'BC2'
-              }
-              let siteName = (site.incoming.match(new RegExp(groupName +
-                '(.*)' +
-                '_')))[1].slice(-2);
-              if (!(siteName === 'WL' || siteName === 'MT' || siteName === 'SP' || siteName === 'JF')) {
-                siteName = site.incoming.split(/[_]+/)[1];
-              }
+            let siteName = (site.incoming.match(new RegExp(site.siteGroup +
+              '(.*)' +
+              '_')))[1].slice(-2);
             DataExporter._downloadCSV(csv, `${siteName.toLowerCase()}${moment().format('YYMMDDHHmmss')}.txt`);
           } catch (error) {
             sAlert.error(`Error:\n ${error.reason}`);
