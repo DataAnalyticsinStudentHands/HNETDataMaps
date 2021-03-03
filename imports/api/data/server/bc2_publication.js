@@ -60,6 +60,8 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
             chart = `${instrument} Back Scattering`;
           } else if (chart.includes("ABSCOEF")) {
             chart = `${instrument.substring(0, 3)} Absolute Coefficients`;
+          } else if (!instrument.includes("tap")) {
+            chart = `${instrument} Scattering`;
           } else if (chart.includes("SAE")) {
             chart = `${chart}`;
           } else if (chart.includes("AAE")) {
