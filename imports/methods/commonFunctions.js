@@ -1128,7 +1128,10 @@ function createTCEQPushData(aqsid, data) {
   }
 
   // ensure whether output dir exists
-  const outputDir = `/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
+	let debugDir=``;
+	if (process.env.debug)
+		debugDir=`test/`;
+	const outputDir = `/hnet/outgoing/${debugDir}${moment().year()}/${moment().month() + 1}/${moment().date()}`;
   fs.ensureDirSync(outputDir, (err) => {
     return logger.error(err); // => null
     // outputdir has now been created, including the directory it is to be placed in

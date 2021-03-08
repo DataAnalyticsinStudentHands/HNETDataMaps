@@ -12,9 +12,12 @@ export const hnetsftp = process.env.hnetsftp;
 
 logger.info(`This instance is for AQSID ${process.env.aqsid} - ${globalsite.siteName}`);
 
+let debugDir = ``;
+if (process.env.debug)
+	debugDir = `test/`;
 Meteor.startup(() => {
   // Create directory for outgoing files for tomorrow
-  fs.mkdirs(`/hnet/outgoing/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, (err) => {
+  fs.mkdirs(`/hnet/outgoing/${debugDir}${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, (err) => {
     if (err) {
       logger.error(err);
     }
