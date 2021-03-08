@@ -19,7 +19,7 @@ if (!process.env.outgoingDir) {
 }
 
 if (process.env.outgoingDir !== "outgoing") {
-  Console.log("Debug / testing outgoing folder path selected.");
+  console.log("Debug / testing outgoing folder path selected.");
 }
 
 Meteor.startup(() => {
