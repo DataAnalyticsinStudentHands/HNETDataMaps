@@ -1127,8 +1127,13 @@ function createTCEQPushData(aqsid, data) {
     siteName = site.incoming.split(/[_]+/)[1];
   }
 
+  // Just ensures that a backslash is at the end of outgoingDir env variable
+  let outgoingDir = process.env.outgoingDir;
+  if (outgoingDir.charAt(outgoingDir.length-1) !== '/')
+    outgoingDir = outgoingDir+'/';
+
   // ensure whether output dir exists
-  const outputDir = `/hnet/${process.env.outgoingDir}/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
+  const outputDir = `${outgoingDir}${moment().year()}/${moment().month() + 1}/${moment().date()}`;
   fs.ensureDirSync(outputDir, (err) => {
     return logger.error(err); // => null
     // outputdir has now been created, including the directory it is to be placed in
