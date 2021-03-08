@@ -689,6 +689,10 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         if (instrument.indexOf('Neph') > -1 && instrumentCalculated.find(finderValue => finderValue === instrument) === undefined) {
           instrumentCalculated.push(instrument);
           newaggr[instrument]['SAE'] = [];
+
+					if (aggrSubTypes['Neph_RedScattering'] === undefined) {
+						continue;
+					}
           // SAE calculations begin here 
           // Need to make sure that Neph has valid data before calculations can begin
           if (instrument.indexOf('Neph') > -1 && obj.Flag === 1) {
@@ -758,6 +762,9 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument]['SSA_Green'] = [];
           newaggr[instrument]['SSA_Blue'] = [];
           newaggr[instrument]['AAE'] = [];
+
+					if (aggrSubTypes[instrument + '_' + 'RedAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'GreenAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'BlueAbsCoef'] === undefined) 
+						continue;
 
           //SSA calculations begin here:
           if (aggrSubTypes['Neph_RedScattering'].Flag === 1 && obj.Flag === 1) {
