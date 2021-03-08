@@ -349,12 +349,12 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             /** Data filtration start **/
 
             /* Reason for data filtration to be inside this subType.includes is for performance reasons. The less if statements ran, the faster.
-             */
+            */
 
             /* Matlab code
              * Some data filtration is required. We will not aggregate datapoints (not records) that do not fit our standards.
              * To Note: Comments in matlab are my own comments
-              
+
               % Do not aggregate data point if r, g, b is < 0 or > 100 
               r1=numa(:,7);
               g1=numa(:,8);
@@ -382,7 +382,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 
               20 = potentially invalid data
               1 = valid data
-             */
+              */
 
             // Reason for if statement is to speed the code up alot. 
             // Having to check for the schema every run is VERY significant.
@@ -406,7 +406,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               }
               hasCheckedTAPdataSchema = true;
             }
-///*
+            ///*
             // Deletion works best because it allows for less points to be in the database, aggregated, etc...
             let datapointsDeleted = 0;
             let indexAdjusted = tapDataSchemaIndex.RedAbsCoef - datapointsDeleted;
@@ -432,18 +432,18 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               data.splice(indexAdjusted, 1);
               datapointsDeleted++;
             }
-            
+
             if (TAP01Flag === 10 && TAP02Flag === 10 && subTypeNum % 2 === 0) {
               break;
             }
 
             //*/
             /*// Flagging and deletion do the same exact thing due to the way the average works. If you don't want data to go into the avg, then don't let it in. No way around it. Experimental code.
-            // We flag the faulty data. This will not show up in the database
+              // We flag the faulty data. This will not show up in the database
             if (data[tapDataSchemaIndex.RedAbsCoef].val < 0 || data[tapDataSchemaIndex.RedAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.RedAbsCoef].val)) {
               data[tapDataSchemaIndex.RedAbsCoef].Flag = 20;
             }
-            
+
             if (data[tapDataSchemaIndex.GreenAbsCoef].val < 0 || data[tapDataSchemaIndex.GreenAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.GreenAbsCoef].val)) {
               data[tapDataSchemaIndex.GreenAbsCoef].Flag = 20;
             }
@@ -690,9 +690,9 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           instrumentCalculated.push(instrument);
           newaggr[instrument]['SAE'] = [];
 
-					if (aggrSubTypes['Neph_RedScattering'] === undefined) {
-						continue;
-					}
+          if (aggrSubTypes['Neph_RedScattering'] === undefined) {
+            continue;
+          }
           // SAE calculations begin here 
           // Need to make sure that Neph has valid data before calculations can begin
           if (instrument.indexOf('Neph') > -1 && obj.Flag === 1) {
@@ -763,8 +763,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument]['SSA_Blue'] = [];
           newaggr[instrument]['AAE'] = [];
 
-					if (aggrSubTypes[instrument + '_' + 'RedAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'GreenAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'BlueAbsCoef'] === undefined) 
-						continue;
+          if (aggrSubTypes[instrument + '_' + 'RedAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'GreenAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'BlueAbsCoef'] === undefined) 
+            continue;
 
           //SSA calculations begin here:
           if (aggrSubTypes['Neph_RedScattering'].Flag === 1 && obj.Flag === 1) {
@@ -1128,7 +1128,7 @@ function createTCEQPushData(aqsid, data) {
   }
 
   // ensure whether output dir exists
-	const outputDir = `/hnet/${outgoingDir}/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
+  const outputDir = `/hnet/${outgoingDir}/${moment().year()}/${moment().month() + 1}/${moment().date()}`;
   fs.ensureDirSync(outputDir, (err) => {
     return logger.error(err); // => null
     // outputdir has now been created, including the directory it is to be placed in
@@ -1210,7 +1210,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
         }, { validate: false });
       }
     }
-    
+
     // Some BC2 sites do not label their TAP01 and TAP02 flags in their DAQfactory file with TAP01 and TAP02 labels in their csv file.
     // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
     // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
@@ -1238,7 +1238,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 
       // The two if statements below take the above information on TAPFlag names and converts them accordingly.
       // Don't worry! If we aren't working with TAP data, it will just skip that right here. 
-      
+
       // Redefines the TAP01Flag label here
       if (TAP01CurrentFlagName !== undefined) {
         let newFlagName = 'BC2_' + siteInitial + '_TAP01_Flag';
@@ -1263,7 +1263,7 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       } else {
         singleObj = makeObj(parsedLines[k], 1, previousObject);
       }
-      
+
       // 86400 sec = 1 day
       // 3600 sec = 1 hour
       // 25569 sec = 7.1025 hours
@@ -1516,7 +1516,7 @@ const batchTapDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       singleObj._id = `${site.AQSID}_${epoch}_${metron}`;
       allObjects.push(singleObj);
     }
-    
+
     // gathering time stamps and then call to bulkUpdate
     // original line: const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(6, 'hour');
     const startTimeStamp = moment.utc(`${parsedLines[0][0]}_${parsedLines[0][1]}`, 'YYMMDD_HH:mm:ss').add(siteTimeZone, 'hour');
