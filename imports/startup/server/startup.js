@@ -13,7 +13,9 @@ export const hnetsftp = process.env.hnetsftp;
 logger.info(`This instance is for AQSID ${process.env.aqsid} - ${globalsite.siteName}`);
 
 if (!process.env.outgoingDir) {
-	throw new Error("environment variable outgoingDir not defined.");
+	throw new Error("Environment variable outgoingDir not defined.");
+} else if (process.env.outgoingDir === '') {
+	throw new Error("Environment variable outgoingDir defined with empty string.");
 }
 
 if (process.env.outgoingDir !== "outgoing") {
