@@ -12,12 +12,17 @@ export const hnetsftp = process.env.hnetsftp;
 
 logger.info(`This instance is for AQSID ${process.env.aqsid} - ${globalsite.siteName}`);
 
-let debugDir = ``;
-if (process.env.debug)
-	debugDir = `test/`;
+if (!process.env.outgoingDir) {
+	throw new Error("environment variable outgoingDir not defined.");
+}
+
+if (process.env.outgoingDir !== "outgoing") {
+	Console.log("Debug / testing outgoing folder path selected.");
+}
+
 Meteor.startup(() => {
   // Create directory for outgoing files for tomorrow
-  fs.mkdirs(`/hnet/outgoing/${debugDir}${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, (err) => {
+  fs.mkdirs(`/hnet/${process.env.outgoingDir}/${moment().year()}/${moment().month() + 1}/${moment().date() + 1}`, (err) => {
     if (err) {
       logger.error(err);
     }
