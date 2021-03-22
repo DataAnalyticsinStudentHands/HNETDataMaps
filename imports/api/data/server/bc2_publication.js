@@ -55,7 +55,7 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
       _.each(line._id.subTypes, (data, instrument) => {
         _.each(data, (points, measurement) => {
           // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
-          if (_.last(points).val !== 8) {
+          if (_.last(points).val === 1) {
             let chart = measurement.toUpperCase();
             if (instrument.includes("Neph")) {
               if (chart.includes("BACK")) {
