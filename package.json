@@ -9,7 +9,7 @@
     "chokidar": "^3.5.1",
     "circular-json": "^0.5.9",
     "eslint": "^3.19.0",
-    "fibers": "^1.0.15",
+    "fibers": "^5.0.0",
     "fs-extra": "^0.30.0",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "lodash": "^4.17.21",
