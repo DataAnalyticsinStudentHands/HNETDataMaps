@@ -332,7 +332,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               if (epochDiff >= 0 && epochDiff < 10) {
                 data[0].val = TAP01Flag;
               } else {
-                break;
+								data[0].val = 20;
               }
             } else {
               // Odd - Needs flag from TAP02
@@ -342,7 +342,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               if (epochDiff >= 0 && epochDiff < 10) {
                 data[0].val = TAP02Flag;
               } else {
-                break;
+								data[0].val = 20;
               }
             }
 
@@ -763,7 +763,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument]['SSA_Blue'] = [];
           newaggr[instrument]['AAE'] = [];
 
-          if (aggrSubTypes[instrument + '_' + 'RedAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'GreenAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'BlueAbsCoef'] === undefined) 
+          if (aggrSubTypes[instrument + '_' + 'RedAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'GreenAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'BlueAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'RedAbsCoef'].Flag === undefined || aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].Flag === undefined || aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].Flag === undefined) 
             continue;
 
           //SSA calculations begin here:
