@@ -413,7 +413,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               hasCheckedTAPdataSchema = true;
             }
             /*
-            // Deletion works best because it allows for less points to be in the database, aggregated, etc...
+              // Deletion works best because it allows for less points to be in the database, aggregated, etc...
             let datapointsDeleted = 0;
             let indexAdjusted = tapDataSchemaIndex.RedAbsCoef - datapointsDeleted;
             if (data[indexAdjusted].val < 0 || data[indexAdjusted].val > 100 || isNaN(data[indexAdjusted].val)) {
@@ -445,7 +445,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 
             //*/
             ///*// Flagging and deletion do the same exact thing due to the way the average works. If you don't want data to go into the avg, then don't let it in. No way around it. Experimental code.
-              // We flag the faulty data. This will not show up in the database
+            // We flag the faulty data. This will not show up in the database
             if (data[tapDataSchemaIndex.RedAbsCoef].val < 0 || data[tapDataSchemaIndex.RedAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.RedAbsCoef].val)) {
               data[tapDataSchemaIndex.RedAbsCoef].Flag = 20;
             }
@@ -586,10 +586,13 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
       }
     }
 
-    // Do not recalculate variable **MUST** be viable over the for loop below
-    // Stores whether a tap instrument has been calculated
-    // Using array due to unknown size of tap instruments being read
-    let instrumentCalculated = [];
+    // This is prep for calculations. Need ensure that we are working with data that has the data necessary to do calculations.
+    // The for loop for transforming aggregated data to a generic data format is more useful for calculations than raw aggrSubTypes.
+    // All I'm doing here is collecting a little bit of information of what we are working with before I do calculations.
+    let hasTap = false;
+    let hasNeph = false;
+    // Don't have to do this with neph. Neph will always have the same name. Tap will always have different numbers
+    let tapNames = [];
 
     // transform aggregated data to generic data format using subtypes etc.
     const newaggr = {};
@@ -598,6 +601,20 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         const split = aggr.lastIndexOf('_');
         const instrument = aggr.substr(0, split);
         const measurement = aggr.substr(split + 1);
+        // 75% flag rule can sometimes be too harsh on data that has been filtrated. Changing value to something more "respectful" for said values.
+        let flagDominance = 0.75;
+        if (instrument.includes("Neph")) {
+          hasNeph = true;
+        }
+
+        if (instrument.includes("tap_")) {
+          hasTap = true;
+          flagDominance = 0.75;
+          if (!tapNames.includes(instrument)) {
+            tapNames.push(instrument);
+          }
+        }
+
         if (!newaggr[instrument]) {
           newaggr[instrument] = {};
         }
@@ -605,7 +622,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         const obj = aggrSubTypes[aggr]; // makes it a little bit easier
 
         // dealing with flags
-        if ((obj.numValid / obj.totalCounter) >= 0.75) {
+        if ((obj.numValid / obj.totalCounter) >= flagDominance) {
           obj.Flag = 1; // valid
         } else {
           // find out which flag was majority
@@ -620,310 +637,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           obj.Flag = majorityFlag;
         }
 
-
         obj.Flag = parseInt(obj.Flag);
 
-
-        /** Helpful functions for calculations **/
-        
-        // flips sign for all elements in array
-        function flipSignForAll1D(arr) {
-          for (let i = 0; i < arr.length; i++) {
-            arr[i] *= -1;
-          }
-        }
-
-        // flips sign for all elements in 2D array
-        function flipSignForAll2D(M) {
-          for (let i = 0; i < M.length; i++) {
-            flipSignForAll1D(M[i]);
-          }
-        }
-
-        // returns row reduced echelon form of given matrix
-        // if vector, return rref vector
-        // if invalid, do nothing
-        function rref(M) {
-          let rows = M.length;
-          let columns = M[0].length;
-          if (((rows === 1 || rows === undefined) && columns > 0) || ((columns === 1 || columns === undefined) && rows > 0)) {
-            M = [];
-            let vectorSize = Math.max(isNaN(columns) ? 0 : columns, isNaN(rows) ? 0 : rows);
-            for (let i = 0; i < vectorSize; i++) {
-              M.push(0);
-            }
-            M[0] = 1;
-            return M;
-          } else if (rows < 0 || columns < 0) {
-            return;
-          }
-
-          let lead = 0;
-          for (let k = 0; k < rows; k++) {
-            if (columns <= lead) {
-              return;
-            }
-
-            let i = k;
-            while (M[i][lead] === 0) {
-              i++;
-              if (rows === i) {
-                i = k;
-                lead++;
-                if (columns === lead) {                
-                  return;
-                }
-              }
-            }
-            let p = M[i]
-            let s = M[k];
-            M[i] = s, M[k] = p;
-
-            let scalar = M[k][lead];
-            for (let j = 0; j < columns; j++) {
-              M[k][j] /= scalar;
-            }
-
-            for (let i = 0; i < rows; i++) {
-              if (i === k) continue;
-              scalar = M[i][lead];
-              for (let j = 0; j < columns; j++) {
-                M[i][j] -= scalar * M[k][j];
-              }
-            }
-            lead++;
-          }
-          return M;
-        }
-
-        /** END of Helpful functions for calculations **/
-        
-        // Calculations for Nepholometer is done here
-        if (instrument.indexOf('Neph') > -1 && instrumentCalculated.find(finderValue => finderValue === instrument) === undefined) {
-          instrumentCalculated.push(instrument);
-          newaggr[instrument]['SAE'] = [];
-          
-          if (aggrSubTypes['Neph_RedScattering'] === undefined || aggrSubTypes['Neph_GreenScattering'] === undefined || aggrSubTypes['Neph_BlueScattering'] === undefined) {
-            newaggr[instrument]['SAE'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 20});
-            continue;
-          }
-
-          // SAE calculations begin here 
-          // Need to make sure that Neph has valid data before calculations can begin
-          if (instrument.includes('Neph') && obj.Flag === 1) {
-            let x = [635, 525, 450]; // Matlab code: x=[635,525,450]; %Wavelength values for Nephelometer 
-            let y_Neph = [aggrSubTypes['Neph_RedScattering'].avg, aggrSubTypes['Neph_GreenScattering'].avg, aggrSubTypes['Neph_BlueScattering'].avg]; // Matlab code: y_Neph = outdata_Neph(:,2:4); %Scattering coefficient values from Daqfactory for Neph
-
-            let lx = mathjs.log(x); // Matlab code: lx = log(x); %Taking log of wavelength
-            let ly_Neph = mathjs.log(y_Neph); // Matlab code: ly_Neph = log(y_Neph); %Taking log of scattering coefficient values
-
-            // Matlab code: log_Neph = -[lx(:) ones(size(x(:)))] \ ly_Neph(:,:)'; %Step 1- SAE calulation
-            // going to have to break this down a little bit
-            let log_Neph = [ // [lx(:) ones(size(x(:)))]
-              lx, 
-              mathjs.ones(mathjs.size(x))
-            ];
-            log_Neph = mathjs.transpose(log_Neph); // Needed to make matrix 3 x 2
-
-            // - operator just negates everything in the matrix
-            flipSignForAll2D(log_Neph);
-            /*
-             * if A is a rectangular m-by-n matrix with m ~= n, and B is a matrix with m rows, then A\B returns a least-squares solution to the system of equations A*x= B.
-             * Least squares solution approximation is needed.
-             * Links to calculating least squares solution:
-             * https://textbooks.math.gatech.edu/ila/least-squares.html
-             * https://www.youtube.com/watch?v=9UE8-6Jlezw
-             */
-            
-            // A^T*A
-            let ATA = mathjs.multiply(mathjs.transpose(log_Neph), log_Neph);
-            // A^T*b
-            let ATb = mathjs.multiply(mathjs.transpose(log_Neph), ly_Neph);
-
-            // Create augmented matrix to solve for least squares solution
-            ATA[0].push(ATb[0]);
-            ATA[1].push(ATb[1]);
-
-            log_Neph = rref(ATA);
-            // Reason for index 0,2 is because I am skipping a step in the least squares approximation.
-            // It is supposed to return a vector with 2 values, but I just shortcut it straight to the correct answer from the 3x2 rref matrix
-            let SAE_Neph = log_Neph[0][2]; // SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
-
-            // SAE ranges should be: -1 - 5
-            // Matlab code: SAE_Neph(SAE_Neph > 5)= NaN;
-            // Sujan said this ^^^
-            // Unsure If I want to check for zero value
-            if (SAE_Neph === undefined || SAE_Neph < -1 || SAE_Neph > 5) { 
-              newaggr[instrument]['SAE'].push({ metric: 'calc', val: ((SAE_Neph === undefined) ? 'NaN' : SAE_Neph) });
-              newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 20 });
-            } else {
-              newaggr[instrument]['SAE'].push({ metric: 'calc', val:  SAE_Neph });
-              newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SAE'].push({ metric: 'Flag', val: obj.Flag});
-            }
-          } else {
-            newaggr[instrument]['SAE'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SAE'].push({ metric: 'Flag', val: obj.Flag});
-          }
-        }
-
-        // Calculations for tap instruments done here
-        if (instrument.indexOf('tap_') > -1 && instrumentCalculated.find(finderValue => finderValue === instrument) === undefined) {
-          instrumentCalculated.push(instrument);
-          newaggr[instrument]['SSA_Red'] = [];
-          newaggr[instrument]['SSA_Green'] = [];
-          newaggr[instrument]['SSA_Blue'] = [];
-          newaggr[instrument]['AAE'] = [];
-
-          // If any of the SSA calculations fail, AAE calculations will fail.
-          // Allows Different SSA colors to still do calculations whilst preventing AAE from failing
-          let SSAFailed = false;
-
-          //SSA calculations begin here:
-          if (aggrSubTypes['Neph_RedScattering'] !== undefined && aggrSubTypes['Neph_RedScattering'].Flag === 1 && obj.Flag === 1) {
-            let TotalExtinction_R = aggrSubTypes['Neph_RedScattering'].avg + aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg; // Matlab code: TotalExtinction_R = AC_R_Combined + outdata_Neph(:,2); %Total Extinction calculation for Red wavelength
-            let SSA_R = aggrSubTypes['Neph_RedScattering'].avg / TotalExtinction_R; // Matlab code: SSA_R = outdata_Neph(:,2)./TotalExtinction_R; % SSA calculation for Red Wavelength
-            
-            newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: SSA_R });
-            newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
-
-            // Matlab code: SSA_R (SSA_R < 0 | SSA_R ==1)=NaN;
-            // decided > 1 because I have no idea why he used == and not >
-            // I decided to make it SSA_R <= 0 to because javascript sends error values to zero by default
-            if (SSA_R === undefined || SSA_R <= 0 || SSA_R > 1) {
-              newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
-              newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: 20});
-            }
-          } else {
-            newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
-            SSAFailed = true;
-          }
-
-          if (aggrSubTypes['Neph_GreenScattering'] !== undefined && aggrSubTypes['Neph_GreenScattering'].Flag === 1 && obj.Flag === 1) {
-            let TotalExtinction_G = aggrSubTypes['Neph_GreenScattering'].avg + aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg; // Matlab code: TotalExtinction_G = AC_G_Combined + outdata_Neph(:,3); %Total Extinction calculation for Green wavelength
-            let SSA_G = aggrSubTypes['Neph_GreenScattering'].avg / TotalExtinction_G; // Matlab code: SSA_G = outdata_Neph(:,3)./TotalExtinction_G; % SSA calculation for Green Wavelength
-            newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: SSA_G });
-            newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
-
-            // Matlab code: SSA_G (SSA_G < 0 | SSA_G ==1)=NaN;
-            // decided > 1 because I have no idea why he used == and not >
-            // I decided to make it SSA_G <= 0 to because javascript sends error values to zero by default
-            if (SSA_G === undefined || SSA_G <= 0 || SSA_G > 1) {
-              newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
-              newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: 20 });
-            }
-          } else {
-            newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
-            SSAFailed = true;
-          }
-
-          if (aggrSubTypes['Neph_BlueScattering'] !== undefined && aggrSubTypes['Neph_BlueScattering'].Flag === 1 && obj.Flag === 1) {
-            let TotalExtinction_B = aggrSubTypes['Neph_BlueScattering'].avg + aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg; // Matlab code: TotalExtinction_B = AC_B_Combined + outdata_Neph(:,4); %Total Extinction calculation for Blue wavelength
-            let SSA_B = aggrSubTypes['Neph_BlueScattering'].avg / TotalExtinction_B; // Matlab code: SSA_B = outdata_Neph(:,4)./TotalExtinction_B; % SSA calculation for Blue Wavelength
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: SSA_B });
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
-
-            // Matlab code: SSA_B (SSA_B < 0 | SSA_B ==1)=NaN; 
-            // decided > 1 because I have no idea why he used == and not >
-            // I decided to make it SSA_B <= 0 to because javascript sends error values to zero by default
-            if (SSA_B === undefined || (SSA_B <= 0 || SSA_B == 1)) {
-              newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
-              newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
-              newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: 20});
-            }
-          } else {
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
-            SSAFailed = true;
-          }
-
-          if (SSAFailed) {
-            newaggr[instrument]['AAE'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
-            newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
-            continue;
-          }
-
-          // AAE calculations begin here:
-          // Make sure tap instrument is valid
-          if (obj.Flag === 1) {
-            let x = [640, 520, 365]; // Matlab code: x=[640,520,365]; % Wavelengths values
-            let y_TAP = [ // Matlab code: y_TAP_01 = outdata1_TAP_01(:,6:8); %Absorption coefficients from TAP01
-              isNaN(aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg) ? 0 : aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg, 
-              isNaN(aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg) ? 0 : aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg, 
-              isNaN(aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg) ? 0 : aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg
-            ];
-            let lx = mathjs.log(x); // Matlab code: lx = log(x); %Taking log of the wavelengths
-            let ly_TAP = mathjs.log(y_TAP);// Matlab code: ly_TAP_01 = log(y_TAP_01); %Taking log of the absorption coefficients for TAP01
-            for (let i = 0; i < ly_TAP.length; i++) {
-              if (isNaN(ly_TAP[i]) || ly_TAP[i] < 0) {
-                ly_TAP[i] = 0;
-              }
-            }
-
-            // Going to have to break this matlab code down a bit, again:
-            // Matlab code: log_TAP_01 = -[lx(:) ones(size(x(:)))] \ ly_TAP_01(:,:)'; %Step 1 -AAE from TAP 01 data
-            let log_TAP = [ // Matlab code: [lx(:) ones(size(x(:)))] 
-              lx,
-              mathjs.ones(mathjs.size(x))
-            ];
-            log_TAP = mathjs.transpose(log_TAP); // Needs to be transposed into 3x2 matrix
-            // - operator just negates everything in the matrix
-            flipSignForAll2D(log_TAP);
-
-
-            /* More information on how I came to the lines below is in the SAE calculations. 
-             * Essentially, we are finding the least squares solution to the system of equations:
-             * A*x=b
-             */
-            
-            // A \ b
-            let ATA = mathjs.multiply(mathjs.transpose(log_TAP), log_TAP);
-            let ATb = mathjs.multiply(mathjs.transpose(log_TAP), ly_TAP);
-
-            // Create augmented matrix to solve for least squares solution
-            ATA[0].push(ATb[0]);
-            ATA[1].push(ATb[1]);
-
-            log_TAP = rref(ATA);
-            // Reason for index 0,2 is because I am skipping a step in the least squares approximation.
-            // It is supposed to return a vector with 2 values, but I just shortcut it straight to the correct answer from the 3x2 rref matrix
-            let AAE_TAP = log_TAP[0][2]; // Matlab code: SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
-
-            // AAE normal ranges: .5 - 3.5
-            // Sujan said this ^^^
-            // matlab comment: % AAE__TAP_A(AAE__TAP_A < 0)= NaN;
-            // I decided to make it AAE_TAP <= 0 to because javascript sends error values to zero by default
-            if (AAE_TAP === undefined || AAE_TAP <= 0 || AAE_TAP > 3.5) {
-              newaggr[instrument]['AAE'].push({ metric: 'calc', val: ((AAE_TAP === undefined) ? 'NaN' : AAE_TAP) });
-              newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
-              newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 20 });
-            } else {
-              newaggr[instrument]['AAE'].push({ metric: 'calc', val: AAE_TAP });
-              newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
-              newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
-            }
-          } else {
-            newaggr[instrument]['AAE'].push({ metric: 'calc', val: 'NaN' });
-            newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
-            newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
-          }
-        }
-        
         if (measurement === 'RMY') { // special treatment for wind measurements
           if (!newaggr[instrument].WD) {
             newaggr[instrument].WD = [];
@@ -964,6 +679,307 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         }
       }
     }
+
+    /** Helpful functions for calculations **/
+
+    // flips sign for all elements in array
+    function flipSignForAll1D(arr) {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] *= -1;
+      }
+    }
+
+    // flips sign for all elements in 2D array
+    function flipSignForAll2D(M) {
+      for (let i = 0; i < M.length; i++) {
+        flipSignForAll1D(M[i]);
+      }
+    }
+
+    // returns row reduced echelon form of given matrix
+    // if vector, return rref vector
+    // if invalid, do nothing
+    function rref(M) {
+      let rows = M.length;
+      let columns = M[0].length;
+      if (((rows === 1 || rows === undefined) && columns > 0) || ((columns === 1 || columns === undefined) && rows > 0)) {
+        M = [];
+        let vectorSize = Math.max(isNaN(columns) ? 0 : columns, isNaN(rows) ? 0 : rows);
+        for (let i = 0; i < vectorSize; i++) {
+          M.push(0);
+        }
+        M[0] = 1;
+        return M;
+      } else if (rows < 0 || columns < 0) {
+        return;
+      }
+
+      let lead = 0;
+      for (let k = 0; k < rows; k++) {
+        if (columns <= lead) {
+          return;
+        }
+
+        let i = k;
+        while (M[i][lead] === 0) {
+          i++;
+          if (rows === i) {
+            i = k;
+            lead++;
+            if (columns === lead) {                
+              return;
+            }
+          }
+        }
+        let p = M[i]
+        let s = M[k];
+        M[i] = s, M[k] = p;
+
+        let scalar = M[k][lead];
+        for (let j = 0; j < columns; j++) {
+          M[k][j] /= scalar;
+        }
+
+        for (let i = 0; i < rows; i++) {
+          if (i === k) continue;
+          scalar = M[i][lead];
+          for (let j = 0; j < columns; j++) {
+            M[i][j] -= scalar * M[k][j];
+          }
+        }
+        lead++;
+      }
+      return M;
+    }
+
+    /** END of Helpful functions for calculations **/
+
+    // Calculations for Nepholometer is done here
+    if (hasNeph) {
+      newaggr['Neph']['SAE'] = [];
+
+      if (aggrSubTypes['Neph_RedScattering'] === undefined || aggrSubTypes['Neph_GreenScattering'] === undefined || aggrSubTypes['Neph_BlueScattering'] === undefined) {
+        newaggr['Neph']['SAE'].push({ metric: 'calc', val: 'NaN' });
+        newaggr['Neph']['SAE'].push({ metric: 'unit', val: "undefined" });
+        newaggr['Neph']['SAE'].push({ metric: 'Flag', val: 20});
+      } else {
+
+        // SAE calculations begin here 
+        // Need to make sure that Neph has valid data before calculations can begin
+        if (aggrSubTypes['Neph_RedScattering'].Flag === 1 && aggrSubTypes['Neph_GreenScattering'].Flag === 1 && aggrSubTypes['Neph_BlueScattering'].Flag === 1) {
+          let x = [635, 525, 450]; // Matlab code: x=[635,525,450]; %Wavelength values for Nephelometer 
+          let y_Neph = [aggrSubTypes['Neph_RedScattering'].avg, aggrSubTypes['Neph_GreenScattering'].avg, aggrSubTypes['Neph_BlueScattering'].avg]; // Matlab code: y_Neph = outdata_Neph(:,2:4); %Scattering coefficient values from Daqfactory for Neph
+
+          let lx = mathjs.log(x); // Matlab code: lx = log(x); %Taking log of wavelength
+          let ly_Neph = mathjs.log(y_Neph); // Matlab code: ly_Neph = log(y_Neph); %Taking log of scattering coefficient values
+
+          // Matlab code: log_Neph = -[lx(:) ones(size(x(:)))] \ ly_Neph(:,:)'; %Step 1- SAE calulation
+          // going to have to break this down a little bit
+          let log_Neph = [ // [lx(:) ones(size(x(:)))]
+            lx, 
+            mathjs.ones(mathjs.size(x))
+          ];
+          log_Neph = mathjs.transpose(log_Neph); // Needed to make matrix 3 x 2
+
+          // - operator just negates everything in the matrix
+          flipSignForAll2D(log_Neph);
+          /*
+           * if A is a rectangular m-by-n matrix with m ~= n, and B is a matrix with m rows, then A\B returns a least-squares solution to the system of equations A*x= B.
+           * Least squares solution approximation is needed.
+           * Links to calculating least squares solution:
+           * https://textbooks.math.gatech.edu/ila/least-squares.html
+           * https://www.youtube.com/watch?v=9UE8-6Jlezw
+           */
+
+          // A^T*A
+          let ATA = mathjs.multiply(mathjs.transpose(log_Neph), log_Neph);
+          // A^T*b
+          let ATb = mathjs.multiply(mathjs.transpose(log_Neph), ly_Neph);
+
+          // Create augmented matrix to solve for least squares solution
+          ATA[0].push(ATb[0]);
+          ATA[1].push(ATb[1]);
+
+          log_Neph = rref(ATA);
+          // Reason for index 0,2 is because I am skipping a step in the least squares approximation.
+          // It is supposed to return a vector with 2 values, but I just shortcut it straight to the correct answer from the 3x2 rref matrix
+          let SAE_Neph = log_Neph[0][2]; // SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
+
+          // SAE ranges should be: -1 - 5
+          // Matlab code: SAE_Neph(SAE_Neph > 5)= NaN;
+          // Sujan said this ^^^
+          // Unsure If I want to check for zero value
+          if (SAE_Neph === undefined || SAE_Neph < -1 || SAE_Neph > 5) { 
+            newaggr['Neph']['SAE'].push({ metric: 'calc', val: ((SAE_Neph === undefined) ? 'NaN' : SAE_Neph) });
+            newaggr['Neph']['SAE'].push({ metric: 'unit', val: "undefined" });
+            newaggr['Neph']['SAE'].push({ metric: 'Flag', val: 20 });
+          } else {
+            newaggr['Neph']['SAE'].push({ metric: 'calc', val:  SAE_Neph });
+            newaggr['Neph']['SAE'].push({ metric: 'unit', val: "undefined" });
+            // Must be valid data if it it came this far
+            newaggr['Neph']['SAE'].push({ metric: 'Flag', val: 1 });
+          }
+        } else {
+          newaggr['Neph']['SAE'].push({ metric: 'calc', val: 'NaN' });
+          newaggr['Neph']['SAE'].push({ metric: 'unit', val: "undefined" });
+          // It's just easier to assign flag 20 when if fails
+          newaggr['Neph']['SAE'].push({ metric: 'Flag', val: 20 });
+        }
+      }
+    }
+
+    // Unfortunately, Neph doesn't really have a flag. It's just trusted that if there is data, it is valid. 
+    // I'll ensure data exists before a calculation for safety reasons.
+    // Calculations for tap instruments done here
+    tapNames.forEach((instrument) =>  {
+      newaggr[instrument]['SSA_Red'] = [];
+      newaggr[instrument]['SSA_Green'] = [];
+      newaggr[instrument]['SSA_Blue'] = [];
+      newaggr[instrument]['AAE'] = [];
+
+      // If any of the SSA calculations fail, AAE calculations will fail.
+      // Allows Different SSA colors to still do calculations whilst preventing AAE from failing
+      let SSAFailed = false;
+
+      //SSA calculations begin here:
+      let obj = aggrSubTypes[instrument + '_' + 'RedAbsCoef'];
+      if (aggrSubTypes['Neph_RedScattering'] !== undefined && aggrSubTypes['Neph_RedScattering'].Flag === 1 && obj.Flag === 1) {
+        let nephObj = aggrSubTypes['Neph_RedScattering'];
+        let TotalExtinction_R = nephObj.avg + obj.avg; // Matlab code: TotalExtinction_R = AC_R_Combined + outdata_Neph(:,2); %Total Extinction calculation for Red wavelength
+        let SSA_R = nephObj.avg / TotalExtinction_R; // Matlab code: SSA_R = outdata_Neph(:,2)./TotalExtinction_R; % SSA calculation for Red Wavelength
+
+        newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: SSA_R });
+        newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+        newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
+
+        // Matlab code: SSA_R (SSA_R < 0 | SSA_R ==1)=NaN;
+        // decided > 1 because I have no idea why he used == and not >
+        // I decided to make it SSA_R <= 0 to because javascript sends error values to zero by default
+        if (SSA_R === undefined || SSA_R <= 0 || SSA_R > 1) {
+          newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: ((SSA_R === undefined) ? 'NaN' : SSA_R) });
+          newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+          newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: 20});
+        }
+      } else {
+        newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: 'NaN' });
+        newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+        newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
+        SSAFailed = true;
+      }
+
+      obj = aggrSubTypes[instrument + '_' + 'GreenAbsCoef'];
+      if (aggrSubTypes['Neph_GreenScattering'] !== undefined && aggrSubTypes['Neph_GreenScattering'].Flag === 1 && obj.Flag === 1) {
+        let nephObj = aggrSubTypes['Neph_GreenScattering'];
+        let TotalExtinction_G = nephObj.avg + obj.avg; // Matlab code: TotalExtinction_G = AC_G_Combined + outdata_Neph(:,3); %Total Extinction calculation for Green wavelength
+        let SSA_G = nephObj.avg / TotalExtinction_G; // Matlab code: SSA_G = outdata_Neph(:,3)./TotalExtinction_G; % SSA calculation for Green Wavelength
+        newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: SSA_G });
+        newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+        newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
+
+        // Matlab code: SSA_G (SSA_G < 0 | SSA_G ==1)=NaN;
+        // decided > 1 because I have no idea why he used == and not >
+        // I decided to make it SSA_G <= 0 to because javascript sends error values to zero by default
+        if (SSA_G === undefined || SSA_G <= 0 || SSA_G > 1) {
+          newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: ((SSA_G === undefined) ? 'NaN' : SSA_G) });
+          newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+          newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: 20 });
+        }
+      } else {
+        newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: 'NaN' });
+        newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+        newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
+        SSAFailed = true;
+      }
+
+      obj = aggrSubTypes[instrument + '_' + 'BlueAbsCoef'];
+      if (aggrSubTypes['Neph_BlueScattering'] !== undefined && aggrSubTypes['Neph_BlueScattering'].Flag === 1 && obj.Flag === 1) {
+        let nephObj = aggrSubTypes['Neph_BlueScattering'];
+        let TotalExtinction_B = nephObj.avg + obj.avg; // Matlab code: TotalExtinction_B = AC_B_Combined + outdata_Neph(:,4); %Total Extinction calculation for Blue wavelength
+        let SSA_B = nephObj.avg / TotalExtinction_B; // Matlab code: SSA_B = outdata_Neph(:,4)./TotalExtinction_B; % SSA calculation for Blue Wavelength
+        newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: SSA_B });
+        newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+        newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
+
+        // Matlab code: SSA_B (SSA_B < 0 | SSA_B ==1)=NaN; 
+        // decided > 1 because I have no idea why he used == and not >
+        // I decided to make it SSA_B <= 0 to because javascript sends error values to zero by default
+        if (SSA_B === undefined || (SSA_B <= 0 || SSA_B == 1)) {
+          newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: ((SSA_B === undefined) ? 'NaN' : SSA_B) });
+          newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+          newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: 20});
+        }
+      } else {
+        newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: 'NaN' });
+        newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+        newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
+        SSAFailed = true;
+      }
+
+      if (!SSAFailed) {
+        // AAE calculations begin here:
+        // Make sure tap instrument is valid
+        let x = [640, 520, 365]; // Matlab code: x=[640,520,365]; % Wavelengths values
+        let y_TAP = [ // Matlab code: y_TAP_01 = outdata1_TAP_01(:,6:8); %Absorption coefficients from TAP01
+          aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg, 
+          aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg, 
+          aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg
+        ];
+        let lx = mathjs.log(x); // Matlab code: lx = log(x); %Taking log of the wavelengths
+        let ly_TAP = mathjs.log(y_TAP);// Matlab code: ly_TAP_01 = log(y_TAP_01); %Taking log of the absorption coefficients for TAP01
+        for (let i = 0; i < ly_TAP.length; i++) {
+          if (isNaN(ly_TAP[i]) || ly_TAP[i] < 0) {
+            ly_TAP[i] = 0;
+          }
+        }
+
+        // Going to have to break this matlab code down a bit, again:
+        // Matlab code: log_TAP_01 = -[lx(:) ones(size(x(:)))] \ ly_TAP_01(:,:)'; %Step 1 -AAE from TAP 01 data
+        let log_TAP = [ // Matlab code: [lx(:) ones(size(x(:)))] 
+          lx,
+          mathjs.ones(mathjs.size(x))
+        ];
+        log_TAP = mathjs.transpose(log_TAP); // Needs to be transposed into 3x2 matrix
+        // - operator just negates everything in the matrix
+        flipSignForAll2D(log_TAP);
+
+
+        /* More information on how I came to the lines below is in the SAE calculations. 
+         * Essentially, we are finding the least squares solution to the system of equations:
+         * A*x=b
+         */
+
+        // A \ b
+        let ATA = mathjs.multiply(mathjs.transpose(log_TAP), log_TAP);
+        let ATb = mathjs.multiply(mathjs.transpose(log_TAP), ly_TAP);
+
+        // Create augmented matrix to solve for least squares solution
+        ATA[0].push(ATb[0]);
+        ATA[1].push(ATb[1]);
+
+        log_TAP = rref(ATA);
+        // Reason for index 0,2 is because I am skipping a step in the least squares approximation.
+        // It is supposed to return a vector with 2 values, but I just shortcut it straight to the correct answer from the 3x2 rref matrix
+        let AAE_TAP = log_TAP[0][2]; // Matlab code: SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
+
+        // AAE normal ranges: .5 - 3.5
+        // Sujan said this ^^^
+        // matlab comment: % AAE__TAP_A(AAE__TAP_A < 0)= NaN;
+        // I decided to make it AAE_TAP <= 0 to because javascript sends error values to zero by default
+        if (AAE_TAP === undefined || AAE_TAP <= 0 || AAE_TAP > 3.5) {
+          newaggr[instrument]['AAE'].push({ metric: 'calc', val: ((AAE_TAP === undefined) ? 'NaN' : AAE_TAP) });
+          newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
+          newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 20 });
+        } else {
+          newaggr[instrument]['AAE'].push({ metric: 'calc', val: AAE_TAP });
+          newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
+          newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
+        }
+      } else {
+        newaggr[instrument]['AAE'].push({ metric: 'calc', val: 'NaN' });
+        newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined" });
+        newaggr[instrument]['AAE'].push({ metric: 'Flag', val: 20 });
+      }
+    });
 
     subObj.subTypes = newaggr;
 
