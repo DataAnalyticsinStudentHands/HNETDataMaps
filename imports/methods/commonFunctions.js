@@ -298,6 +298,10 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           let numValid = 1;
           var newkey;
 
+					// Add flag variable for Neph. No flag specified for Neph, thus if there is data, flag 1.
+					if (subType.includes("Neph")) {
+						data.unshift({ metric: 'Flag', val: 1, unit: 'NA' });
+					}
 
           /** Tap flag implementation **/
           // Get flag from DAQ data and save it
@@ -540,17 +544,12 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
             }
           } else { // normal aggreagation for all other subTypes
-            let flag = data[0].val;
-						if (subType.includes("Neph")) {
-							flag = 1;
-						}
-
-            for (let j = 0; j < data.length; j++) {
+            for (let j = 1; j < data.length; j++) {
               newkey = subType + '_' + data[j].metric;
 
-              if (data[j].Flag !== undefined) { // taking care of empty or NaN data values
-								flag = data[j].Flag;
-              }
+							// TAP data requires data filtration. Setting flag to 20 if such for specified values. 
+							// Otherwise, use suggested flag value from file
+							const flag = data[j].Flag !== undefined ? data[j].Flag : data[0].val;
 
               if (flag !== 1) { // if flag is not 1 (valid) don't increase numValid
                 numValid = 0;
