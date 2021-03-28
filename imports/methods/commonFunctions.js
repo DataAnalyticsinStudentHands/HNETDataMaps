@@ -298,10 +298,10 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           let numValid = 1;
           var newkey;
 
-					// Add flag variable for Neph. No flag specified for Neph, thus if there is data, flag 1.
-					if (subType.includes("Neph")) {
-						data.unshift({ metric: 'Flag', val: 1, unit: 'NA' });
-					}
+          // Add flag variable for Neph. No flag specified for Neph, thus if there is data, flag 1.
+          if (subType.includes("Neph")) {
+            data.unshift({ metric: 'Flag', val: 1, unit: 'NA' });
+          }
 
           /** Tap flag implementation **/
           // Get flag from DAQ data and save it
@@ -338,7 +338,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               if (epochDiff >= 0 && epochDiff < 10) {
                 data[0].val = TAP01Flag;
               } else {
-								data[0].val = 20;
+                data[0].val = 20;
               }
             } else {
               // Odd - Needs flag from TAP02
@@ -348,7 +348,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               if (epochDiff >= 0 && epochDiff < 10) {
                 data[0].val = TAP02Flag;
               } else {
-								data[0].val = 20;
+                data[0].val = 20;
               }
             }
 
@@ -467,11 +467,11 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           }
 
 
-					// Don't aggregate subTypes TAP01 and TAP02. They are for flagging TAP_SNXX only.
-					// Bug where they would aggregate
-					if (subType.includes("TAP01") || subType.includes("TAP02")) {
-						continue;
-					}
+          // Don't aggregate subTypes TAP01 and TAP02. They are for flagging TAP_SNXX only.
+          // Bug where they would aggregate
+          if (subType.includes("TAP01") || subType.includes("TAP02")) {
+            continue;
+          }
           /**  End of TAP switch implementation **/
 
           // if flag is not existing, put 9 as default, need to ask Jim?
@@ -547,9 +547,9 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             for (let j = 1; j < data.length; j++) {
               newkey = subType + '_' + data[j].metric;
 
-							// TAP data requires data filtration. Setting flag to 20 if such for specified values. 
-							// Otherwise, use suggested flag value from file
-							const flag = data[j].Flag !== undefined ? data[j].Flag : data[0].val;
+              // TAP data requires data filtration. Setting flag to 20 if such for specified values. 
+              // Otherwise, use suggested flag value from file
+              const flag = data[j].Flag !== undefined ? data[j].Flag : data[0].val;
 
               if (flag !== 1) { // if flag is not 1 (valid) don't increase numValid
                 numValid = 0;
@@ -621,12 +621,12 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         }
 
 
-				obj.Flag = parseInt(obj.Flag);
+        obj.Flag = parseInt(obj.Flag);
 
 
         /** Helpful functions for calculations **/
         
-				// flips sign for all elements in array
+        // flips sign for all elements in array
         function flipSignForAll1D(arr) {
           for (let i = 0; i < arr.length; i++) {
             arr[i] *= -1;
@@ -698,17 +698,17 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 
         /** END of Helpful functions for calculations **/
         
-				// Calculations for Nepholometer is done here
+        // Calculations for Nepholometer is done here
         if (instrument.indexOf('Neph') > -1 && instrumentCalculated.find(finderValue => finderValue === instrument) === undefined) {
           instrumentCalculated.push(instrument);
           newaggr[instrument]['SAE'] = [];
           
-					if (aggrSubTypes['Neph_RedScattering'] === undefined || aggrSubTypes['Neph_GreenScattering'] === undefined || aggrSubTypes['Neph_BlueScattering'] === undefined) {
+          if (aggrSubTypes['Neph_RedScattering'] === undefined || aggrSubTypes['Neph_GreenScattering'] === undefined || aggrSubTypes['Neph_BlueScattering'] === undefined) {
             newaggr[instrument]['SAE'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 20});
             continue;
-					}
+          }
 
           // SAE calculations begin here 
           // Need to make sure that Neph has valid data before calculations can begin
@@ -737,7 +737,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
              * https://www.youtube.com/watch?v=9UE8-6Jlezw
              */
             
-						// A^T*A
+            // A^T*A
             let ATA = mathjs.multiply(mathjs.transpose(log_Neph), log_Neph);
             // A^T*b
             let ATb = mathjs.multiply(mathjs.transpose(log_Neph), ly_Neph);
@@ -779,16 +779,16 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument]['SSA_Blue'] = [];
           newaggr[instrument]['AAE'] = [];
 
-					// If any of the SSA calculations fail, AAE calculations will fail.
-					// Allows Different SSA colors to still do calculations whilst preventing AAE from failing
-					let SSAFailed = false;
+          // If any of the SSA calculations fail, AAE calculations will fail.
+          // Allows Different SSA colors to still do calculations whilst preventing AAE from failing
+          let SSAFailed = false;
 
           //SSA calculations begin here:
           if (aggrSubTypes['Neph_RedScattering'] !== undefined && aggrSubTypes['Neph_RedScattering'].Flag === 1 && obj.Flag === 1) {
             let TotalExtinction_R = aggrSubTypes['Neph_RedScattering'].avg + aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg; // Matlab code: TotalExtinction_R = AC_R_Combined + outdata_Neph(:,2); %Total Extinction calculation for Red wavelength
             let SSA_R = aggrSubTypes['Neph_RedScattering'].avg / TotalExtinction_R; // Matlab code: SSA_R = outdata_Neph(:,2)./TotalExtinction_R; % SSA calculation for Red Wavelength
-						
-						newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: SSA_R });
+            
+            newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: SSA_R });
             newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
 
@@ -804,7 +804,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
-						SSAFailed = true;
+            SSAFailed = true;
           }
 
           if (aggrSubTypes['Neph_GreenScattering'] !== undefined && aggrSubTypes['Neph_GreenScattering'].Flag === 1 && obj.Flag === 1) {
@@ -826,7 +826,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
-						SSAFailed = true;
+            SSAFailed = true;
           }
 
           if (aggrSubTypes['Neph_BlueScattering'] !== undefined && aggrSubTypes['Neph_BlueScattering'].Flag === 1 && obj.Flag === 1) {
@@ -848,15 +848,15 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
-						SSAFailed = true;
+            SSAFailed = true;
           }
 
-					if (SSAFailed) {
+          if (SSAFailed) {
             newaggr[instrument]['AAE'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
             newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
-						continue;
-					}
+            continue;
+          }
 
           // AAE calculations begin here:
           // Make sure tap instrument is valid
@@ -891,7 +891,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
              * A*x=b
              */
             
-						// A \ b
+            // A \ b
             let ATA = mathjs.multiply(mathjs.transpose(log_TAP), log_TAP);
             let ATb = mathjs.multiply(mathjs.transpose(log_TAP), ly_TAP);
 
@@ -924,7 +924,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           }
         }
         
-				if (measurement === 'RMY') { // special treatment for wind measurements
+        if (measurement === 'RMY') { // special treatment for wind measurements
           if (!newaggr[instrument].WD) {
             newaggr[instrument].WD = [];
           } 
