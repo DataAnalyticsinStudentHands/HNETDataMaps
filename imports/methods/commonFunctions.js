@@ -298,12 +298,13 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           let numValid = 1;
           var newkey;
 
+
           /** Tap flag implementation **/
           // Get flag from DAQ data and save it
-          if (subType.indexOf('TAP01') >= 0) {
+          if (subType.includes('TAP01')) {
             TAP01Flag = data[0].val === 10 ? 1 : data[0].val;
             TAP01Epoch = subObj.epoch;
-          } else if (subType.indexOf('TAP02') >= 0) {
+          } else if (subType.includes('TAP02')) {
             TAP02Flag = data[0].val === 10 ? 8 : data[0].val
             TAP02Epoch = subObj.epoch;
           }
@@ -329,6 +330,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               // Make sure that tap data has a corresponding timestamp in DaqFactory file
               // If not, break and do not aggregate datapoint
               epochDiff = subObj.epoch - TAP01Epoch;
+
               if (epochDiff >= 0 && epochDiff < 10) {
                 data[0].val = TAP01Flag;
               } else {
@@ -406,7 +408,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               }
               hasCheckedTAPdataSchema = true;
             }
-            ///*
+            /*
             // Deletion works best because it allows for less points to be in the database, aggregated, etc...
             let datapointsDeleted = 0;
             let indexAdjusted = tapDataSchemaIndex.RedAbsCoef - datapointsDeleted;
@@ -438,7 +440,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             }
 
             //*/
-            /*// Flagging and deletion do the same exact thing due to the way the average works. If you don't want data to go into the avg, then don't let it in. No way around it. Experimental code.
+            ///*// Flagging and deletion do the same exact thing due to the way the average works. If you don't want data to go into the avg, then don't let it in. No way around it. Experimental code.
               // We flag the faulty data. This will not show up in the database
             if (data[tapDataSchemaIndex.RedAbsCoef].val < 0 || data[tapDataSchemaIndex.RedAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.RedAbsCoef].val)) {
               data[tapDataSchemaIndex.RedAbsCoef].Flag = 20;
@@ -461,6 +463,11 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           }
 
 
+					// Don't aggregate subTypes TAP01 and TAP02. They are for flagging TAP_SNXX only.
+					// Bug where they would aggregate
+					if (subType.includes("TAP01") || subType.includes("TAP02")) {
+						continue;
+					}
           /**  End of TAP switch implementation **/
 
           // if flag is not existing, put 9 as default, need to ask Jim?
@@ -533,14 +540,17 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
             }
           } else { // normal aggreagation for all other subTypes
-            for (let j = 1; j < data.length; j++) {
+            let flag = data[0].val;
+						if (subType.includes("Neph")) {
+							flag = 1;
+						}
+
+            for (let j = 0; j < data.length; j++) {
               newkey = subType + '_' + data[j].metric;
 
-              if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
-                numValid = 0;
+              if (data[j].Flag !== undefined) { // taking care of empty or NaN data values
+								flag = data[j].Flag;
               }
-
-              const flag = data[0].val;
 
               if (flag !== 1) { // if flag is not 1 (valid) don't increase numValid
                 numValid = 0;
@@ -611,9 +621,13 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           obj.Flag = majorityFlag;
         }
 
-        /** Helpful functions for calculations **/
 
-        // flips sign for all elements in array
+				obj.Flag = parseInt(obj.Flag);
+
+
+        /** Helpful functions for calculations **/
+        
+				// flips sign for all elements in array
         function flipSignForAll1D(arr) {
           for (let i = 0; i < arr.length; i++) {
             arr[i] *= -1;
@@ -684,18 +698,22 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         }
 
         /** END of Helpful functions for calculations **/
-
-        // Calculations for Nepholometer is done here
+        
+				// Calculations for Nepholometer is done here
         if (instrument.indexOf('Neph') > -1 && instrumentCalculated.find(finderValue => finderValue === instrument) === undefined) {
           instrumentCalculated.push(instrument);
           newaggr[instrument]['SAE'] = [];
-
-          if (aggrSubTypes['Neph_RedScattering'] === undefined) {
+          
+					if (aggrSubTypes['Neph_RedScattering'] === undefined || aggrSubTypes['Neph_GreenScattering'] === undefined || aggrSubTypes['Neph_BlueScattering'] === undefined) {
+            newaggr[instrument]['SAE'].push({ metric: 'calc', val: 'NaN' });
+            newaggr[instrument]['SAE'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SAE'].push({ metric: 'Flag', val: 20});
             continue;
-          }
+					}
+
           // SAE calculations begin here 
           // Need to make sure that Neph has valid data before calculations can begin
-          if (instrument.indexOf('Neph') > -1 && obj.Flag === 1) {
+          if (instrument.includes('Neph') && obj.Flag === 1) {
             let x = [635, 525, 450]; // Matlab code: x=[635,525,450]; %Wavelength values for Nephelometer 
             let y_Neph = [aggrSubTypes['Neph_RedScattering'].avg, aggrSubTypes['Neph_GreenScattering'].avg, aggrSubTypes['Neph_BlueScattering'].avg]; // Matlab code: y_Neph = outdata_Neph(:,2:4); %Scattering coefficient values from Daqfactory for Neph
 
@@ -719,8 +737,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
              * https://textbooks.math.gatech.edu/ila/least-squares.html
              * https://www.youtube.com/watch?v=9UE8-6Jlezw
              */
-
-            // A^T*A
+            
+						// A^T*A
             let ATA = mathjs.multiply(mathjs.transpose(log_Neph), log_Neph);
             // A^T*b
             let ATb = mathjs.multiply(mathjs.transpose(log_Neph), ly_Neph);
@@ -733,7 +751,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             // Reason for index 0,2 is because I am skipping a step in the least squares approximation.
             // It is supposed to return a vector with 2 values, but I just shortcut it straight to the correct answer from the 3x2 rref matrix
             let SAE_Neph = log_Neph[0][2]; // SAE_Neph = log_Neph(1,:)'; %Step 2- SAE calulation
-
 
             // SAE ranges should be: -1 - 5
             // Matlab code: SAE_Neph(SAE_Neph > 5)= NaN;
@@ -763,13 +780,19 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument]['SSA_Blue'] = [];
           newaggr[instrument]['AAE'] = [];
 
-          if (aggrSubTypes[instrument + '_' + 'RedAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'GreenAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'BlueAbsCoef'] === undefined || aggrSubTypes[instrument + '_' + 'RedAbsCoef'].Flag === undefined || aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].Flag === undefined || aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].Flag === undefined) 
-            continue;
+					// If any of the SSA calculations fail, AAE calculations will fail.
+					// Allows Different SSA colors to still do calculations whilst preventing AAE from failing
+					let SSAFailed = false;
 
           //SSA calculations begin here:
-          if (aggrSubTypes['Neph_RedScattering'].Flag === 1 && obj.Flag === 1) {
+          if (aggrSubTypes['Neph_RedScattering'] !== undefined && aggrSubTypes['Neph_RedScattering'].Flag === 1 && obj.Flag === 1) {
             let TotalExtinction_R = aggrSubTypes['Neph_RedScattering'].avg + aggrSubTypes[instrument + '_' + 'RedAbsCoef'].avg; // Matlab code: TotalExtinction_R = AC_R_Combined + outdata_Neph(:,2); %Total Extinction calculation for Red wavelength
             let SSA_R = aggrSubTypes['Neph_RedScattering'].avg / TotalExtinction_R; // Matlab code: SSA_R = outdata_Neph(:,2)./TotalExtinction_R; % SSA calculation for Red Wavelength
+						
+						newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: SSA_R });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
+
             // Matlab code: SSA_R (SSA_R < 0 | SSA_R ==1)=NaN;
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_R <= 0 to because javascript sends error values to zero by default
@@ -778,18 +801,20 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
               newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: 20});
             }
-            newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: SSA_R });
-            newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
           } else {
             newaggr[instrument]['SSA_Red'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['SSA_Red'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_Red'].push({ metric: 'Flag', val: obj.Flag});
+						SSAFailed = true;
           }
 
-          if (aggrSubTypes['Neph_GreenScattering'].Flag === 1 && obj.Flag === 1) {
+          if (aggrSubTypes['Neph_GreenScattering'] !== undefined && aggrSubTypes['Neph_GreenScattering'].Flag === 1 && obj.Flag === 1) {
             let TotalExtinction_G = aggrSubTypes['Neph_GreenScattering'].avg + aggrSubTypes[instrument + '_' + 'GreenAbsCoef'].avg; // Matlab code: TotalExtinction_G = AC_G_Combined + outdata_Neph(:,3); %Total Extinction calculation for Green wavelength
             let SSA_G = aggrSubTypes['Neph_GreenScattering'].avg / TotalExtinction_G; // Matlab code: SSA_G = outdata_Neph(:,3)./TotalExtinction_G; % SSA calculation for Green Wavelength
+            newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: SSA_G });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
+
             // Matlab code: SSA_G (SSA_G < 0 | SSA_G ==1)=NaN;
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_G <= 0 to because javascript sends error values to zero by default
@@ -798,19 +823,20 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
               newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: 20 });
             }
-
-            newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: SSA_G });
-            newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
           } else {
             newaggr[instrument]['SSA_Green'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['SSA_Green'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_Green'].push({ metric: 'Flag', val: obj.Flag});
+						SSAFailed = true;
           }
 
-          if (aggrSubTypes['Neph_BlueScattering'].Flag === 1 && obj.Flag === 1) {
+          if (aggrSubTypes['Neph_BlueScattering'] !== undefined && aggrSubTypes['Neph_BlueScattering'].Flag === 1 && obj.Flag === 1) {
             let TotalExtinction_B = aggrSubTypes['Neph_BlueScattering'].avg + aggrSubTypes[instrument + '_' + 'BlueAbsCoef'].avg; // Matlab code: TotalExtinction_B = AC_B_Combined + outdata_Neph(:,4); %Total Extinction calculation for Blue wavelength
             let SSA_B = aggrSubTypes['Neph_BlueScattering'].avg / TotalExtinction_B; // Matlab code: SSA_B = outdata_Neph(:,4)./TotalExtinction_B; % SSA calculation for Blue Wavelength
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: SSA_B });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
+            newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
+
             // Matlab code: SSA_B (SSA_B < 0 | SSA_B ==1)=NaN; 
             // decided > 1 because I have no idea why he used == and not >
             // I decided to make it SSA_B <= 0 to because javascript sends error values to zero by default
@@ -819,15 +845,19 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
               newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: 20});
             }
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: SSA_B });
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
-            newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
           } else {
             newaggr[instrument]['SSA_Blue'].push({ metric: 'calc', val: 'NaN' });
             newaggr[instrument]['SSA_Blue'].push({ metric: 'unit', val: "undefined" });
             newaggr[instrument]['SSA_Blue'].push({ metric: 'Flag', val: obj.Flag});
+						SSAFailed = true;
           }
 
+					if (SSAFailed) {
+            newaggr[instrument]['AAE'].push({ metric: 'calc', val: 'NaN' });
+            newaggr[instrument]['AAE'].push({ metric: 'unit', val: "undefined"});
+            newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
+						continue;
+					}
 
           // AAE calculations begin here:
           // Make sure tap instrument is valid
@@ -861,8 +891,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
              * Essentially, we are finding the least squares solution to the system of equations:
              * A*x=b
              */
-
-            // A \ b
+            
+						// A \ b
             let ATA = mathjs.multiply(mathjs.transpose(log_TAP), log_TAP);
             let ATb = mathjs.multiply(mathjs.transpose(log_TAP), ly_TAP);
 
@@ -894,8 +924,8 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
             newaggr[instrument]['AAE'].push({ metric: 'Flag', val: obj.Flag});
           }
         }
-
-        if (measurement === 'RMY') { // special treatment for wind measurements
+        
+				if (measurement === 'RMY') { // special treatment for wind measurements
           if (!newaggr[instrument].WD) {
             newaggr[instrument].WD = [];
           } 
@@ -1171,7 +1201,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
       // Change the 1 to 1000000 to aggregate VERY old data serverside. Remember to change it back to 1 before you commit
-      startAggrEpoch = moment.unix(fileModified).subtract(1, 'hours').unix();
+      startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     }
