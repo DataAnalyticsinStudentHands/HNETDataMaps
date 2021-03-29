@@ -230,6 +230,11 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 	// gather all data, group by 5min epoch
 	const pipeline = [
 		{
+			$sort: {
+				epoch: -1
+			}
+		},
+		{
 			$match: {
 				$and: [
 					{
@@ -260,10 +265,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 				}
 			}
 		}, {
-			$sort: {
-				epoch: -1
-			}
-		}, {
 			$out: aggrResultsName
 		}
 	];
@@ -281,7 +282,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 	let tapDataSchemaIndex = {};
 	tapDataSchemaIndex.RedAbsCoef = undefined, tapDataSchemaIndex.GreenAbsCoef = undefined, tapDataSchemaIndex.BlueAbsCoef = undefined, tapDataSchemaIndex.SampleFlow = undefined;
 
-	let once = true;
 	// create new structure for data series to be used for charts
 	AggrResults.find({}).forEach((e) => {
 		const subObj = {};
@@ -1101,7 +1101,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
 		AggrData.insert(subObj, function(error, result) {
 			// only update aggregated values if object already exists to avoid loosing edited data flags
 			// flags 15 minutes from current time can change.
-			if (result === false || flagCanChangeEpoch <= subObj.epoch) {
+			if (true || result === false) {
 				Object.keys(newaggr).forEach(function(newInstrument) {
 					Object.keys(newaggr[newInstrument]).forEach(function(newMeasurement) {
 						// test whether aggregates for this instrument/measurement already exists
