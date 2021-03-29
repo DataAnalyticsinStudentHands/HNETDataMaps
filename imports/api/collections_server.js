@@ -71,7 +71,7 @@ const SitesSchema = new SimpleSchema({
   'Channels.$.Threshold.Bounds': {
     type: String,
     optional: true,
-    label: 'Lesser or greater:',
+    label: 'Lesser or greater than the threshold: (eg: <0.5, >1.2)',
     autoform: {
       options: [
         {
@@ -87,7 +87,7 @@ const SitesSchema = new SimpleSchema({
   'Channels.$.Threshold.Value': {
     type: String,
     optional: true,
-    label: 'Threshold:'
+    label: 'Threshold (numeric value):'
   },
   TAPInstruments: {
     type: Array,

@@ -151,8 +151,10 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                     _.each(site.Channels, (subChannels) => {
                       _.each(subChannels, (subData) => {
                         if (typeof subChannels.Threshold !== "undefined") { // does not loop if you have undefined thresholds
-                          threshold = subChannels.Threshold.Value
-                          bounds = subChannels.Threshold.Bounds
+                          if (subChannels.Name === chart) {
+                            threshold = subChannels.Threshold.Value
+                            bounds = subChannels.Threshold.Bounds
+                          }
                         }
                       });
                     });
@@ -176,14 +178,14 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                         modifiedData = {
                           x: epoch * 1000, // milliseconds
                           y: points[0].val, // calc
-                          color: colorsHash[1].color,
+                          color: colorsHash[4].color,
                         };
                       }
                       else {
                         modifiedData = {
                           x: epoch * 1000, // milliseconds
                           y: points[0].val, // calc
-                          color: colorsHash[3].color,
+                          color: colorsHash[4].color,
                         };
                       }
                     }
@@ -195,8 +197,10 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                     _.each(site.Channels, (subChannels) => {
                       _.each(subChannels, (subData) => {
                         if (typeof subChannels.Threshold !== "undefined") { // does not loop if you have undefined thresholds
-                          threshold = subChannels.Threshold.Value
-                          bounds = subChannels.Threshold.Bounds
+                          if (subChannels.Name === chart) {
+                            threshold = subChannels.Threshold.Value
+                            bounds = subChannels.Threshold.Bounds
+                          }
                         }
                       });
                     });
@@ -205,14 +209,14 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                         modifiedData = {
                           x: epoch * 1000, // milliseconds
                           y: points[0].val, // calc
-                          color: colorsHash[3].color,
+                          color: colorsHash[4].color,
                         };
                       }
                       else {
                         modifiedData = {
                           x: epoch * 1000, // milliseconds
                           y: points[0].val, // calc
-                          color: colorsHash[5].color,
+                          color: colorsHash[4].color,
                         };
                       }
                     } else {
