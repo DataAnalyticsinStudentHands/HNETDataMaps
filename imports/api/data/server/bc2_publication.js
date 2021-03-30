@@ -55,31 +55,38 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
       _.each(line._id.subTypes, (data, instrument) => {
         _.each(data, (points, measurement) => {
           // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
-          let chart = measurement.toUpperCase();
-          if (chart.includes("BACK")) {
-            chart = `${instrument} Back Scattering`;
-          } else if (chart.includes("ABSCOEF")) {
-            chart = `${instrument.substring(0, 3)} Absolute Coefficients`;
-          } else if (chart.includes("SAE")) {
-            chart = `${chart}`;
-          } else if (chart.includes("AAE")) {
-            chart = `${chart}`;
-          } else if (chart.includes("SSA")) {
-            chart = `${chart}`;
-          } else {
-            chart = ``;
-          }
-          if (chart !== ``) {
-            if (!bc2siteData[chart]) {
-              // create placeholder for measurement
-              bc2siteData[chart] = {};
+          if (_.last(points).val === 1) {
+            let chart = measurement.toUpperCase();
+            if (instrument.includes("Neph")) {
+              if (chart.includes("BACK")) {
+                chart = `${instrument} Back Scattering`
+              } else if (chart.includes("SAE")) {
+                chart = `SAE`
+              } else {
+                chart = `${instrument} Scattering`
+              }
             }
-            if (!bc2siteData[chart][measurement]) {
-              // create placeholder for series if not exists
-              bc2siteData[chart][measurement] = [];
+            if (instrument.includes("tap")) {
+              if (chart.includes("ABSCOEF")) {
+                chart = `${instrument.substring(0, 3)} Absolute Coefficients`
+              } else if (chart.includes("SSA")) {
+                chart = `SSA`
+              } else if (chart.includes("AAE")) {
+                chart = `${chart}`
+              } else {
+                chart = ``
+              }
             }
-            // get all measurements where flag == 1
-            if (_.last(points).val === 1) {
+            if (chart !== ``) {
+              if (!bc2siteData[chart]) {
+                // create placeholder for measurement
+                bc2siteData[chart] = {};
+              }
+              if (!bc2siteData[chart][measurement]) {
+                // create placeholder for series if not exists
+                bc2siteData[chart][measurement] = [];
+              }
+              // get all measurements where flag == 1
               if (modifiedData[epoch * 1000]) {
                 modifiedData[epoch * 1000] = {
                   ...modifiedData[epoch * 1000],
@@ -96,29 +103,47 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
               }
               if (points[1].val) {
                 if (measurement.includes("Red")) {
-                  modifiedData = {
-                    x: epoch * 1000, // milliseconds
-                    y: points[1].val, // average
-                    color: colorsHash[1].color,
-                  };
+                  if (chart.includes("SSA")) {
+                    modifiedData = {
+                      x: epoch * 1000, // milliseconds
+                      y: points[0].val, // average
+                      color: colorsHash[1].color,
+                    };  
+                  } else {
+                    modifiedData = {
+                      x: epoch * 1000, // milliseconds
+                      y: points[1].val, // average
+                      color: colorsHash[1].color,
+                    };  
+                  }
                 } else if (measurement.includes("Blue")) {
-                  modifiedData = {
-                    x: epoch * 1000, // milliseconds
-                    y: points[1].val, // average
-                    color: colorsHash[2].color,
-                  };
+                  if (chart.includes("SSA")) {
+                    modifiedData = {
+                      x: epoch * 1000, // milliseconds
+                      y: points[0].val, // average
+                      color: colorsHash[2].color,
+                    };  
+                  } else {
+                    modifiedData = {
+                      x: epoch * 1000, // milliseconds
+                      y: points[1].val, // average
+                      color: colorsHash[2].color,
+                    };  
+                  }
                 } else if (measurement.includes("Green")) {
-                  modifiedData = {
-                    x: epoch * 1000, // milliseconds
-                    y: points[1].val, // average
-                    color: colorsHash[3].color,
-                  };
-                } else if (measurement.includes("SSA")) {
-                  modifiedData = {
-                    x: epoch * 1000, // milliseconds
-                    y: points[0].val, // average
-                    color: colorsHash[4].color,
-                  };
+                  if (chart.includes("SSA")) {
+                    modifiedData = {
+                      x: epoch * 1000, // milliseconds
+                      y: points[0].val, // average
+                      color: colorsHash[3].color,
+                    };  
+                  } else {
+                    modifiedData = {
+                      x: epoch * 1000, // milliseconds
+                      y: points[1].val, // average
+                      color: colorsHash[3].color,
+                    };  
+                  }
                 } else if (chart.includes("SAE")) { 
                   let threshold      // initializing threshold
                   let bounds         // initializing bounds
@@ -126,8 +151,10 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                     _.each(site.Channels, (subChannels) => {
                       _.each(subChannels, (subData) => {
                         if (typeof subChannels.Threshold !== "undefined") { // does not loop if you have undefined thresholds
-                          threshold = subChannels.Threshold.Value
-                          bounds = subChannels.Threshold.Bounds
+                          if (subChannels.Name === chart) {
+                            threshold = subChannels.Threshold.Value
+                            bounds = subChannels.Threshold.Bounds
+                          }
                         }
                       });
                     });
@@ -151,14 +178,14 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                         modifiedData = {
                           x: epoch * 1000, // milliseconds
                           y: points[0].val, // calc
-                          color: colorsHash[1].color,
+                          color: colorsHash[4].color,
                         };
                       }
                       else {
                         modifiedData = {
                           x: epoch * 1000, // milliseconds
                           y: points[0].val, // calc
-                          color: colorsHash[3].color,
+                          color: colorsHash[4].color,
                         };
                       }
                     }
@@ -170,8 +197,10 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                     _.each(site.Channels, (subChannels) => {
                       _.each(subChannels, (subData) => {
                         if (typeof subChannels.Threshold !== "undefined") { // does not loop if you have undefined thresholds
-                          threshold = subChannels.Threshold.Value
-                          bounds = subChannels.Threshold.Bounds
+                          if (subChannels.Name === chart) {
+                            threshold = subChannels.Threshold.Value
+                            bounds = subChannels.Threshold.Bounds
+                          }
                         }
                       });
                     });
@@ -180,14 +209,14 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                         modifiedData = {
                           x: epoch * 1000, // milliseconds
                           y: points[0].val, // calc
-                          color: colorsHash[3].color,
+                          color: colorsHash[4].color,
                         };
                       }
                       else {
                         modifiedData = {
                           x: epoch * 1000, // milliseconds
                           y: points[0].val, // calc
-                          color: colorsHash[5].color,
+                          color: colorsHash[4].color,
                         };
                       }
                     } else {

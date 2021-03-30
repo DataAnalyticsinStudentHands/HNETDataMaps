@@ -10,7 +10,8 @@
     "fs-extra": "^0.30.0",
     "ftps": "https://registry.npmjs.org/ftps/-/ftps-0.4.6.tgz",
     "highcharts": "^8.2.2",
-    "meteor-node-stubs": "^0.3.2"
+    "meteor-node-stubs": "^0.3.2",
+    "mathjs": "7.6.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
