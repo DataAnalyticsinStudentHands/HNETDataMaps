@@ -312,6 +312,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
 	tapDataSchemaIndex.RedAbsCoef = undefined, tapDataSchemaIndex.GreenAbsCoef = undefined, tapDataSchemaIndex.BlueAbsCoef = undefined, tapDataSchemaIndex.SampleFlow = undefined;
 	let TAP01Name = undefined;
 	let TAP02Name = undefined;
+	const allElementsEqual = arr => arr.every(v => v === arr[0]);
 
 	AggrResults.find({}).forEach((e) => {
 		const subObj = {};
@@ -319,7 +320,8 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
 		subObj.site = e.site;
 		subObj.epoch = e._id;
 		const subTypes = e.subTypes;
-		const aggrSubTypes = {}; // hold aggregated data	
+		const aggrSubTypes = {}; // hold aggregated data
+		let tap01flagList = [], tap02flagList = [];
 
 		let subTypesLength = subTypes.length
 		for (let i = 0; i < subTypesLength; i++) {
@@ -339,9 +341,11 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
 					if (subType.includes('TAP01')) {
 						TAP01Flag = data[0].val === 10 ? 1 : data[0].val;
 						TAP01Epoch = subObj.epoch;
+						tap01flagList.push(TAP01Flag);
 					} else if (subType.includes('TAP02')) {
 						TAP02Flag = data[0].val === 10 ? 8 : data[0].val
 						TAP02Epoch = subObj.epoch;
+						tap02flagList.push(TAP02Flag);
 					}
 
 					// Get flag from TAP0(1|2)Flag and give it to the appropriate instrument
@@ -519,6 +523,11 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
 					}
 				}
 			}
+		}
+
+		// If tap switch occured, skip aggregating. Don't worry, it's okay to skip every now and then
+		if (!allElementsEqual(tap01flagList) || !allElementsEqual(tap02flagList)) {
+			return;
 		}
 	
 		// This is prep for calculations. Need ensure that we are working with data that has the data necessary to do calculations.
