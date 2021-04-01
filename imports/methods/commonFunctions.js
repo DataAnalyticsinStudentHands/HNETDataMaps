@@ -568,7 +568,6 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
 					// SKIP 
 					if (obj.totalCounter < minDAQFactoryCount && (endEpoch - 3300 - subObj.epoch) > 0) {
 						// This forces the forEach loop to go to the next loop skipping pushing data into database
-			console.log(subObj.epoch, endEpoch - 3300, endEpoch - 3300 - subObj.epoch);
 						return;
 					}
 				}
@@ -585,7 +584,6 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
 					// SKIP 
 					if (obj.totalCounter < minTAPcount && (endEpoch - 3300 - subObj.epoch) > 0) {
 						// This forces the forEach loop to go to the next loop skipping pushing data into database
-			console.log(subObj.epoch, endEpoch - 3300, endEpoch - 3300 - subObj.epoch);
 						return;
 					}
 				}
@@ -610,8 +608,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
 
 		// If TAP or NEPH is missing AND what we are aggregating is greater than 55 minutes from endEpoch:
 		// SKIP
-		if ((!hasTap || !hasNeph) && (endEpoch - 3300 - subObj.epoch) > 0) {
-			console.log(subObj.epoch, endEpoch - 3300, endEpoch - 3300 - subObj.epoch);
+		if ((tapNames.length < 2 || !hasNeph) && (endEpoch - 3300 - subObj.epoch) > 0) {
 			// This forces the forEach loop to go to the next loop skipping pushing data into database
 			return;			
 		}
