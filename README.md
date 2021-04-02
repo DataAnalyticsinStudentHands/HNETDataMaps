@@ -8,7 +8,7 @@ The following instructions are for developers who want to setup their own versio
 
 ## Prerequisites
 
-* Data Folder: The framework expects a certain data folder structure. `/hnet/incoming/current` + `/hnet/outgoing/current` should exist. Those locations are hard coded and need be changed if desired.
+* Data Folder: The framework expects a certain data folder structure. `/hnet/incoming/current` should exist. This location is hard coded and need be changed if desired. There also needs to be an outgoing data directory which can be defined as an environment varaible `outgoingDir`.
 
 * We are running with a local [MongoDB](https://docs.mongodb.org/manual/installation/)
 
