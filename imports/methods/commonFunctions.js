@@ -321,7 +321,6 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
     subObj.epoch = e._id;
     const subTypes = e.subTypes;
     const aggrSubTypes = {}; // hold aggregated data
-    let tap01flagList = [], tap02flagList = [];
     let newData = (endEpoch - 3300 - subObj.epoch) > 0;
 
     let subTypesLength = subTypes.length
@@ -342,11 +341,9 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
           if (subType.includes('TAP01')) {
             TAP01Flag = data[0].val === 10 ? 1 : data[0].val;
             TAP01Epoch = subObj.epoch;
-            tap01flagList.push(TAP01Flag);
           } else if (subType.includes('TAP02')) {
             TAP02Flag = data[0].val === 10 ? 8 : data[0].val
             TAP02Epoch = subObj.epoch;
-            tap02flagList.push(TAP02Flag);
           }
 
           // Get flag from TAP0(1|2)Flag and give it to the appropriate instrument
@@ -525,12 +522,6 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
         }
       }
     }
-
-    // If tap switch occured, skip aggregating. Don't worry, it's okay to skip every now and then
-    let tapSwitchOccured = false;
-    if (!allElementsEqual(tap01flagList) || !allElementsEqual(tap02flagList)) {
-      tapSwitchOccured = true;
-    }
   
     // This is prep for calculations. Need ensure that we are working with data that has the data necessary to do calculations.
     // The for loop for transforming aggregated data to a generic data format is more useful for calculations than raw aggrSubTypes.
@@ -584,9 +575,6 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
         }
 
         if (instrument.includes("tap_")) {
-          if (tapSwitchOccured) {
-            continue;
-          }
           hasTap = true;
           if (!tapNames.includes(instrument)) {
             tapNames.push(instrument);
@@ -1607,7 +1595,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
       // Change the 1 to 1000000 to aggregate VERY old data serverside. Remember to change it back to 1 before you commit
-      startAggrEpoch = moment.unix(fileModified).subtract(96, 'hours').unix();
+      startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     }
