@@ -321,7 +321,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
     subObj.epoch = e._id;
     const subTypes = e.subTypes;
     const aggrSubTypes = {}; // hold aggregated data
-    let newData = (endEpoch - 3300 - subObj.epoch) > 0;
+    let newData = (endEpoch - 3300 - subObj.epoch) < 0;
 
     let subTypesLength = subTypes.length
     for (let i = 0; i < subTypesLength; i++) {
@@ -1595,7 +1595,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
       // Change the 1 to 1000000 to aggregate VERY old data serverside. Remember to change it back to 1 before you commit
-      startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
+      startAggrEpoch = moment.unix(fileModified).subtract(96, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     }
