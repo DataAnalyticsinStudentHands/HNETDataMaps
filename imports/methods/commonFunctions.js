@@ -1113,6 +1113,8 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
       }
     });
   });
+  // drop temp collection that was placeholder for aggreagation results
+  AggrResults.rawCollection().drop();
 }
 
 // performs the creation of 5 minute aggregate data points
