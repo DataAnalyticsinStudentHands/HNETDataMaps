@@ -8,6 +8,6 @@ Meteor.setInterval(() => {
   const site = LiveSites.findOne({ AQSID: process.env.aqsid });
 
   if (site.status === 'Active' && site.TCEQPushing === 'Active') {
-		// pushSiteData(process.env.aqsid, false);
+		pushSiteData(process.env.aqsid, false);
   }
 }, 10 * 60 * 1000); // run every 10 min
