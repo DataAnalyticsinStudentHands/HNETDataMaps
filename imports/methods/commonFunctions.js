@@ -305,6 +305,9 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
   var TAP01Flag = 8, TAP02Flag = 8;
   var TAP01Epoch = 0, TAP02Epoch = 0;
 
+  // For some god aweful reason, some sites don't have neph flags. Need to check for neph flag before assigning whatever
+  let hasNephFlag = false;
+
   // Tap data filtration is required. These variables are simply placeholders for where the rgb abs coef indeces and sampleFlow index is at.
   // ***MUST*** be viable over for loop
   let hasCheckedTAPdataSchema = false;
@@ -331,10 +334,16 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
           let numValid = 1;
           var newkey;
 
-          // Add flag variable for Neph. No flag specified for Neph, thus if there is data, flag 1.
+          // if Neph flag is undefined, flag it 1, otherwise ignore
           if (subType.includes("Neph")) {
-            data.unshift({ metric: 'Flag', val: 1, unit: 'NA' });
+            if (data[0].metric === 'Flag') {
+              hasNephFlag = true;
+            }
+            if (!hasNephFlag) {
+              data.unshift({ metric: 'Flag', val: 1, unit: 'NA' });
+            }
           }
+
         
           /** Tap flag implementation **/
           // Get flag from DAQ data and save it
