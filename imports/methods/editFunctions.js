@@ -5,7 +5,7 @@ import { Meteor } from 'meteor/meteor';
 import { logger } from 'meteor/votercircle:winston';
 import { _ } from 'meteor/underscore';
 import { exportDataAsCSV, createTCEQPushData } from './commonFunctions';
-import { AggrData } from '../api/collections_server';
+import { AggrData, LiveSites } from '../api/collections_server';
 import { AggrEdits } from '../api/collections_client';
 import { hnetsftp } from '../startup/server/startup';
 
@@ -31,6 +31,14 @@ export const deleteAggregates = function deleteAggregates(aqsid, startEpoch, end
 };
 
 export const pushEdits = function pushEdits(aqsid, pushPointsEpochs) {
+  const activeSites = LiveSites.find({AQSID: `${aqsid}`});
+
+  activeSites.forEach((site) => {
+    if (site.TCEQPushing === 'Inactive') {
+      throw new Meteor.Error('TCEQPushing is Inactive');
+    }
+  })
+
   if (typeof (hnetsftp) === 'undefined') {
     // hnetsftp environment variable doesn't exists
     throw new Meteor.Error('No password found for hnet sftp.');
