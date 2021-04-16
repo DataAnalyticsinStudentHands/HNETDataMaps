@@ -37,6 +37,12 @@ If you are testing while the client is also running, you may need to use a diffe
 
 For debugging with node inspector run `MONGO_URL=mongodb://localhost:27017/DataMaps meteor debug` and open the app in Chrome with the port listed once the app has started.
 
+Need more memory? Define this environment variable. 32768 is 32GB of ram.
+`NODE_OPTIONS="--max_old_space_size=32768"`
+
+Having timeout issues locally? Try defining the environment variable MONGO_URL as such:
+`MONGO_URL="mongodb://localhost:27017/DataMaps?socketTimeoutMS=600000&connectTimeoutMS=600000"`
+
 ## Deployment with PM2
 
 * change into the working directory and run `meteor build ..` - this will generate a *.tar .gz file
