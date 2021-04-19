@@ -66,6 +66,14 @@ Template.bc2site.helpers({
     Meteor.defer(() => {
       if (document.getElementById(`container-chart-${measurement}`) !== null) {
         // Create standard Highcharts chart with options:
+        let colors
+        if ((measurement.includes('tap')) || measurement.includes('SSA')) {
+          colors = ["#BF0B23", "#00cc00", "#3333ff"]
+        } else if (measurement.includes('Scattering')) {
+          colors = ["#3333ff", "#00cc00", "#BF0B23"]
+        } else {
+          colors = ["#000000"]
+        }
         const chart = Highcharts.StockChart(`container-chart-${measurement}`, {
           chart: {
             zoomType: "x",
@@ -148,6 +156,7 @@ Template.bc2site.helpers({
             verticalAlign: "top",
             y: 100,
           },
+          colors: colors,
           rangeSelector: {
             inputEnabled: false,
             allButtonsEnabled: true,
