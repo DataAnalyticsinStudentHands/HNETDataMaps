@@ -269,7 +269,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
   ];
 
   Promise.await(LiveData.rawCollection().aggregate(pipeline, { allowDiskUse: true }).toArray());
-  
+
   /*
    * Only aggregate data if a certain percentage (defined by thresholdPercent) of the required data is in the 5minepoch.
    * There is supposed to be 630 database documents per 5minepoch.
@@ -344,7 +344,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
             }
           }
 
-        
+
           /** Tap flag implementation **/
           // Get flag from DAQ data and save it
           if (subType.includes('TAP01')) {
@@ -454,7 +454,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
               }
               hasCheckedTAPdataSchema = true;
             }
-            
+
             // We flag the faulty data with flag 20.
             if (data[tapDataSchemaIndex.RedAbsCoef].val < 0 || data[tapDataSchemaIndex.RedAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.RedAbsCoef].val)) {
               data[tapDataSchemaIndex.RedAbsCoef].Flag = 20;
@@ -531,7 +531,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
         }
       }
     }
-  
+
     // This is prep for calculations. Need ensure that we are working with data that has the data necessary to do calculations.
     // The for loop for transforming aggregated data to a generic data format is more useful for calculations than raw aggrSubTypes.
     // All I'm doing here is collecting a little bit of information of what we are working with before I do calculations.
@@ -569,11 +569,11 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
           const majorityFlag = (_.invert(counts))[maxObj];
           obj.Flag = majorityFlag;
         }
-      
+
         // Some specific setting up for tap calculations and skipping
         if (instrument.includes("Neph")) {
           hasNeph = true;
-          
+
           // If obj.totalCounter (which is documentation for the amount of datapoints in our 5minepoch) is < minTAPcount
           // And what we are aggregating is greater than 55 minutes from endEpoch: 
           // SKIP 
@@ -588,15 +588,15 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
           if (!tapNames.includes(instrument)) {
             tapNames.push(instrument);
           }
-    
+
           if (obj.totalCounter < 300)
-          // If obj.totalCounter (which is documentation for the amount of datapoints in our 5minepoch) is < minTAPcount
-          // And what we are aggregating is greater than 55 minutes from endEpoch: 
-          // SKIP 
-          if (obj.totalCounter < minTAPcount && newData) {
-            // This forces the forEach loop to go to the next loop skipping pushing data into database
-            return;
-          }
+            // If obj.totalCounter (which is documentation for the amount of datapoints in our 5minepoch) is < minTAPcount
+            // And what we are aggregating is greater than 55 minutes from endEpoch: 
+            // SKIP 
+            if (obj.totalCounter < minTAPcount && newData) {
+              // This forces the forEach loop to go to the next loop skipping pushing data into database
+              return;
+            }
         }
 
         if (!newaggr[instrument][measurement]) { newaggr[instrument][measurement] = [];
@@ -1643,49 +1643,58 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       }
     }
 
-    // Some BC2 sites do not label their TAP01 and TAP02 flags in their DAQfactory file with TAP01 and TAP02 labels in their csv file.
-    // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
-    // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
-    let siteData = Object.getOwnPropertyNames(parsedLines[0]);
-    let TAP01CurrentFlagName = undefined;
-    let TAP02CurrentFlagName = undefined;
-    let siteInitial = undefined;
+    // Only do this for BC2 sites teehee.
+    // May have let this run for HNET sites too on accident.
+    if (site.siteGroup.includes("BC2")) {
+      // Some BC2 sites do not label their TAP01 and TAP02 flags in their DAQfactory file with TAP01 and TAP02 labels in their csv file.
+      // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
+      // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
+      let siteData = Object.getOwnPropertyNames(parsedLines[0]);
+      let TAP01CurrentFlagName = undefined;
+      let TAP02CurrentFlagName = undefined;
+      let siteInitial = undefined;
 
-    siteData.forEach((colName) => {
-      if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
-        let flagNum = colName.substring(colName.indexOf("Flag") - 3, colName.indexOf("Flag") - 1);
-        siteInitial = colName.substring(colName.indexOf("BC2_") + 4, colName.indexOf("_", colName.indexOf("_") + 1));
-        if (parseInt(flagNum) % 2 == 0) {
-          TAP02CurrentFlagName = colName;
-        } else {
-          TAP01CurrentFlagName = colName;
+      siteData.forEach((colName) => {
+        if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
+          let flagNum = colName.substring(colName.indexOf("Flag") - 3, colName.indexOf("Flag") - 1);
+          siteInitial = colName.substring(colName.indexOf("BC2_") + 4, colName.indexOf("_", colName.indexOf("_") + 1));
+          if (parseInt(flagNum) % 2 == 0) {
+            TAP02CurrentFlagName = colName;
+          } else {
+            TAP01CurrentFlagName = colName;
+          }
         }
-      }
-    });
+      });
+    }
 
     // create objects from parsed lines
     const allObjects = [];
     let previousObject = {};
     for (let k = 0; k < parsedLines.length; k++) {
 
+
+      // Only do this for BC2 sites teehee.
+      // May have let this run for HNET sites too on accident.
+      if (site.siteGroup.includes("BC2")) {
       // The two if statements below take the above information on TAPFlag names and converts them accordingly.
       // Don't worry! If we aren't working with TAP data, it will just skip that right here. 
 
       // Redefines the TAP01Flag label here
-      if (TAP01CurrentFlagName !== undefined) {
-        let newFlagName = 'BC2_' + siteInitial + '_TAP01_Flag';
-        parsedLines[k][newFlagName] = parsedLines[k][TAP01CurrentFlagName];
-        if (newFlagName !== TAP01CurrentFlagName) {
-          delete parsedLines[k][TAP01CurrentFlagName];
+        if (TAP01CurrentFlagName !== undefined) {
+          let newFlagName = 'BC2_' + siteInitial + '_TAP01_Flag';
+          parsedLines[k][newFlagName] = parsedLines[k][TAP01CurrentFlagName];
+          if (newFlagName !== TAP01CurrentFlagName) {
+            delete parsedLines[k][TAP01CurrentFlagName];
+          }
         }
-      }
 
-      // Redefines the TAP02Flag label here
-      if (TAP02CurrentFlagName !== undefined) {
-        let newFlagName = 'BC2_' + siteInitial + '_TAP02_Flag';
-        parsedLines[k][newFlagName] = parsedLines[k][TAP02CurrentFlagName];
-        if (newFlagName !== TAP02CurrentFlagName) {
-          delete parsedLines[k][TAP02CurrentFlagName];
+        // Redefines the TAP02Flag label here
+        if (TAP02CurrentFlagName !== undefined) {
+          let newFlagName = 'BC2_' + siteInitial + '_TAP02_Flag';
+          parsedLines[k][newFlagName] = parsedLines[k][TAP02CurrentFlagName];
+          if (newFlagName !== TAP02CurrentFlagName) {
+            delete parsedLines[k][TAP02CurrentFlagName];
+          }
         }
       }
 
