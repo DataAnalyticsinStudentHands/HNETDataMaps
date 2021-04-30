@@ -1599,7 +1599,7 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
 
 		// Floor to the nearest 5 min epoch
 		let currEpoch = moment().unix();
-    endAggrEpoch = currEpoch - currEpoch % 300;
+    endAggrEpoch = currEpoch - currEpoch % 300 - 300;
   }
   bulkCollectionUpdate(LiveData, allObjects, {
     callback() {
