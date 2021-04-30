@@ -1170,7 +1170,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   ];
 
   Promise.await(LiveData.rawCollection().aggregate(pipeline, { allowDiskUse: true }).toArray());
-  
+
   // create new structure for data series to be used for charts
   AggrResults.find({}).forEach((e) => {
     const subObj = {};
@@ -1180,8 +1180,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     const subTypes = e.subTypes;
     const aggrSubTypes = {}; // hold aggregated data
 
-    let subTypesLength = subTypes.length
-    for (let i = 0; i < subTypesLength; i++) {
+    for (let i = 0; i < subTypes.length; i++) {
       for (const subType in subTypes[i]) {
         if (subTypes[i].hasOwnProperty(subType)) {
           const data = subTypes[i][subType];
@@ -1258,11 +1257,14 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
             }
           } else { // normal aggreagation for all other subTypes
-            const flag = data[0].val;
-            // The loop is faster if it reads from a variable instead of calling an object first
-            const dataLength = data.length;
-            for (let j = 1; j < dataLength; j++) {
+            for (let j = 1; j < data.length; j++) {
               newkey = subType + '_' + data[j].metric;
+
+              if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
+                numValid = 0;
+              }
+
+              const flag = data[0].val;
 
               if (flag !== 1) { // if flag is not 1 (valid) don't increase numValid
                 numValid = 0;
@@ -1306,7 +1308,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         const split = aggr.lastIndexOf('_');
         const instrument = aggr.substr(0, split);
         const measurement = aggr.substr(split + 1);
-        
         if (!newaggr[instrument]) {
           newaggr[instrument] = {};
         }
@@ -1329,12 +1330,10 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           obj.Flag = majorityFlag;
         }
 
-        obj.Flag = parseInt(obj.Flag);
-
         if (measurement === 'RMY') { // special treatment for wind measurements
           if (!newaggr[instrument].WD) {
             newaggr[instrument].WD = [];
-          } 
+          }
           if (!newaggr[instrument].WS) {
             newaggr[instrument].WS = [];
           }
@@ -1351,9 +1350,10 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument].WS.push({ metric: 'avg', val: windSpdAvg });
           newaggr[instrument].WS.push({ metric: 'numValid', val: obj.numValid });
           newaggr[instrument].WS.push({ metric: 'unit', val: obj.WSunit });
-          newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag }); 
+          newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag });
         } else { // all other measurements
-          if (!newaggr[instrument][measurement]) { newaggr[instrument][measurement] = [];
+          if (!newaggr[instrument][measurement]) {
+            newaggr[instrument][measurement] = [];
           }
 
           // automatic flagging of aggregated values that are out of range for NO2 to be flagged with 9(N)
@@ -1373,6 +1373,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     }
 
     subObj.subTypes = newaggr;
+
     AggrData.insert(subObj, function(error, result) {
       // only update aggregated values if object already exists to avoid loosing edited data flags
       if (result === false) {
@@ -1406,36 +1407,36 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
                 new: true
               });
             } else {
-							const query0 = {};
-							query0._id = subObj._id;
-							query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
-							const $set0 = {};
-							$set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
-							AggrData.update(query0, { $set: $set0 });
-							const query1 = {};
-							query1._id = subObj._id;
-							query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
-							const $set1 = {};
-							$set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
-							AggrData.update(query1, { $set: $set1 });
-							const query2 = {};
-							query2._id = subObj._id;
-							query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
-							const $set2 = {};
-							$set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
-							AggrData.update(query2, { $set: $set2 });
-							const query3 = {};
-							query3._id = subObj._id;
-							query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
-							const $set3 = {};
-							$set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
-							AggrData.update(query3, { $set: $set3 });
-							const query4 = {};
-							query4._id = subObj._id;
-							query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
-							const $set4 = {};
-							$set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
-							AggrData.update(query4, { $set: $set4 });
+              const query0 = {};
+              query0._id = subObj._id;
+              query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
+              const $set0 = {};
+              $set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
+              AggrData.update(query0, { $set: $set0 });
+              const query1 = {};
+              query1._id = subObj._id;
+              query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
+              const $set1 = {};
+              $set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
+              AggrData.update(query1, { $set: $set1 });
+              const query2 = {};
+              query2._id = subObj._id;
+              query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
+              const $set2 = {};
+              $set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
+              AggrData.update(query2, { $set: $set2 });
+              const query3 = {};
+              query3._id = subObj._id;
+              query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
+              const $set3 = {};
+              $set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
+              AggrData.update(query3, { $set: $set3 });
+              const query4 = {};
+              query4._id = subObj._id;
+              query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
+              const $set4 = {};
+              $set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
+              AggrData.update(query4, { $set: $set4 });
             }
           });
         });
