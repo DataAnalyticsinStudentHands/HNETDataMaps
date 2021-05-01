@@ -66,6 +66,18 @@
                 </ul>
             </li>
         {{/if}}
+		{{#if isInRole 'editor,operator,admin'}}
+		<li class="dropdown">
+			<a href="#" data-toggle="dropdown" class="dropdown-toggle">RAMBOLL Sites <b class="caret"></b></a>
+			<ul class="dropdown-menu">
+				{{#each rambollsites}}
+					<li>
+						<a href="{{ pathFor 'rambollsite' _id=AQSID }}"> {{siteName}} </a>
+					</li>
+				{{/each}}
+			</ul>
+		</li>
+	{{/if}}
         {{#if isInRole 'editor,operator,admin'}}
             <li class="dropdown">
                 <a href="#" data-toggle="dropdown" class="dropdown-toggle">Composites<b class="caret"></b></a>
@@ -75,6 +87,7 @@
                 </ul>
             </li>
         {{/if}}
+
 	    {{#if isInRole 'editor,operator,admin' }}
             <li class="dropdown">
                 <a href="#" data-toggle="dropdown" class="dropdown-toggle">Data Management<b class="caret"></b></a>

@@ -27,6 +27,12 @@ Template.navItems.helpers({
         { status: 'Active' },
         { siteGroup: 'BC2' }]
     });
+  },
+  rambollsites() {
+    return LiveSites.find({ $and: [
+        { status: 'Active' },
+        { siteGroup: 'Ramboll' }]
+    });
   }
 });
 

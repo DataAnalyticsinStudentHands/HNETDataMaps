@@ -23,8 +23,8 @@ const SitesSchema = new SimpleSchema({
           label: 'BC2',
           value: 'BC2'
         }, {
-          label: 'RAMBOLL',
-          value: 'RAMBOLL'
+          label: 'Ramboll',
+          value: 'Ramboll'
         }
       ]
     }
