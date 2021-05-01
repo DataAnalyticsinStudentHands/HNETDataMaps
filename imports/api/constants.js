@@ -116,6 +116,12 @@ export const flagsHash = {
     color10: "#00cc00",
     labelcolor: "label-danger",
   },
+  20: {
+    val: 20,
+    description: "Invalid",
+    label: "I",
+    selectable: false,
+  },
 };
 
 export const colorsHash = {

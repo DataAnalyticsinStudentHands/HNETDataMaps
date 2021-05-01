@@ -14,6 +14,9 @@ export const DataExporter = {
       if (!activeOnly) {
         fileFormat = 'tceq_allchannels';
       }
+      if (aqsid.startsWith('9')){
+        fileFormat = 'raw';
+      }
 
       // get TCEQ export formated data
       Meteor.call('exportData', aqsid, startEpoch, endEpoch, fileFormat, (err, response) => {

@@ -61,7 +61,59 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
 
   switch (fileFormat) {
     case 'raw':
-      logger.error('raw export format not yet implemented.');
+      if (aggregatData.length !== 0) {
+        dataObject.data = [];
+        dataObject.fields = ['siteID', 'dateGMT', 'timeGMT']; // create fields for unparse
+      }
+      _.each(aggregatData, (e) => {
+        const obj = {};
+        const siteID = e.site.substring(e.site.length - 4, e.site.length);
+        if (siteID.startsWith('0')) {
+          obj.siteID = e.site.substring(e.site.length - 3, e.site.length);
+        } else if (siteID.startsWith('9')) {
+          obj.siteID = e.site;
+        } else {
+          obj.siteID = e.site.substring(e.site.length - 4, e.site.length);
+        }
+        obj.dateGMT = moment.utc(moment.unix(e.epoch)).format('YY/MM/DD');
+        obj.timeGMT = moment.utc(moment.unix(e.epoch)).format('HH:mm:ss');
+
+        Object.keys(e.subTypes).forEach((instrument) => {
+          if (Object.prototype.hasOwnProperty.call(e.subTypes, instrument)) {
+            const measurements = e.subTypes[instrument];
+            Object.keys(measurements).forEach((measurement) => {
+              if (Object.prototype.hasOwnProperty.call(measurements, measurement)) {
+                const data = measurements[measurement];
+
+                label = `${instrument}_${measurement}_flag`;
+                if (dataObject.fields.indexOf(label) === -1) { // add to fields?
+                  dataObject.fields.push(label);
+                }
+                obj[label] = flagsHash[_.last(data).val].label; // Flag
+                label = `${instrument}_${measurement}_value`;
+                if (dataObject.fields.indexOf(label) === -1) { // add to fields?
+                  dataObject.fields.push(label);
+                }
+                // taking care of flag Q (span)
+                if (flagsHash[_.last(data).val].label === 'Q') {
+                  obj[label] = 0; // set value to 0
+                } else {
+                  let outputValue = data[1].val; // avg
+                  // HNET Unit conversion for Temp from C to F
+                  if (measurement === 'Temp' || measurement === 'AmbTemp') {
+                    outputValue = (outputValue * 9 / 5) + 32;
+                  } else if (measurement === 'WS') {
+                    outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
+                  }
+                  if (outputValue !== 'undefined')
+                    obj[label] = outputValue.toFixed(3);
+                }
+              }
+            });
+          }
+        });
+        dataObject.data.push(obj);
+      });
       break;
     case 'tceq_allchannels':
       if (aggregatData.length !== 0) {
@@ -73,6 +125,8 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
         const siteID = e.site.substring(e.site.length - 4, e.site.length);
         if (siteID.startsWith('0')) {
           obj.siteID = e.site.substring(e.site.length - 3, e.site.length);
+        } else if (siteID.startsWith('9')) {
+          obj.siteID = e.site;
         } else {
           obj.siteID = e.site.substring(e.site.length - 4, e.site.length);
         }
@@ -113,7 +167,8 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                   } else if (measurement === 'WS') {
                     outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
                   }
-                  obj[label] = outputValue.toFixed(3);
+                  if (outputValue !== 'undefined')
+                    obj[label] = outputValue.toFixed(3);
                 }
               }
             });
