@@ -41,6 +41,9 @@ AdminConfig = {
   userSchema: new SimpleSchema({
     receiveSiteStatusEmail: {
       type: Boolean
+    },
+    receiveSiteAlertEmail: {
+      type: Boolean
     }
   })
 };
