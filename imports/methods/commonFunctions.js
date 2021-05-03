@@ -1648,14 +1648,14 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
 
     // Only do this for BC2 sites teehee.
     // May have let this run for HNET sites too on accident.
+		let siteData = Object.getOwnPropertyNames(parsedLines[0]);
+		let TAP01CurrentFlagName = undefined;
+		let TAP02CurrentFlagName = undefined;
+		let siteInitial = undefined;
     if (site.siteGroup.includes("BC2")) {
       // Some BC2 sites do not label their TAP01 and TAP02 flags in their DAQfactory file with TAP01 and TAP02 labels in their csv file.
       // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
       // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
-      let siteData = Object.getOwnPropertyNames(parsedLines[0]);
-      let TAP01CurrentFlagName = undefined;
-      let TAP02CurrentFlagName = undefined;
-      let siteInitial = undefined;
 
       siteData.forEach((colName) => {
         if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
