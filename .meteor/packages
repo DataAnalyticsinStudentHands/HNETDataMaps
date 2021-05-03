@@ -16,7 +16,7 @@ jquery@1.11.9
 underscore@1.0.10
 
 # data
-mongo@1.10.1                           # The database Meteor supports right now
+mongo@1.1.12                           # The database Meteor supports right now
 aldeed:collection2              # Automatic validation of insert and update operations on the client and server.
 udondan:bulk-collection-update  # Collection bulk update
 meteorhacks:aggregate           # MongoDB Aggregation
