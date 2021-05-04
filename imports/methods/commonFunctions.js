@@ -269,7 +269,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
   ];
 
   Promise.await(LiveData.rawCollection().aggregate(pipeline, { allowDiskUse: true }).toArray());
-  
+
   /*
    * Only aggregate data if a certain percentage (defined by thresholdPercent) of the required data is in the 5minepoch.
    * There is supposed to be 630 database documents per 5minepoch.
@@ -344,7 +344,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
             }
           }
 
-        
+
           /** Tap flag implementation **/
           // Get flag from DAQ data and save it
           if (subType.includes('TAP01')) {
@@ -454,7 +454,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
               }
               hasCheckedTAPdataSchema = true;
             }
-            
+
             // We flag the faulty data with flag 20.
             if (data[tapDataSchemaIndex.RedAbsCoef].val < 0 || data[tapDataSchemaIndex.RedAbsCoef].val > 100 || isNaN(data[tapDataSchemaIndex.RedAbsCoef].val)) {
               data[tapDataSchemaIndex.RedAbsCoef].Flag = 20;
@@ -531,7 +531,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
         }
       }
     }
-  
+
     // This is prep for calculations. Need ensure that we are working with data that has the data necessary to do calculations.
     // The for loop for transforming aggregated data to a generic data format is more useful for calculations than raw aggrSubTypes.
     // All I'm doing here is collecting a little bit of information of what we are working with before I do calculations.
@@ -569,11 +569,11 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
           const majorityFlag = (_.invert(counts))[maxObj];
           obj.Flag = majorityFlag;
         }
-      
+
         // Some specific setting up for tap calculations and skipping
         if (instrument.includes("Neph")) {
           hasNeph = true;
-          
+
           // If obj.totalCounter (which is documentation for the amount of datapoints in our 5minepoch) is < minTAPcount
           // And what we are aggregating is greater than 55 minutes from endEpoch: 
           // SKIP 
@@ -588,15 +588,15 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
           if (!tapNames.includes(instrument)) {
             tapNames.push(instrument);
           }
-    
+
           if (obj.totalCounter < 300)
-          // If obj.totalCounter (which is documentation for the amount of datapoints in our 5minepoch) is < minTAPcount
-          // And what we are aggregating is greater than 55 minutes from endEpoch: 
-          // SKIP 
-          if (obj.totalCounter < minTAPcount && newData) {
-            // This forces the forEach loop to go to the next loop skipping pushing data into database
-            return;
-          }
+            // If obj.totalCounter (which is documentation for the amount of datapoints in our 5minepoch) is < minTAPcount
+            // And what we are aggregating is greater than 55 minutes from endEpoch: 
+            // SKIP 
+            if (obj.totalCounter < minTAPcount && newData) {
+              // This forces the forEach loop to go to the next loop skipping pushing data into database
+              return;
+            }
         }
 
         if (!newaggr[instrument][measurement]) { newaggr[instrument][measurement] = [];
@@ -1170,7 +1170,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
   ];
 
   Promise.await(LiveData.rawCollection().aggregate(pipeline, { allowDiskUse: true }).toArray());
-  
+
   // create new structure for data series to be used for charts
   AggrResults.find({}).forEach((e) => {
     const subObj = {};
@@ -1180,8 +1180,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     const subTypes = e.subTypes;
     const aggrSubTypes = {}; // hold aggregated data
 
-    let subTypesLength = subTypes.length
-    for (let i = 0; i < subTypesLength; i++) {
+    for (let i = 0; i < subTypes.length; i++) {
       for (const subType in subTypes[i]) {
         if (subTypes[i].hasOwnProperty(subType)) {
           const data = subTypes[i][subType];
@@ -1258,11 +1257,14 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
               aggrSubTypes[newkey].flagstore.push(flag); // store incoming flag
             }
           } else { // normal aggreagation for all other subTypes
-            const flag = data[0].val;
-            // The loop is faster if it reads from a variable instead of calling an object first
-            const dataLength = data.length;
-            for (let j = 1; j < dataLength; j++) {
+            for (let j = 1; j < data.length; j++) {
               newkey = subType + '_' + data[j].metric;
+
+              if (data[j].val === '' || isNaN(data[j].val)) { // taking care of empty or NaN data values
+                numValid = 0;
+              }
+
+              const flag = data[0].val;
 
               if (flag !== 1) { // if flag is not 1 (valid) don't increase numValid
                 numValid = 0;
@@ -1306,7 +1308,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
         const split = aggr.lastIndexOf('_');
         const instrument = aggr.substr(0, split);
         const measurement = aggr.substr(split + 1);
-        
         if (!newaggr[instrument]) {
           newaggr[instrument] = {};
         }
@@ -1329,12 +1330,10 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           obj.Flag = majorityFlag;
         }
 
-        obj.Flag = parseInt(obj.Flag);
-
         if (measurement === 'RMY') { // special treatment for wind measurements
           if (!newaggr[instrument].WD) {
             newaggr[instrument].WD = [];
-          } 
+          }
           if (!newaggr[instrument].WS) {
             newaggr[instrument].WS = [];
           }
@@ -1351,9 +1350,10 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
           newaggr[instrument].WS.push({ metric: 'avg', val: windSpdAvg });
           newaggr[instrument].WS.push({ metric: 'numValid', val: obj.numValid });
           newaggr[instrument].WS.push({ metric: 'unit', val: obj.WSunit });
-          newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag }); 
+          newaggr[instrument].WS.push({ metric: 'Flag', val: obj.Flag });
         } else { // all other measurements
-          if (!newaggr[instrument][measurement]) { newaggr[instrument][measurement] = [];
+          if (!newaggr[instrument][measurement]) {
+            newaggr[instrument][measurement] = [];
           }
 
           // automatic flagging of aggregated values that are out of range for NO2 to be flagged with 9(N)
@@ -1373,6 +1373,7 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
     }
 
     subObj.subTypes = newaggr;
+
     AggrData.insert(subObj, function(error, result) {
       // only update aggregated values if object already exists to avoid loosing edited data flags
       if (result === false) {
@@ -1406,51 +1407,36 @@ function perform5minAggregat(siteId, startEpoch, endEpoch) {
                 new: true
               });
             } else {
-              // Some aggregations will have less than 5 parts to it. 
-              // Need if statements to make sure it doesn't generate errors.
-              // I really think that this whole thing should change, but I have no idea how it works.
-              // So just leave this be and it will keep working.
-              let newaggrLength = newaggr[newInstrument][newMeasurement].length;
-              if (newaggrLength > 1) {
-                const query0 = {};
-                query0._id = subObj._id;
-                query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
-                const $set0 = {};
-                $set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
-                AggrData.update(query0, { $set: $set0 });
-              }
-              if (newaggrLength > 1) {
-                const query1 = {};
-                query1._id = subObj._id;
-                query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
-                const $set1 = {};
-                $set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
-                AggrData.update(query1, { $set: $set1 });
-              }
-              if (newaggrLength > 2) {
-                const query2 = {};
-                query2._id = subObj._id;
-                query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
-                const $set2 = {};
-                $set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
-                AggrData.update(query2, { $set: $set2 });
-              }
-              if (newaggrLength > 3) {
-                const query3 = {};
-                query3._id = subObj._id;
-                query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
-                const $set3 = {};
-                $set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
-                AggrData.update(query3, { $set: $set3 });
-              }
-              if (newaggrLength > 4) {
-                const query4 = {};
-                query4._id = subObj._id;
-                query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
-                const $set4 = {};
-                $set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
-                AggrData.update(query4, { $set: $set4 });
-              }
+              const query0 = {};
+              query0._id = subObj._id;
+              query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
+              const $set0 = {};
+              $set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
+              AggrData.update(query0, { $set: $set0 });
+              const query1 = {};
+              query1._id = subObj._id;
+              query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
+              const $set1 = {};
+              $set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
+              AggrData.update(query1, { $set: $set1 });
+              const query2 = {};
+              query2._id = subObj._id;
+              query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
+              const $set2 = {};
+              $set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
+              AggrData.update(query2, { $set: $set2 });
+              const query3 = {};
+              query3._id = subObj._id;
+              query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
+              const $set3 = {};
+              $set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
+              AggrData.update(query3, { $set: $set3 });
+              const query4 = {};
+              query4._id = subObj._id;
+              query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
+              const $set4 = {};
+              $set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
+              AggrData.update(query4, { $set: $set4 });
             }
           });
         });
@@ -1606,11 +1592,14 @@ const callToBulkUpdate = Meteor.bindEnvironment((allObjects, path, site, startEp
     // set start epoch for BC2 sites to be 1 hour in the past, for HNET sites 24 hours in the past
     if (site.siteGroup === 'BC2') {
       // Change the 1 to 1000000 to aggregate VERY old data serverside. Remember to change it back to 1 before you commit
-      startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
+      startAggrEpoch = moment.unix(fileModified).subtract(4, 'hours').unix();
     } else {
       startAggrEpoch = moment.unix(fileModified).subtract(24, 'hours').unix();
     }
-    endAggrEpoch = moment().unix();
+
+		// Floor to the nearest 5 min epoch
+		let currEpoch = moment().unix();
+    endAggrEpoch = currEpoch - currEpoch % 300 - 300;
   }
   bulkCollectionUpdate(LiveData, allObjects, {
     callback() {
@@ -1657,49 +1646,58 @@ const batchLiveDataUpsert = Meteor.bindEnvironment((parsedLines, path) => {
       }
     }
 
-    // Some BC2 sites do not label their TAP01 and TAP02 flags in their DAQfactory file with TAP01 and TAP02 labels in their csv file.
-    // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
-    // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
-    let siteData = Object.getOwnPropertyNames(parsedLines[0]);
-    let TAP01CurrentFlagName = undefined;
-    let TAP02CurrentFlagName = undefined;
-    let siteInitial = undefined;
+    // Only do this for BC2 sites teehee.
+    // May have let this run for HNET sites too on accident.
+		let siteData = Object.getOwnPropertyNames(parsedLines[0]);
+		let TAP01CurrentFlagName = undefined;
+		let TAP02CurrentFlagName = undefined;
+		let siteInitial = undefined;
+    if (site.siteGroup.includes("BC2")) {
+      // Some BC2 sites do not label their TAP01 and TAP02 flags in their DAQfactory file with TAP01 and TAP02 labels in their csv file.
+      // e.g. El Paso BC2 data uses TAP05 and TAP06. Annoying really.
+      // All this does is check if we are working with BC2 data, and looks for what the flag name is currently set to.
 
-    siteData.forEach((colName) => {
-      if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
-        let flagNum = colName.substring(colName.indexOf("Flag") - 3, colName.indexOf("Flag") - 1);
-        siteInitial = colName.substring(colName.indexOf("BC2_") + 4, colName.indexOf("_", colName.indexOf("_") + 1));
-        if (parseInt(flagNum) % 2 == 0) {
-          TAP02CurrentFlagName = colName;
-        } else {
-          TAP01CurrentFlagName = colName;
+      siteData.forEach((colName) => {
+        if (colName.includes("BC2") && colName.includes("TAP") && colName.includes("Flag")) {
+          let flagNum = colName.substring(colName.indexOf("Flag") - 3, colName.indexOf("Flag") - 1);
+          siteInitial = colName.substring(colName.indexOf("BC2_") + 4, colName.indexOf("_", colName.indexOf("_") + 1));
+          if (parseInt(flagNum) % 2 == 0) {
+            TAP02CurrentFlagName = colName;
+          } else {
+            TAP01CurrentFlagName = colName;
+          }
         }
-      }
-    });
+      });
+    }
 
     // create objects from parsed lines
     const allObjects = [];
     let previousObject = {};
     for (let k = 0; k < parsedLines.length; k++) {
 
+
+      // Only do this for BC2 sites teehee.
+      // May have let this run for HNET sites too on accident.
+      if (site.siteGroup.includes("BC2")) {
       // The two if statements below take the above information on TAPFlag names and converts them accordingly.
       // Don't worry! If we aren't working with TAP data, it will just skip that right here. 
 
       // Redefines the TAP01Flag label here
-      if (TAP01CurrentFlagName !== undefined) {
-        let newFlagName = 'BC2_' + siteInitial + '_TAP01_Flag';
-        parsedLines[k][newFlagName] = parsedLines[k][TAP01CurrentFlagName];
-        if (newFlagName !== TAP01CurrentFlagName) {
-          delete parsedLines[k][TAP01CurrentFlagName];
+        if (TAP01CurrentFlagName !== undefined) {
+          let newFlagName = 'BC2_' + siteInitial + '_TAP01_Flag';
+          parsedLines[k][newFlagName] = parsedLines[k][TAP01CurrentFlagName];
+          if (newFlagName !== TAP01CurrentFlagName) {
+            delete parsedLines[k][TAP01CurrentFlagName];
+          }
         }
-      }
 
-      // Redefines the TAP02Flag label here
-      if (TAP02CurrentFlagName !== undefined) {
-        let newFlagName = 'BC2_' + siteInitial + '_TAP02_Flag';
-        parsedLines[k][newFlagName] = parsedLines[k][TAP02CurrentFlagName];
-        if (newFlagName !== TAP02CurrentFlagName) {
-          delete parsedLines[k][TAP02CurrentFlagName];
+        // Redefines the TAP02Flag label here
+        if (TAP02CurrentFlagName !== undefined) {
+          let newFlagName = 'BC2_' + siteInitial + '_TAP02_Flag';
+          parsedLines[k][newFlagName] = parsedLines[k][TAP02CurrentFlagName];
+          if (newFlagName !== TAP02CurrentFlagName) {
+            delete parsedLines[k][TAP02CurrentFlagName];
+          }
         }
       }
 
