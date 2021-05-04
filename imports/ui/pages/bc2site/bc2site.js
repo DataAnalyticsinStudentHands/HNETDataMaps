@@ -115,7 +115,6 @@ Template.bc2site.helpers({
           },
           tooltip: {
             enabled: true,
-            crosshairs: [true],
             positioner(labelWidth, labelHeight, point) {
               let tooltipX;
               let tooltipY;
@@ -139,12 +138,12 @@ Template.bc2site.helpers({
                 y: tooltipY,
               };
             },
-            formatter() {
-              let s = moment(this.x).format("YYYY/MM/DD HH:mm:ss");
-              s += `<br/>${this.series.name} <b>${this.y.toFixed(2)}</b>`;
+            pointFormatter: function () {
+              let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
+              s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>' + '<br/>' + this.x;
               return s;
             },
-            shared: false,
+            split: false
           },
           credits: {
             enabled: false,

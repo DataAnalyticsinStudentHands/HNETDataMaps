@@ -162,7 +162,6 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
     series: seriesOptions,
     tooltip: {
       enabled: true,
-      crosshairs: [true],
       positioner(labelWidth, labelHeight, point) {
         let tooltipX;
         let tooltipY;
@@ -175,12 +174,17 @@ function createChart(chartName, titleText, seriesOptions, yAxisOptions) {
         }
         return {x: tooltipX, y: tooltipY};
       },
-      formatter() {
+      pointFormatter: function () {
         let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
         s += '<br/>' + this.series.name + ' <b>' + this.y.toFixed(2) + '</b>' + '<br/>' + this.x;
         return s;
       },
-      shared: false
+      split: false
+      // formatter: function () {
+      //   let s = moment(this.x).format('YYYY/MM/DD HH:mm:ss');
+      //   s += '<br/>' + this.points[0].series.name + ' <b>' + this.y.toFixed(2) + '</b>' + '<br/>' + this.x;
+      //   return s;
+      // }
     },
     credits: {
       enabled: false
