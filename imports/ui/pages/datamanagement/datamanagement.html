@@ -6,9 +6,21 @@
       <div class="col-xs-4">
         <label for="selectedSite">Select Site:</label>
         <select class="form-control" id="selectedSite">
-          {{#each availableSites}}
-          <option>{{siteName}}</option>
-          {{/each}}
+          {{#if isInRole 'editor,operator, admin' }}
+            {{#each availableSites}}
+              <option>{{siteName}}</option>
+            {{/each}}
+          {{/if}}
+          {{#if isInRole 'bc2collaborator' }}
+            {{#each availableBC2Sites}}
+              <option>{{siteName}}</option>
+            {{/each}}
+          {{/if}}
+          {{#if isInRole 'rambollcollaborator' }}
+            {{#each availablerambollSites}}
+              <option>{{siteName}}</option>
+            {{/each}}
+          {{/if}}
         </select>
       </div>
     </div>
@@ -58,12 +70,14 @@
             Download Data File
           </button>
       </div>
+      {{#if isInRole 'editor,operator, admin' }}
       <div class="col-xs-4">
           <button type="submit" class="btn btn-primary" id="downloadActiveData"
           data-toggle="tooltip" data-placement="bottom" title="Download Data in TCEQ Format (UTC) active channels only">
             Download TCEQ Data File (only active channels)
           </button>
       </div>
+      {{/if}}
       <div class="col-xs-2">
           {{#if isInRole 'operator, admin' }}
           <button type="submit" class="btn btn-primary" id="pushData"
@@ -74,6 +88,7 @@
       </div>
     </div>
 
+    {{#if isInRole 'operator,admin' }}
     <div class="row">
         <div class="col-xs-2">
           <button type="submit" class="btn btn-primary" id="createAggregates"
@@ -90,9 +105,11 @@
           {{/if}}
         </div>
       </div>
+    {{/if}}
     </div>
   </div>
 
+{{#if isInRole 'operator,admin' }}
 <div class="panel panel-default">
   <div class="panel-heading">
     <h3 class="panel-title">Data Management for 10s Data</h3>
@@ -124,9 +141,6 @@
             </select>
           </div>
         </div>
-
-
-
       </div>
        <br>
       <div class="row extra-bottom-padding">
@@ -139,9 +153,6 @@
       </div>
     </div>
 </div>
-
-
-
-
+{{/if}}
 </form>
 </template>

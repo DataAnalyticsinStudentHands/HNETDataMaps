@@ -41,6 +41,12 @@ Template.datamanagement.helpers({
   },
   availableSites() {
     return LiveSites.find();
+  },
+  availableBC2Sites() {
+    return LiveSites.find({ siteGroup: 'BC2' });
+  },
+  availableRambollSites() {
+    return LiveSites.find({ siteGroup: 'Ramboll' });
   }
 });
 
