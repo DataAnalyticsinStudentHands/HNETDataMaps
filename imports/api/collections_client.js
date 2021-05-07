@@ -13,6 +13,9 @@ export const CompositeDataSeries = new Mongo.Collection('compositeDataSeries');
 // collection used for charts only (composite data in the right format)
 export const CompositeCampusDataSeries = new Mongo.Collection('compositeCampusDataSeries');
 
+// collection used for charts only (composite group data in the right format)
+export const CompositeGroupDataSeries = new Mongo.Collection('compositeGroupDataSeries');
+
 // collection used for charts only (public data in the right format)
 export const PublicDataSeries = new Mongo.Collection('publicDataSeries');
 

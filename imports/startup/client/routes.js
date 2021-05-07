@@ -5,6 +5,7 @@ import '../../ui/pages/about/about';
 import '../../ui/pages/admin/fixSites';
 import '../../ui/pages/composite/composite';
 import '../../ui/pages/composite/compositeCampus';
+import '../../ui/pages/composite/compositeGroup';
 import '../../ui/pages/datamanagement/datamanagement';
 import '../../ui/pages/datamanagement/listEdits';
 import '../../ui/pages/datamanagement/listAutomaticPushes';
@@ -148,6 +149,15 @@ Router.route('/compositeCampus/', {
   name: 'compositeCampus',
   template: 'compositeCampus',
   action: function() {
+    this.render();
+  }
+});
+Router.route('/compositeGroup', {
+  path: '/compositeGroup/:_group',
+  //name: 'compositeGroup',
+  template: 'compositeGroup',
+  action: function() {
+    this.state.set('fromRouter', (this.params._group));
     this.render();
   }
 });
