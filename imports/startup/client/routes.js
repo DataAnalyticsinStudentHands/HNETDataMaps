@@ -15,7 +15,6 @@ import '../../ui/pages/site/site';
 import '../../ui/pages/bc2site/bc2site';
 
 import '../../ui/pages/admin/versionInfo.html';
-import '../../ui/pages/about/project.html';
 
 import { LiveSites, AggrData } from '../../api/collections_server';
 
@@ -171,13 +170,6 @@ Router.route('about', {
     } else {
       this.state.set('fromRouter', moment().subtract(4320, 'minutes').unix());
     }
-    this.render();
-  }
-});
-Router.route('project', {
-  name: 'project',
-  template: 'project',
-  action: function() {
     this.render();
   }
 });

@@ -111,13 +111,14 @@
 	<li class="dropdown">
 		<a href="#" data-toggle="dropdown" class="dropdown-toggle">About <b class="caret"></b></a>
 		<ul class="dropdown-menu">
+			<li><a href="https://github.com/DataAnalyticsinStudentHands/HNETDataMaps/wiki">Documentation</a></li>
+			<li class="divider"></li>
 			{{#each sites}}
 			  <li>
 			    <a href="{{ pathFor 'about' _id=AQSID }}"> {{siteName}} </a>
 			  </li>
 			{{/each}}
-			<li class="divider"></li>
-			<li><a href="{{pathFor 'project'}}">Project Information</a></li>
+			
 		</ul>
 	</li>
 </template>
