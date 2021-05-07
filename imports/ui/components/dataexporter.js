@@ -33,10 +33,18 @@ export const DataExporter = {
             fields: response.fields
           });
           try {
-            let siteName = (site.incoming.match(new RegExp(site.siteGroup +
-              '(.*)' +
-              '_')))[1].slice(-2);
-            DataExporter._downloadCSV(csv, `${siteName.toLowerCase()}${moment().format('YYMMDDHHmmss')}.txt`);
+            if (fileFormat === 'raw') {
+              let siteName = (site.incoming.match(new RegExp(site.siteGroup +
+                '(.*)' +
+                '_')))[1];
+                DataExporter._downloadCSV(csv, `${site.siteGroup.toLowerCase()}${siteName.toLowerCase()}_${moment().format('YYMMDDHHmmss')}.txt`);
+            }
+            else {
+              let siteName = (site.incoming.match(new RegExp(site.siteGroup +
+                '(.*)' +
+                '_')))[1].slice(-2);
+                DataExporter._downloadCSV(csv, `${siteName.toLowerCase()}${moment().format('YYMMDDHHmmss')}.txt`);
+            }
           } catch (error) {
             sAlert.error(`Error:\n ${error.reason}`);
           }
