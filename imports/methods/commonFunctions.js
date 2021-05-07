@@ -85,7 +85,7 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
               if (Object.prototype.hasOwnProperty.call(measurements, measurement)) {
                 const data = measurements[measurement];
 
-                label = `${instrument}_${measurement}_flag`;
+                let label = `${instrument}_${measurement}_flag`;
                 if (dataObject.fields.indexOf(label) === -1) { // add to fields?
                   dataObject.fields.push(label);
                 }
@@ -94,19 +94,23 @@ function exportDataAsCSV(aqsid, startEpoch, endEpoch, fileFormat) {
                 if (dataObject.fields.indexOf(label) === -1) { // add to fields?
                   dataObject.fields.push(label);
                 }
-                // taking care of flag Q (span)
-                if (flagsHash[_.last(data).val].label === 'Q') {
-                  obj[label] = 0; // set value to 0
+
+                let outputValue;
+                if (data.length < 5) {
+                  outputValue = data[0].val; // calc
                 } else {
-                  let outputValue = data[1].val; // avg
-                  // HNET Unit conversion for Temp from C to F
-                  if (measurement === 'Temp' || measurement === 'AmbTemp') {
-                    outputValue = (outputValue * 9 / 5) + 32;
-                  } else if (measurement === 'WS') {
-                    outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
-                  }
-                  if (outputValue !== 'undefined')
-                    obj[label] = outputValue.toFixed(3);
+                  outputValue = data[1].val; // avg
+                }
+
+                // HNET Unit conversion for Temp from C to F
+                if (measurement === 'Temp' || measurement === 'AmbTemp') {
+                  outputValue = (outputValue * 9 / 5) + 32;
+                } else if (measurement === 'WS') {
+                  outputValue = Math.round(outputValue * 3600 / 1610.3 * 1000) / 1000;
+                }
+                if (outputValue !== 'undefined' && !isNaN(outputValue)) {
+                // if (!isNaN(outputValue)) {
+                  obj[label] = outputValue.toFixed(3);
                 }
               }
             });
