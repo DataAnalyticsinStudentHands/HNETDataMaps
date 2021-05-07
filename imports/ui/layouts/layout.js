@@ -33,6 +33,24 @@ Template.navItems.helpers({
         { status: 'Active' },
         { siteGroup: 'Ramboll' }]
     });
+  },
+  histsites() {
+    return LiveSites.find({ $and: [
+        { status: 'Inactive' },
+        { siteGroup: 'HNET' }]
+    });
+  },
+  histbc2sites() {
+    return LiveSites.find({ $and: [
+        { status: 'Inactive' },
+        { siteGroup: 'BC2' }]
+    });
+  },
+  histrambollsites() {
+    return LiveSites.find({ $and: [
+        { status: 'Inactive' },
+        { siteGroup: 'Ramboll' }]
+    });
   }
 });
 

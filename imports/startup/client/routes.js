@@ -115,6 +115,28 @@ Router.route('rambollsite', {
   }
 });
 
+Router.route('histsites', {
+  path: '/histsites/:_id',
+  data: function() {
+    return LiveSites.findOne({ AQSID: this.params._id });
+  },
+  template: 'site',
+  action: function() {
+    this.render();
+  }
+});
+
+Router.route('histbc2sites', {
+  path: '/histbc2sites/:_id',
+  data: function() {
+    return LiveSites.findOne({ AQSID: this.params._id });
+  },
+  template: 'bc2site',
+  action: function() {
+    this.render();
+  }
+});
+
 Router.route('/composite/', {
   name: 'composite',
   template: 'composite',

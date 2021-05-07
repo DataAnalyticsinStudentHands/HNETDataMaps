@@ -1,6 +1,6 @@
 <template name='nav'>
 <nav class="navbar navbar-default navbar-fixed-top">
-	<div class="container">
+	<div class="container-fluid">
 		<div class="navbar-header">
 			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
 				<span class="sr-only">Toggle navigation</span>
@@ -101,6 +101,36 @@
                 </ul>
             </li>
 	    {{/if}}
+
+		{{#if isInRole 'rambollcollaborator,bc2collaborator,editor,operator,admin'}}
+            <li class="dropdown">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">Historical Sites <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+					{{#if isInRole 'editor,operator,admin'}}
+                    	{{#each histsites}}
+                        	<li>
+                            	<a href="{{ pathFor 'histsites' _id=AQSID }}"> {{siteName}} </a>
+                        	</li>
+                    	{{/each}}
+					{{/if}}
+					{{#if isInRole 'bc2collaborator,editor,operator,admin'}}
+                    	{{#each histbc2sites}}
+                        	<li>
+                            	<a href="{{ pathFor 'histbc2sites' _id=AQSID }}"> {{siteName}} </a>
+                        	</li>
+                    	{{/each}}
+					{{/if}}
+					{{#if isInRole 'rambollcollaborator,editor,operator,admin'}}
+					{{#each histrambollsites}}
+						<li>
+							<a href="{{ pathFor 'histsites' _id=AQSID }}"> {{siteName}} </a>
+						</li>
+					{{/each}}
+				{{/if}}
+                </ul>
+            </li>
+        {{/if}}
+
         {{#if isInRole 'admin' }}
             <li>
                 <a href="/admin">Admin</a>
