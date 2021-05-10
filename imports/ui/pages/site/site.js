@@ -37,7 +37,7 @@ const Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   // Select points only for series where allowPointSelect
   Highcharts.each(this.series, function (series) {
-    if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
+    if (series.options.allowPointSelect === 'true' && !series.name.includes('Navigator')) {   // does not include Navigator in measurement
 
       Highcharts.each(series.points, function (point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
