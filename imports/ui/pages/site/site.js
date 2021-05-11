@@ -332,7 +332,7 @@ Template.site.events({
     const metric = chart.title.textStr.split(/[ ]+/)[1]; // measurement
     const yAxis = chart.get(metric);
     // Set value from form element
-    yAxis.setExtremes(target.min.value, target.max.value);
+    yAxis.setExtremes(parseFloat(target.min.value), parseFloat(target.max.value));
   },
   'change #datepicker' (event) {
     // update reactive var whith selected date
