@@ -48,7 +48,19 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
 
   let modifiedData = {};
   const allSites = LiveSites.find({});
+  // Initialize vars to measure individual function performance profiling across BC2 site 
+  var timeForInstrumentSegregation = 0
+  var timeForDataModification = 0
+  var timeForRedBlueGreenOrganisation = 0
+  var timeForSAEorganisation = 0
+  var timeForAAEorganisation = 0
+  var timeForCOorganisation = 0
+  var timeForBC2ChartSubscription = 0
 
+  // Initialize constant to measure current UNIX epoch
+  const timeForWholeBC2chartOrganisationStart = Date.now()
+  
+  // BC2 chart data organisation begins here
   if (results.length > 0) {
     results.forEach((line) => {
       const epoch = line._id.epoch;
@@ -57,6 +69,10 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
           // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
           if (_.last(points).val === 1) {
             let chart = measurement.toUpperCase();
+
+            // Initialize constant to measure current UNIX epoch
+            const timeForInstrumentSegregationStart = Date.now()
+
             if (instrument.includes("Neph")) {
               if (chart.includes("BACK")) {
                 chart = `${instrument} Back Scattering`
@@ -77,7 +93,13 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                 chart = ``
               }
             }
+            // Increment the var with subtracted UNIX epochs to get the final execution time
+            timeForInstrumentSegregation = timeForInstrumentSegregation + (Date.now() - timeForInstrumentSegregationStart)
+            
             if (chart !== ``) {
+              // Initialize constant to measure current UNIX epoch
+              const timeForDataModificationStart = Date.now()
+
               if (!bc2siteData[chart]) {
                 // create placeholder for measurement
                 bc2siteData[chart] = {};
@@ -101,7 +123,13 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                   },
                 };
               }
+              // Increment the var with subtracted UNIX epochs to get the final execution time
+              timeForDataModification = timeForDataModification + (Date.now() - timeForDataModificationStart)
+
               if (points[1].val) {
+                // Initialize constant to measure current UNIX epoch
+                const timeForRedBlueGreenOrganisationStart = Date.now()
+
                 if (measurement.includes("Red")) {
                   if (chart.includes("SSA")) {
                     modifiedData = {
@@ -144,7 +172,12 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                       color: colorsHash[3].color,
                     };  
                   }
+                  // Increment the var with subtracted UNIX epochs to get the final execution time
+                  timeForRedBlueGreenOrganisation = timeForRedBlueGreenOrganisation + (Date.now() - timeForRedBlueGreenOrganisationStart)
                 } else if (chart.includes("SAE")) { 
+                  // Initialize constant to measure current UNIX epoch
+                  const timeForSAEorganisationStart = Date.now()
+
                   let threshold      // initializing threshold
                   let bounds         // initializing bounds
                   allSites.forEach((site) => {
@@ -190,7 +223,12 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                       }
                     }
                   });
-                } else if (measurement.includes("AAE")) { 
+                  // Increment the var with subtracted UNIX epochs to get the final execution time
+                  timeForSAEorganisation = timeForSAEorganisation + (Date.now() - timeForSAEorganisationStart)
+                } else if (measurement.includes("AAE")) {
+                  // Initialize constant to measure current UNIX epoch
+                  const timeForAAEorganisationStart = Date.now()
+
                   let threshold      // initializing threshold
                   let bounds         // initializing bounds
                   allSites.forEach((site) => {
@@ -236,12 +274,19 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
                       }
                     }
                   });
+                  // Increment the var with subtracted UNIX epochs to get the final execution time
+                  timeForAAEorganisation = timeForAAEorganisation + (Date.now() - timeForAAEorganisationStart)
                 } else if (measurement.includes("CO")) {
+                  // Initialize constant to measure current UNIX epoch
+                  const timeForCOorganisationStart = Date.now()
+
                   modifiedData = {
                     x: epoch * 1000, // milliseconds
                     y: points[1].val, // average
                     color: colorsHash[4].color, // red color
                   };
+                  // Increment the var with subtracted UNIX epochs to get the final execution time
+                  timeForCOorganisation = timeForCOorganisation + (Date.now() - timeForCOorganisationStart)
                 }
               }
               bc2siteData[chart][measurement].push(modifiedData);
@@ -251,8 +296,18 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
       });
     });
   }
+  console.log('Time for whole BC2 chart Organisation: ', Date.now() - timeForWholeBC2chartOrganisationStart, 'milliseconds')
+  console.log('Time for Instrument Segregation: ', timeForInstrumentSegregation, 'milliseconds')
+  console.log('Time for Data Modification: ', timeForDataModification, 'milliseconds')
+  console.log('Time for Red Blue Green Organisation: ', timeForRedBlueGreenOrganisation, 'milliseconds')
+  console.log('Time for SAE Organisation: ', timeForSAEorganisation, 'milliseconds')
+  console.log('Time for AAE Organisation: ', timeForAAEorganisation, 'milliseconds')
+  console.log('Time for CO Organisation', timeForCOorganisation, 'milliseconds')
 
   Object.keys(bc2siteData).forEach((chart) => {
+  // Initialize constant to measure current UNIX epoch
+  const timeForBC2ChartSubscriptionStart = Date.now()
+
     if (Object.prototype.hasOwnProperty.call(bc2siteData, chart)) {
       const chartSeries = { charts: [] };
       Object.keys(bc2siteData[chart]).forEach((measurment) => {
@@ -281,6 +336,9 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
 
       subscription.added("bc2DataSeries", chart, chartSeries);
     }
+    // Increment the var with subtracted UNIX epochs to get the final execution time
+    timeForBC2ChartSubscription = timeForBC2ChartSubscription + (Date.now() - timeForBC2ChartSubscriptionStart)
   });
+  console.log('Time for BC2 Chart Subscription: ', timeForBC2ChartSubscription, 'milliseconds', '\n')
   this.ready();
 });
