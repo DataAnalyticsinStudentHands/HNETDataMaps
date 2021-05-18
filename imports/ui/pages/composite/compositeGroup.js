@@ -54,6 +54,10 @@ Template.compositeGroup.helpers({
   selectedDate() {
     return moment.unix(endEpoch.get()).format('YYYY-MM-DD');
   },
+  siteGroup() {
+    const controller = Iron.controller();
+    return controller.state.get('fromRouter');
+  },
   charts() {
     return CompositeGroupDataSeries.find();
   },

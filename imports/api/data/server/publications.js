@@ -1,3 +1,5 @@
+/* eslint-disable func-names */
+/* eslint-disable meteor/audit-argument-checks */
 import { Meteor } from 'meteor/meteor';
 import { _ } from 'meteor/underscore';
 import { Promise } from 'meteor/promise';
@@ -307,204 +309,19 @@ Meteor.publish('dataSeries', function(siteName, startEpoch, endEpoch) {
   subscription.ready();
 });
 
-// aggregation of aggregated data to be plotted with highstock for composites
-Meteor.publish('compositeDataSeries', function(startEpoch, endEpoch) {
+// publications for all composite plots - based on site group
+Meteor.publish('compositeGroupDataSeries', function (startEpoch, endEpoch, siteGroupName) {
   const subscription = this;
   const pollCompData = {};
 
-  const aggCompPipe = [
-    {
-      $match: {
-        epoch: {
-          $gt: parseInt(startEpoch, 10),
-          $lt: parseInt(endEpoch, 10)
-        }
-      }
-    }, {
-      $sort: {
-        epoch: -1
-      }
-    }, {
-      $group: {
-        _id: { subTypes: '$subTypes', site: '$site', epoch: '$epoch' }
-      }
+  const selectedGroup = LiveSites.find({ siteGroup: siteGroupName }).fetch();
+  let selectedAQSID = [];
+  if (siteGroupName === 'UHCampus') { // pre-define list of sites for UH Campus
+    selectedAQSID = ['482010695', '482011611'];
+  } else {
+    for (let i = 0; i < selectedGroup.length; i++) {
+      selectedAQSID.push(selectedGroup[i].AQSID);
     }
-  ];
-
-  // create new structure for composite data series to be used for charts
-  const results = Promise.await(AggrData.rawCollection().aggregate(aggCompPipe).toArray());
-
-  if (results.length > 0) {
-    results.forEach((line) => {
-      const epoch = line._id.epoch;
-      const site = line._id.site;
-      _.each(line._id.subTypes, (data) => { // Instrument, HPM60 etc.
-        _.each(data, (points, origMeasurement) => { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
-          const measurement = origMeasurement.toUpperCase();
-          if (!pollCompData[measurement]) { // create placeholder for measurement
-            pollCompData[measurement] = {};
-          }
-          if (!pollCompData[measurement][site]) { // create placeholder for series if not exists
-            pollCompData[measurement][site] = [];
-          }
-
-          if (_.last(points).val === 1) { // get all measurements where flag == 1
-            let datapoint = {};
-            // HNET special treatment for precipitation using sum instead of avg
-            if (measurement.indexOf('Precip') >= 0) {
-              datapoint = {
-                x: epoch * 1000, // milliseconds
-                y: points[0].val // sum
-              };
-            } else {
-              datapoint = {
-                x: epoch * 1000, // milliseconds
-                y: points[1].val // average
-              };
-            }
-            pollCompData[measurement][site].push(datapoint);
-          }
-        });
-      });
-    });
-  }
-
-  Object.keys(pollCompData).forEach((measurement) => {
-    if (Object.prototype.hasOwnProperty.call(pollCompData, measurement)) {
-      const chartSeries = { charts: [] };
-      Object.keys(pollCompData[measurement]).forEach((site) => {
-        if (Object.prototype.hasOwnProperty.call(pollCompData[measurement], site)) {
-          var dataSorted = pollCompData[measurement][site].sort((obj1, obj2) => {
-            // Ascending: sorting by epoch?
-            return obj1.x - obj2.x;
-          });
-          const selectedSite = LiveSites.findOne({AQSID: site});
-          const series = {
-            name: selectedSite.siteName,
-            type: 'scatter',
-            marker: {
-              enabled: true,
-              radius: 2,
-              symbol: 'circle',
-              fillColor: `${selectedSite.compositeColor}`
-            },
-            data: dataSorted
-          };
-          chartSeries.charts.push(series);
-        }
-      });
-
-      subscription.added('compositeDataSeries', measurement, chartSeries);
-    }
-  });
-  this.ready();
-});
-
-Meteor.publish('compositeCampusDataSeries', function(startEpoch, endEpoch) {
-  const subscription = this;
-  const pollCompData = {};
-
-  const aggCompPipe = [
-    {
-      $match: {
-        epoch: {
-          $gt: parseInt(startEpoch, 10),
-          $lt: parseInt(endEpoch, 10)
-        },
-        site: {
-          $in: ['482010695', '482011611']
-        }
-      }
-    }, {
-      $sort: {
-        epoch: -1
-      }
-    }, {
-      $group: {
-        _id: { subTypes: '$subTypes', site: '$site', epoch: '$epoch' }
-      }
-    }
-  ];
-
-  // create new structure for composite data series to be used for charts
-  const results = Promise.await(AggrData.rawCollection().aggregate(aggCompPipe).toArray());
-
-  if (results != null) {
-    if (results.length > 0) {
-      results.forEach((line) => {
-        const epoch = line._id.epoch;
-        const site = line._id.site;
-        _.each(line._id.subTypes, (data) => { // Instrument, HPM60 etc.
-          _.each(data, (points, origMeasurement) => { // sub is the array with metric/val pairs as subarrays, measurement, WS etc.
-            const measurement = origMeasurement.toUpperCase();
-            if (!pollCompData[measurement]) { // create placeholder for measurement
-              pollCompData[measurement] = {};
-            }
-            if (!pollCompData[measurement][site]) { // create placeholder for series if not exists
-              pollCompData[measurement][site] = [];
-            }
-
-            if (_.last(points).val === 1) { // get all measurements where flag == 1
-              let datapoint = {};
-              // HNET special treatment for precipitation using sum instead of avg
-              if (measurement.indexOf('Precip') >= 0) {
-                datapoint = {
-                  x: epoch * 1000, // milliseconds
-                  y: points[0].val // sum
-                };
-              } else {
-                datapoint = {
-                  x: epoch * 1000, // milliseconds
-                  y: points[1].val // average
-                };
-              }
-              pollCompData[measurement][site].push(datapoint);
-            }
-          });
-        });
-      });
-    }
-  }
-
-  Object.keys(pollCompData).forEach((measurement) => {
-    if (Object.prototype.hasOwnProperty.call(pollCompData, measurement)) {
-      const chartSeries = { charts: [] };
-      Object.keys(pollCompData[measurement]).forEach((site) => {
-        if (Object.prototype.hasOwnProperty.call(pollCompData[measurement], site)) {
-          var dataSorted = pollCompData[measurement][site].sort((obj1, obj2) => {
-            // Ascending: sorting by epoch?
-            return obj1.x - obj2.x;
-          });
-          const selectedSite = LiveSites.findOne({AQSID: site});
-          const series = {
-            name: selectedSite.siteName,
-            type: 'scatter',
-            marker: {
-              enabled: true,
-              radius: 2,
-              symbol: 'circle',
-              fillColor: `${selectedSite.compositeColor}`
-            },
-            data: dataSorted
-          };
-          chartSeries.charts.push(series);
-        }
-      });
-
-      subscription.added('compositeCampusDataSeries', measurement, chartSeries);
-    }
-  });
-  this.ready();
-});
-
-Meteor.publish('compositeGroupDataSeries', function(startEpoch, endEpoch, siteGroup) {
-  const subscription = this;
-  const pollCompData = {};
-
-  const selectedGroup = LiveSites.find({siteGroup: siteGroup}).fetch();
-  var selectedAQSID = [];
-  for (var i = 0; i < selectedGroup.length; i++) {
-    selectedAQSID.push(selectedGroup[i].AQSID)
   }
 
   const aggCompPipe = [
@@ -529,9 +346,9 @@ Meteor.publish('compositeGroupDataSeries', function(startEpoch, endEpoch, siteGr
     }
   ];
 
-  // create new structure for composite data series to be used for charts
+  // wait for results from aggregation
   const results = Promise.await(AggrData.rawCollection().aggregate(aggCompPipe).toArray());
-
+  // create new structure for composite data series to be used for charts
   if (results != null) {
     if (results.length > 0) {
       results.forEach((line) => {
@@ -550,17 +367,18 @@ Meteor.publish('compositeGroupDataSeries', function(startEpoch, endEpoch, siteGr
             if (_.last(points).val === 1) { // get all measurements where flag == 1
               let datapoint = {};
               // HNET special treatment for precipitation using sum instead of avg
-              if (measurement.indexOf('Precip') >= 0) {
+              if (measurement.indexOf('Precip') >= 0 || points.length < 5) {
                 datapoint = {
                   x: epoch * 1000, // milliseconds
-                  y: points[0].val // sum
+                  y: parseFloat(points[0].val) // sum or calc
                 };
               } else {
                 datapoint = {
                   x: epoch * 1000, // milliseconds
-                  y: points[1].val // average
+                  y: parseFloat(points[1].val) // average
                 };
               }
+
               pollCompData[measurement][site].push(datapoint);
             }
           });
