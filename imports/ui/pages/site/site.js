@@ -37,7 +37,7 @@ const Charts = new Meteor.Collection(null);
 function selectPointsByDrag(e) {
   // Select points only for series where allowPointSelect
   Highcharts.each(this.series, function (series) {
-    if (series.options.allowPointSelect === 'true' && series.name !== 'Navigator') {
+    if (series.options.allowPointSelect === 'true' && !series.name.includes('Navigator')) {   // does not include Navigator in measurement
 
       Highcharts.each(series.points, function (point) {
         if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max) {
@@ -336,7 +336,7 @@ Template.site.events({
     const metric = chart.title.textStr.split(/[ ]+/)[1]; // measurement
     const yAxis = chart.get(metric);
     // Set value from form element
-    yAxis.setExtremes(target.min.value, target.max.value);
+    yAxis.setExtremes(parseFloat(target.min.value), parseFloat(target.max.value));
   },
   'change #datepicker' (event) {
     // update reactive var whith selected date
