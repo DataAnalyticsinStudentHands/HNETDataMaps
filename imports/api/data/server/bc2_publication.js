@@ -296,13 +296,13 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
       });
     });
   }
-  console.log('Time for whole BC2 chart Organisation: ', Date.now() - timeForWholeBC2chartOrganisationStart, 'milliseconds')
-  console.log('Time for Instrument Segregation: ', timeForInstrumentSegregation, 'milliseconds')
-  console.log('Time for Data Modification: ', timeForDataModification, 'milliseconds')
-  console.log('Time for Red Blue Green Organisation: ', timeForRedBlueGreenOrganisation, 'milliseconds')
-  console.log('Time for SAE Organisation: ', timeForSAEorganisation, 'milliseconds')
-  console.log('Time for AAE Organisation: ', timeForAAEorganisation, 'milliseconds')
-  console.log('Time for CO Organisation', timeForCOorganisation, 'milliseconds')
+  // console.log('Time for whole BC2 chart Organisation: ', Date.now() - timeForWholeBC2chartOrganisationStart, 'milliseconds')
+  // console.log('Time for Instrument Segregation: ', timeForInstrumentSegregation, 'milliseconds')
+  // console.log('Time for Data Modification: ', timeForDataModification, 'milliseconds')
+  // console.log('Time for Red Blue Green Organisation: ', timeForRedBlueGreenOrganisation, 'milliseconds')
+  // console.log('Time for SAE Organisation: ', timeForSAEorganisation, 'milliseconds')
+  // console.log('Time for AAE Organisation: ', timeForAAEorganisation, 'milliseconds')
+  // console.log('Time for CO Organisation', timeForCOorganisation, 'milliseconds')
 
   Object.keys(bc2siteData).forEach((chart) => {
   // Initialize constant to measure current UNIX epoch
@@ -339,6 +339,6 @@ Meteor.publish("bc2DataSeries", function (siteName, startEpoch, endEpoch) {
     // Increment the var with subtracted UNIX epochs to get the final execution time
     timeForBC2ChartSubscription = timeForBC2ChartSubscription + (Date.now() - timeForBC2ChartSubscriptionStart)
   });
-  console.log('Time for BC2 Chart Subscription: ', timeForBC2ChartSubscription, 'milliseconds', '\n')
+  // console.log('Time for BC2 Chart Subscription: ', timeForBC2ChartSubscription, 'milliseconds', '\n')
   this.ready();
 });
