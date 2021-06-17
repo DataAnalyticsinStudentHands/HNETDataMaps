@@ -53,7 +53,7 @@ Then run: `npm run test`
 ## For deployment with PM2
 
 * Ensure that you have cloned it onto the server.
-* `cp ~/project/ ~/bundle_backendImportOld`
+* `cp -R ~/project/ ~/bundle_backendImportOld`
 * `cd ~/bundle_backendImportOld` and `npm install`
 * generate a configuration file for PM2 (see example [gist](https://gist.github.com/fcbee3b520b4fdf97552.git)) outside of bundle
 * run `pm2 start [your_pm2_conf_file] --node-args="--max_old_space_size=6144"`
