@@ -1,0 +1,19 @@
+// Setting up directory in which this server expects incoming files (uses an environment variable)
+
+const importOldData = true;
+const dburl = process.env.MONGO_URL;
+const dbName = process.env.MONGO_NAME;
+const globalsite = undefined;
+
+
+function checkInitialEnvironmentVariables() {
+	if (typeof process.env.MONGO_URL === "undefined") {
+		throw new Error("environment variable 'MONGO_URL' undefined");
+	}
+	if (typeof process.env.MONGO_NAME === "undefined") {
+		throw new Error("environment variable 'MONGO_NAME' undefined");
+	}
+}
+
+// export { importOldData, dburl, dbName, checkInitialEnvironmentVariables, globalsite };
+module.exports = { importOldData, dburl, dbName, checkInitialEnvironmentVariables, globalsite };
