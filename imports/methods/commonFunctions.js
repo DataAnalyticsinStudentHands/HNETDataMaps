@@ -294,7 +294,7 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch) {
           }
         ]
       }
-    }, {
+    }, { // To note: this sort is extremely important. This allows synchronization of DAQFactory flags and TAP instruments.
       $sort: {
         epoch: 1
       }
