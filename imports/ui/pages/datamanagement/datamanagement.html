@@ -17,7 +17,12 @@
             {{/each}}
           {{/if}}
           {{#if isInRole 'rambollcollaborator' }}
-            {{#each availablerambollSites}}
+            {{#each availableRambollSites}}
+              <option>{{siteName}}</option>
+            {{/each}}
+          {{/if}}
+          {{#if isInRole 'go3collaborator' }}
+            {{#each availableGo3Sites}}
               <option>{{siteName}}</option>
             {{/each}}
           {{/if}}

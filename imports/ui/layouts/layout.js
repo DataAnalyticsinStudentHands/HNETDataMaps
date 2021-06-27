@@ -34,6 +34,12 @@ Template.navItems.helpers({
         { siteGroup: 'Ramboll' }]
     });
   },
+  go3sites() {
+    return LiveSites.find({ $and: [
+        { status: 'Active' },
+        { siteGroup: 'GO3' }]
+    });
+  },
   histsites() {
     return LiveSites.find({ $and: [
         { status: 'Inactive' },
@@ -50,6 +56,12 @@ Template.navItems.helpers({
     return LiveSites.find({ $and: [
         { status: 'Inactive' },
         { siteGroup: 'Ramboll' }]
+    });
+  },
+  histgo3sites() {
+    return LiveSites.find({ $and: [
+        { status: 'Inactive' },
+        { siteGroup: 'GO3' }]
     });
   }
 });

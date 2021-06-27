@@ -47,6 +47,9 @@ Template.datamanagement.helpers({
   },
   availableRambollSites() {
     return LiveSites.find({ siteGroup: 'Ramboll' });
+  },
+  availableGo3Sites() {
+    return LiveSites.find({ siteGroup: 'GO3' });
   }
 });
 
