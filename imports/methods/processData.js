@@ -4,51 +4,25 @@ import { logger } from 'meteor/votercircle:winston';
 import { moment } from 'meteor/momentjs:moment';
 
 import { readFile } from './commonFunctions';
+import { ImportOldJob } from '../api/collections_server';
 
-export const reimportLiveData = function reimportLiveData(incomingFolder, selectedDate, selectedType) {
-  // get short site name from incoming folder
-  // get site name from incoming folder (TODO: take out check after we have renamed all folders)
-  let shortSiteName;
-  try {
-    shortSiteName = (incomingFolder.match(new RegExp('UH' +
-        '(.*)' +
-        '_')))[1].slice(-2);
-  } catch (e) {
-  }
+// create new job to import old data
+export const reimportLiveData = function reimportLiveData(aqsid, selectedImportStartEpoch, selectedImportEndEpoch) {
+  // id that will be created
+  const submitEpoch = moment().unix();
+  const id = `${aqsid}_${submitEpoch}`; 
 
-  let siteGroup = 'HNET';
-  if (!(shortSiteName === 'WL' || shortSiteName === 'MT' || shortSiteName === 'SP' || shortSiteName === 'JF')) {
-    shortSiteName = incomingFolder.split(/[_]+/)[1];
-    siteGroup = incomingFolder.split(/[_]+/)[0];
-  }
-  let path;
+  const newJob = {};
+  newJob._id = id;
+  newJob.site = aqsid;
+  newJob.user = Meteor.user().emails[0].address; // user doing the edit
+  newJob.startEpoch = selectedImportStartEpoch;
+  newJob.endEpoch = selectedImportEndEpoch;
+  newJob.submitEpoch = submitEpoch;
+  newJob.jobStatus = 'pending';
+  newJob.overwriteLiveData = false;
+  newJob.overwriteAggrData = true;
 
-  switch (selectedType) {
-    case 'LoggerNet(met)':
-      if (siteGroup !== 'BC2') {
-        path = `/hnet/incoming/current/${incomingFolder}/${siteGroup}_${shortSiteName}_TCEQmet_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
-      } else {
-        path = `/hnet/incoming/current/${incomingFolder}/${siteGroup}_${shortSiteName}_met_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
-      }
-      break;
-    case 'TAP':
-      // TODO: find naming pattern for TAP
-      path = `/hnet/incoming/current/${incomingFolder}/${siteGroup}_${shortSiteName}_tap_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
-      break;
-    default: {
-      if (siteGroup !== 'BC2') {
-        path = `/hnet/incoming/current/${incomingFolder}/${siteGroup}_${shortSiteName}_TCEQ_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
-      } else {
-        path = `/hnet/incoming/current/${incomingFolder}/${siteGroup}_${shortSiteName}_${moment(selectedDate, 'MM/DD/YYYY').format('YYMMDD')}.txt`;
-      }
-    }
-  }
-
-  if (!fs.existsSync(path)) {
-    logger.error('Error in call for reimportLiveData.', `Could not find data file for ${selectedDate} and site ${siteGroup}_${shortSiteName}.`);
-    throw new Meteor.Error('File does not exists.', `Could not find data file for ${selectedDate} and site ${siteGroup}_${shortSiteName}.`);
-  }
-
-  readFile(path);
-  return `started reimport data at path ${path}`;
+  ImportOldJob.insert(newJob);
+  return `${id}`;
 };

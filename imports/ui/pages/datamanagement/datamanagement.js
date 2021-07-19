@@ -17,12 +17,25 @@ Template.datamanagement.onCreated(function () {
 
 Template.datamanagement.onRendered(function () {
   // setup date picker for reimport data
-  this.$('#datetimepicker1').datetimepicker({
-    format: 'MM/DD/YYYY',
+  // setup date picker
+  this.$("#datetimepicker1").datetimepicker({
+    format: "MM/DD/YYYY",
+    useCurrent: true,
+    defaultDate: new Date(),
     widgetPositioning: {
-      horizontal: 'left',
-      vertical: 'auto'
-    }
+      horizontal: "left",
+      vertical: "auto",
+    },
+  });
+  // setup date picker
+  this.$("#datetimepicker2").datetimepicker({
+    format: "MM/DD/YYYY",
+    useCurrent: true,
+    defaultDate: new Date(),
+    widgetPositioning: {
+      horizontal: "left",
+      vertical: "auto",
+    },
   });
 });
 
@@ -130,16 +143,17 @@ Template.datamanagement.events = {
   'click #reimportLiveData'(event, target) {
     event.preventDefault();
     const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
-    const selectedDate = target.$('#selectedDate').val();
-    const selectedType = target.$('#selectedType').val();
+    const selectedImportStartEpoch = moment(target.$('#selectedImportStartDate').val(), "MM/DD/YYYY").unix();
+    console.log(target.$('#selectedImportStartDate').val())
+    const selectedImportEndEpoch = moment(target.$('#selectedImportEndDate').val(), "MM/DD/YYYY").unix();
 
-    // call to reimport Live data files
-    Meteor.call('reimportLiveData', site.incoming, selectedDate, selectedType, (err, response) => {
+    // call to submit import data job
+    Meteor.call('reimportLiveData', site.AQSID, selectedImportStartEpoch, selectedImportEndEpoch, (err, response) => {
       if (err) {
         sAlert.error(`Error:\n ${err.reason}`);
         return;
       }
-      sAlert.success(`Import:\n ${response} live data points`);
+      sAlert.success(`Import job submitted \n ${response}`);
     });
   }
 };

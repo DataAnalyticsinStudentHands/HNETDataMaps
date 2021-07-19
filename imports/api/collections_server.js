@@ -233,3 +233,6 @@ export const AggrData = new Mongo.Collection('aggregatedata5min');
 
 // stored records for exported data
 export const Exports = new Mongo.Collection('exports');
+
+// stored records for import old data jobs
+export const ImportOldJob = new Mongo.Collection('importOldJob');

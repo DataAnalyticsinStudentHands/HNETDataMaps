@@ -117,33 +117,34 @@
 {{#if isInRole 'operator,admin' }}
 <div class="panel panel-default">
   <div class="panel-heading">
-    <h3 class="panel-title">Data Management for 10s Data</h3>
+    <h3 class="panel-title">Reimport Data</h3>
   </div>
   <div class="panel-body">
 
-      <span id="helpBlock" class="help-block">We are going to find the file based on the date and site that you select. The file name must contain the date selected.</span>
+    <span id="helpBlock" class="help-block">We are going to find the original data files based on the dates and site that you select. The file names must contain the date selected. The imported data will also be aggregated. We will generate a job which will run in the background with the import. Please check back on the individual sites for the imported data after the job has finished.</span>
 
     <div class="row">
         <div class="col-xs-2">
-          <label for="datetimepicker1">Select Date:</label>
+          <label for="datetimepicker1">Select Start Date:</label>
           <div class="form-group">
-                <div class='input-group date' id='datetimepicker1'>
-                    <input type='text' class="form-control" id='selectedDate'/>
-                    <span class="input-group-addon">
-                        <span class="glyphicon glyphicon-calendar"></span>
-                    </span>
-                </div>
+            <div class='input-group date' id='datetimepicker1'>
+              <input type='text' class="form-control" id='selectedImportStartDate'/>
+                <span class="input-group-addon">
+                  <span class="glyphicon glyphicon-calendar"></span>
+                </span>
             </div>
+          </div>
         </div>
 
-        <div class="col-xs-3">
+        <div class="col-xs-2">
+          <label for="datetimepicker2">Select End Date:</label>
           <div class="form-group">
-            <label>Select Type of 10s Data:</label>
-            <select class="form-control" id='selectedType'>
-              <option>DAQFactory</option>
-              <option>LoggerNet(met)</option>
-              <option>TAP</option>
-            </select>
+            <div class='input-group date' id='datetimepicker2'>
+              <input type='text' class="form-control" id='selectedImportEndDate'/>
+                <span class="input-group-addon">
+                  <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
           </div>
         </div>
       </div>
