@@ -148,12 +148,27 @@
           </div>
         </div>
       </div>
-       <br>
+
+      <div class="row">
+        <div class="col-xs-4">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" id='selectedOverwriteLive'> Overwrite Live Data
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" id='selectedOverwriteAggregate' checked> Overwrite Aggregated Data
+            </label>
+          </div>
+        </div>
+      </div>
+      <br>
       <div class="row extra-bottom-padding">
         <div class="col-xs-2">
           <button type="submit" class="btn btn-primary" id="reimportLiveData"
           data-toggle="tooltip" data-placement="bottom" title="Will import 10s data files into DB">
-            Reimport Data Files
+            Import Data Files
           </button>
         </div>
       </div>

@@ -20,8 +20,6 @@ Template.datamanagement.onRendered(function () {
   // setup date picker
   this.$("#datetimepicker1").datetimepicker({
     format: "MM/DD/YYYY",
-    useCurrent: true,
-    defaultDate: new Date(),
     widgetPositioning: {
       horizontal: "left",
       vertical: "auto",
@@ -30,8 +28,6 @@ Template.datamanagement.onRendered(function () {
   // setup date picker
   this.$("#datetimepicker2").datetimepicker({
     format: "MM/DD/YYYY",
-    useCurrent: true,
-    defaultDate: new Date(),
     widgetPositioning: {
       horizontal: "left",
       vertical: "auto",
@@ -142,13 +138,41 @@ Template.datamanagement.events = {
   },
   'click #reimportLiveData'(event, target) {
     event.preventDefault();
+
+    // get selected site and dates
     const site = LiveSites.findOne({ siteName: $('#selectedSite').val() });
     const selectedImportStartEpoch = moment(target.$('#selectedImportStartDate').val(), "MM/DD/YYYY").unix();
-    console.log(target.$('#selectedImportStartDate').val())
     const selectedImportEndEpoch = moment(target.$('#selectedImportEndDate').val(), "MM/DD/YYYY").unix();
 
+    if (Number.isNaN(selectedImportStartEpoch)) {
+      sAlert.error(`Please select a Import Start date.`);
+      return;
+    }
+
+    if (Number.isNaN(selectedImportEndEpoch)) {
+      sAlert.error(`Please select a Import End date.`);
+      return;
+    }
+
+    // get selected settings for overwrite
+    let selectedOverwriteLive = false;
+    let selectedOverwriteAggregate = true;
+
+    if (target.$('#selectedOverwriteLive').is(":checked"))
+    {
+      selectedOverwriteLive = true;
+    } else {
+      selectedOverwriteLive = false;
+    }
+    if (target.$('#selectedOverwriteAggregate').is(":checked"))
+    {
+      selectedOverwriteAggregate = true;
+    } else {
+      selectedOverwriteAggregate = false;
+    }
+
     // call to submit import data job
-    Meteor.call('reimportLiveData', site.AQSID, selectedImportStartEpoch, selectedImportEndEpoch, (err, response) => {
+    Meteor.call('reimportLiveData', site.AQSID, selectedImportStartEpoch, selectedImportEndEpoch, selectedOverwriteLive, selectedOverwriteAggregate, (err, response) => {
       if (err) {
         sAlert.error(`Error:\n ${err.reason}`);
         return;
