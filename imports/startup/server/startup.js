@@ -15,5 +15,4 @@ function checkInitialEnvironmentVariables() {
 	}
 }
 
-// export { importOldData, dburl, dbName, checkInitialEnvironmentVariables, globalsite };
 module.exports = { importOldData, dburl, dbName, checkInitialEnvironmentVariables, globalsite };

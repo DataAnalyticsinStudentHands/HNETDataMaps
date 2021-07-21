@@ -1,17 +1,3 @@
-// These are functions that are the same for the front-end and backend. If changes are being made, they should be pulled over.
-/* old meteor code
-import { logger } from '../startup/startup-logger.js';
-import _ from 'underscore';
-import moment from 'moment';
-import Papa from 'papaparse';
-import fs from 'fs-extra';
-import pathModule from 'path';
-import { collectionNames, insert, bulkWrite } from '../api/serverFunctions.js';
-import { channelHash, flagsHash } from '../api/constants.js';
-import { globalsite, dburl, dbName } from '../startup/server/startup.js';
-import * as mathjs from 'mathjs';
-*/
-
 // libraries
 const _ = require('underscore');
 const moment = require('moment');
@@ -119,7 +105,6 @@ function makeObj(keys, startIndex, previousObject) {
 
 // writes a TCEQ input formatted output file to the local outgoing folder
 function createTCEQPushData(aqsid, data) {
-	// Old meteor code: const site = LiveSites.find({ AQSID: `${aqsid}` }).fetch()[0];
 
 	if (site === undefined) {
 		throw new Error('Could not find AQSID: ', aqsid, ' in LiveSites.');
@@ -427,82 +412,6 @@ function perform5minAggregat(siteId, startEpoch, endEpoch, callback) {
 			callbackAggregate();
 		});
 	});
-
-	/* Old meteor code
-	// create new structure for data series to be used for charts
-	AggrResults.find({}).forEach((e) => {
-		AggrData.insert(subObj, function(error, result) {
-			// only update aggregated values if object already exists to avoid loosing edited data flags
-			if (result === false) {
-				Object.keys(newaggr).forEach(function(newInstrument) {
-					Object.keys(newaggr[newInstrument]).forEach(function(newMeasurement) {
-						// test whether aggregates for this instrument/measurement already exists
-						const qry = {};
-						qry._id = subObj._id;
-						qry[`subTypes.${newInstrument}.${newMeasurement}`] = { $exists: true };
-
-						if (AggrData.findOne(qry) === undefined) {
-							const newQuery = {};
-							newQuery.epoch = subObj.epoch;
-							newQuery.site = subObj.site;
-							const $set = {};
-							const newSet = [];
-							newSet[0] = newaggr[newInstrument][newMeasurement][0];
-							newSet[1] = newaggr[newInstrument][newMeasurement][1];
-							newSet[2] = newaggr[newInstrument][newMeasurement][2];
-							newSet[3] = newaggr[newInstrument][newMeasurement][3];
-							newSet[4] = newaggr[newInstrument][newMeasurement][4];
-							$set['subTypes.' + newInstrument + '.' + newMeasurement] = newSet;
-
-							// add aggregates for new instrument/mesaurements
-							AggrData.findAndModify({
-								query: newQuery,
-								update: {
-									$set: $set
-								},
-								upsert: false,
-								new: true
-							});
-						} else {
-							const query0 = {};
-							query0._id = subObj._id;
-							query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
-							const $set0 = {};
-							$set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
-							AggrData.update(query0, { $set: $set0 });
-							const query1 = {};
-							query1._id = subObj._id;
-							query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
-							const $set1 = {};
-							$set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
-							AggrData.update(query1, { $set: $set1 });
-							const query2 = {};
-							query2._id = subObj._id;
-							query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
-							const $set2 = {};
-							$set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
-							AggrData.update(query2, { $set: $set2 });
-							const query3 = {};
-							query3._id = subObj._id;
-							query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
-							const $set3 = {};
-							$set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
-							AggrData.update(query3, { $set: $set3 });
-							const query4 = {};
-							query4._id = subObj._id;
-							query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
-							const $set4 = {};
-							$set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
-							AggrData.update(query4, { $set: $set4 });
-						}
-					});
-				});
-			}
-		});
-	});
-// drop temp collection that was placeholder for aggreagation results
-	AggrResults.rawCollection().drop();
-	*/
 }
 
 // performs the creation of 5 minute aggregate data points on BC2 
@@ -1332,82 +1241,6 @@ function perform5minAggregatBC2(siteId, startEpoch, endEpoch, callback) {
 
 		callback();
 	});
-
-	/* Old meteor code
-	// create new structure for data series to be used for charts
-	AggrResults.find({}).forEach((e) => {
-		AggrData.insert(subObj, function(error, result) {
-			// only update aggregated values if object already exists to avoid loosing edited data flags
-			if (result === false) {
-				Object.keys(newaggr).forEach(function(newInstrument) {
-					Object.keys(newaggr[newInstrument]).forEach(function(newMeasurement) {
-						// test whether aggregates for this instrument/measurement already exists
-						const qry = {};
-						qry._id = subObj._id;
-						qry[`subTypes.${newInstrument}.${newMeasurement}`] = { $exists: true };
-
-						if (AggrData.findOne(qry) === undefined) {
-							const newQuery = {};
-							newQuery.epoch = subObj.epoch;
-							newQuery.site = subObj.site;
-							const $set = {};
-							const newSet = [];
-							newSet[0] = newaggr[newInstrument][newMeasurement][0];
-							newSet[1] = newaggr[newInstrument][newMeasurement][1];
-							newSet[2] = newaggr[newInstrument][newMeasurement][2];
-							newSet[3] = newaggr[newInstrument][newMeasurement][3];
-							newSet[4] = newaggr[newInstrument][newMeasurement][4];
-							$set['subTypes.' + newInstrument + '.' + newMeasurement] = newSet;
-
-							// add aggregates for new instrument/mesaurements
-							AggrData.findAndModify({
-								query: newQuery,
-								update: {
-									$set: $set
-								},
-								upsert: false,
-								new: true
-							});
-						} else {
-							const query0 = {};
-							query0._id = subObj._id;
-							query0[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'sum';
-							const $set0 = {};
-							$set0[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][0].val;
-							AggrData.update(query0, { $set: $set0 });
-							const query1 = {};
-							query1._id = subObj._id;
-							query1[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'avg';
-							const $set1 = {};
-							$set1[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][1].val;
-							AggrData.update(query1, { $set: $set1 });
-							const query2 = {};
-							query2._id = subObj._id;
-							query2[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'numValid';
-							const $set2 = {};
-							$set2[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][2].val;
-							AggrData.update(query2, { $set: $set2 });
-							const query3 = {};
-							query3._id = subObj._id;
-							query3[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'unit';
-							const $set3 = {};
-							$set3[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][3].val;
-							AggrData.update(query3, { $set: $set3 });
-							const query4 = {};
-							query4._id = subObj._id;
-							query4[`subTypes.${newInstrument}.${newMeasurement}.metric`] = 'Flag';
-							const $set4 = {};
-							$set4[`subTypes.${newInstrument}.${newMeasurement}.$.val`] = newaggr[newInstrument][newMeasurement][4].val;
-							AggrData.update(query4, { $set: $set4 });
-						}
-					});
-				});
-			}
-		});
-	});
-// drop temp collection that was placeholder for aggreagation results
-	AggrResults.rawCollection().drop();
-	*/
 }
 
 async function callToBulkUpdate(allObjects, path, site, startEpoch, endEpoch, daqFactory) {
@@ -1447,7 +1280,6 @@ function batchLiveDataUpsert(parsedLines, path) {
 	// find the site information using the location of the file that is being read
 	const pathArray = path.split(pathModule.sep);
 	const parentDir = pathArray[pathArray.length - 2];
-	// Old meteor code const site = LiveSites.findOne({ incoming: parentDir }); // Get the timezone offset into one nice variable
 	let siteTimeZone = site['GMToffset'] * -1 * 3600;
 
 
@@ -1673,7 +1505,6 @@ function batchTapDataUpsert(parsedLines, path) {
 	// find the site information using the location of the file that is being read
 	const pathArray = path.split(pathModule.sep);
 	const parentDir = pathArray[pathArray.length - 2];
-	// Old meteor code: const site = LiveSites.findOne({ incoming: parentDir }); 
 	let siteTimeZone = site['GMToffset'] * -1;
 
 	if (site.AQSID) {

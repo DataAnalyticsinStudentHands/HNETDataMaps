@@ -1,11 +1,3 @@
-/* This file is to abstract the mongo connection, and functionality.
- * This allows simple one liner calls to these functions and it will just work.
- */
-
-/*
-import { dbName, dburl } from '../startup/server/startup.js';
-import { logger } from '../startup/startup-logger.js';
-*/
 // library
 const mongodb = require('mongodb');
 
@@ -14,21 +6,6 @@ const dbName = require('../startup/server/startup').dbName;
 const dburl = require('../startup/server/startup').dburl;
 
 const logger = require('../startup/startup-logger').logger;
-
-/*
- * Old meteor way of connecting to collections
-// all air monitoring sites pushing to us
-export const LiveSites = new Mongo.Collection('livesites');
-
-// live data pushed to our server
-export const LiveData = new Mongo.Collection('livedata');
-
-// aggregated data produced by our server
-export const AggrData = new Mongo.Collection('aggregatedata5min');
-
-// collection used to start the importing of old data in mongodb
-export const ImportOldJob = new Mongo.Collection('importOldJob');
-*/
 
 const collectionNames = {
 	LiveSites : 'livesites',
