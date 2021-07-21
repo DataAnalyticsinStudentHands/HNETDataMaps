@@ -15,9 +15,9 @@ function getDifferenceInDays(date1, date2) {
 setInterval(() => {
 	let currDate = new Date();
 	if (
-		(logger.lastInfoDate === null || getDifferenceInDays(currDate, logger.lastInfoDate) > 0) &&
-		(logger.lastWarnDate === null || getDifferenceInDays(currDate, logger.lastWarnDate) > 0) &&
-		(logger.lastErrorDate === null || getDifferenceInDays(currDate, logger.lastErrorDate) > 0)
+		(logger.lastInfoDate === null || getDifferenceInDays(currDate, logger.lastInfoDate) > 3) &&
+		(logger.lastWarnDate === null || getDifferenceInDays(currDate, logger.lastWarnDate) > 3) &&
+		(logger.lastErrorDate === null || getDifferenceInDays(currDate, logger.lastErrorDate) > 3)
 	) {
 		throw new Error("Nothing has been logged in 3 days. Potentially stuck. Forcing restart.");
 	}
