@@ -1,6 +1,6 @@
-# HNETDataMaps (Server)
+# HNETDataMaps (Backend)
 
-This is server part for for a data processing framework for atmospheric sensors. Each site has it's own instance of a server running to process incoming files.
+This is backend server part for for a data processing framework for atmospheric sensors. Each site has it's own instance of a server running to process incoming files.
 
 The following instructions are for developers who want to setup their own version. This is a [meteor](https://www.meteor.com/) based framework.
 
