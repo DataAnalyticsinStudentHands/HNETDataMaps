@@ -340,7 +340,7 @@ function interval() {
 			currentlyRunning = true;
 			performOldImport();
 		}
-	}, 100000); // Run every 100 seconds
+	}, 600); // Run every 10 minutes
 }
 
 module.exports = { interval };
