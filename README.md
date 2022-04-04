@@ -1,10 +1,10 @@
-# HNETDataMaps backendImportOld
+# HNETDataMaps backendImport5minute Data
 
-This is the backend aggregation for older data for a data processing framework for atmospheric sensors who can monitor and edit their data.
+This is the backend to import data from atmospheric sensors who can monitor that doesn't need aggregationand. 
 
 The documentation for end users can be found in the Wiki.
 
-The following instructions are for developers who want to setup their own version. This is a Node framework. We abandoned meteor for performance on this branch.
+The following instructions are for developers who want to setup their own version. This is a simple Node based app. 
 
 
 ## Prerequisites
@@ -37,23 +37,10 @@ Define environment variables:
 
 Then run: `npm run start`
 
-### For test cases only
-
-Also define envrionment variables (they don't have to be the variables specified): 
-
-`endEpoch=2000000000`
-
-`startEpoch=0`
-
-`aqsid=99995`
-
-Then run: `npm run test`
-
 
 ## For deployment with PM2
 
 * Ensure that you have cloned it onto the server.
-* `cp -R ~/project/ ~/bundle_backendImportOld`
-* `cd ~/bundle_backendImportOld` and `npm install`
+* `cd ~/bundle_backendImport5minuteData` and `npm install`
 * generate a configuration file for PM2 (see example [gist](https://gist.github.com/fcbee3b520b4fdf97552.git)) outside of bundle
 * run `pm2 start [your_pm2_conf_file] --node-args="--max_old_space_size=6144"`

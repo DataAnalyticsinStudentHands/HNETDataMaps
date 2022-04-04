@@ -10,8 +10,8 @@ import { logger } from '../startup/startup-logger.js';
 const mongodb = require('mongodb');
 
 // Program functions
-const dbName = require('../startup/server/startup').dbName;
-const dburl = require('../startup/server/startup').dburl;
+const dbName = require('../startup').dbName;
+const dburl = require('../startup').dburl;
 
 const logger = require('../startup/startup-logger').logger;
 

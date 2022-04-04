@@ -30,9 +30,9 @@ const db = require('../api/serverFunctions').db;
 const channelHash = require('../api/constants').channelHash;
 const flagsHash = require('../api/constants').flagsHash;
 
-const globalsite = require('../startup/server/startup').globalsite;
-const dburl = require('../startup/server/startup').dburl;
-const dbName = require('../startup/server/startup').dbName;
+const globalsite = require('../startup').globalsite;
+const dburl = require('../startup').dburl;
+const dbName = require('../startup').dbName;
 
 let site = undefined;
 
