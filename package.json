@@ -18,6 +18,7 @@
   "homepage": "https://github.com/DataAnalyticsinStudentHands/HNETDataMaps/tree/%3CbackendImportOld%3E#readme",
   "dependencies": {
     "chokidar": "^3.5.3",
+    "moment": "^2.29.2",
     "mongodb": "^4.4.1",
     "papaparse": "^5.3.2",
     "winston": "^3.7.1"
