@@ -90,6 +90,18 @@
 			</ul>
 		</li>
 		{{/if}}
+		{{#if isInRole 'boemcollaborator,editor,operator,admin'}}
+		<li class="dropdown">
+			<a href="#" data-toggle="dropdown" class="dropdown-toggle">BOEM Sites <b class="caret"></b></a>
+			<ul class="dropdown-menu">
+				{{#each boemsites}}
+					<li>
+						<a href="{{ pathFor 'boemsite' _id=AQSID }}"> {{siteName}} </a>
+					</li>
+				{{/each}}
+			</ul>
+		</li>
+		{{/if}}
         {{#if isInRole 'editor,operator,admin'}}
             <li class="dropdown">
                 <a href="#" data-toggle="dropdown" class="dropdown-toggle">Composites<b class="caret"></b></a>

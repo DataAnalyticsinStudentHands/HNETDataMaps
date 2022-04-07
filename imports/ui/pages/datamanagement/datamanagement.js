@@ -59,6 +59,9 @@ Template.datamanagement.helpers({
   },
   availableGo3Sites() {
     return LiveSites.find({ siteGroup: 'GO3' });
+  },
+  availableBoemSites() {
+    return LiveSites.find({ siteGroup: 'BOEM' });
   }
 });
 

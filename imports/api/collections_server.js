@@ -29,6 +29,10 @@ const SitesSchema = new SimpleSchema({
         {
           label: 'GO3',
           value: 'GO3'
+        },
+        {
+          label: 'BOEM',
+          value: 'BOEM'
         }
       ]
     }

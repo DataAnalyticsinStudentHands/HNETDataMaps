@@ -26,6 +26,11 @@
               <option>{{siteName}}</option>
             {{/each}}
           {{/if}}
+          {{#if isInRole 'boemcollaborator' }}
+            {{#each availableBoemSites}}
+              <option>{{siteName}}</option>
+            {{/each}}
+          {{/if}}
         </select>
       </div>
     </div>

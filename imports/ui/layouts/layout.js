@@ -40,6 +40,12 @@ Template.navItems.helpers({
         { siteGroup: 'GO3' }]
     });
   },
+  boemsites() {
+    return LiveSites.find({ $and: [
+        { status: 'Active' },
+        { siteGroup: 'BOEM' }]
+    });
+  },
   histsites() {
     return LiveSites.find({ $and: [
         { status: 'Inactive' },
