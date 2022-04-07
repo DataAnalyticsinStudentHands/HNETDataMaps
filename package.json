@@ -2,6 +2,7 @@
   "name": "hnetdatamapsimport5minute",
   "version": "0.0.1",
   "description": "Backend for importing 5 minute data",
+  "type": "module",
   "main": "main.js",
   "scripts": {
     "start": "node main.js"
@@ -10,7 +11,7 @@
     "type": "git",
     "url": "git+ssh://git@github.com/DataAnalyticsinStudentHands/HNETDataMaps.git#<backendImport5minute>"
   },
-  "author": "Peggy Lindner, Shane Whitmire",
+  "author": "Peggy Lindner",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/DataAnalyticsinStudentHands/HNETDataMaps/issues"

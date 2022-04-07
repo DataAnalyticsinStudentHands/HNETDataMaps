@@ -1,13 +1,15 @@
-const chokidar = require('chokidar');
-const path = require('path');
-const fs = require('fs');
-const { createLogger, format, transports } = require('winston')
-const mongodb = require('mongodb');
-const Papa = require('papaparse');
-const moment = require('moment');
+import chokidar from 'chokidar';
+import path from 'path';
+import fs from 'fs';
+import { createLogger, format, transports } from 'winston';
+import mongodb from 'mongodb';
+import Papa from 'papaparse';
+import moment from 'moment';
 
-var url = "mongodb://localhost:27017/DataMaps";
-var aqsid = 99950;
+import { dburl, aqsid }  from './modules/startup.js';
+import checkInitialEnvironmentVariables from './modules/startup.js';
+
+checkInitialEnvironmentVariables();
 
 //Logger setup
 const logger = createLogger({
@@ -18,102 +20,140 @@ const logger = createLogger({
 
 //DB connection setup
 var dbConn;
-mongodb.MongoClient.connect(url, {
+var incoming;
+//watcher setup
+let liveWatcher;
+mongodb.MongoClient.connect(dburl, {
 	useUnifiedTopology: true,
 }).then((client) => {
-	console.log("DB Connected!");
+	logger.info("DB Connected!");
 	dbConn = client.db();
+	// find site information
+	dbConn.collection("livesites").findOne({ AQSID: `${aqsid}` }, function(err, result) {
+		if (err) throw err;
+		incoming = `/hnet/incoming/current/${result.incoming}`;
+		console.log(incoming);
+		liveWatcher = chokidar.watch(incoming, {
+			ignored: /[\/\\]\./,
+			ignoreInitial: true,
+			usePolling: true,
+			persistent: true
+		});
+	  });
 }).catch(err => {
-	console.log("DB Connection Error: ${err.message}");
-});
-
-//watcher setup
-const liveWatcher = chokidar.watch(`/hnet/incoming/current/BOEM_SC_DAQData`, {
-	ignored: /[\/\\]\./,
-	ignoreInitial: true,
-	usePolling: true,
-	persistent: true
+	logger.error("DB Connection Error: ${err.message}");
 });
 
 //we will only import when file is added
 liveWatcher.on('add', (filePath) => {
-	console.log('File ', filePath, ' has been added.');
+	logger.info('File ', filePath, ' has been added.');
 	const pathArray = filePath.split(path.sep);
 	const fileName = pathArray[pathArray.length - 1];
 	const siteId = fileName.split(/[_]+/)[1];
 	const parentDir = pathArray[pathArray.length - 2];
 	const test = parentDir.split(/[_]+/)[1];
 
-	if (siteId === test || fileName.startsWith('TAP')) {
-		console.log("Will import", filePath)
-		//parse local CSV file
+	if (siteId === test) {
+		logger.info("Will import", filePath)
+		//create objects from parsed lines in csv
+		const allObjects = [];
 		Papa.parse(fs.createReadStream(filePath), {
-			complete: function (results) {
-				// create objects from parsed lines
-				const allObjects = [];
-				const header = results.data[0];
-				//loop over parsed data
-				for (let k = 1; k < results.data.length; k++) {
-					const data = results.data[k];
-					const obj = {};
-					obj.subTypes = {};
-					let instrument = [];
-					for (let i = 0; i < header.length; i++) {
-						//work through different columns
-						const subKeys = header[i].split('_'); // split each column header
-						if (subKeys.length > 1) { // skipping 'TheTime'
-							instrument = subKeys[2]; // instrument i.e. Wind, Ozone etc.
-							const measurement = subKeys[3]; // measurement conc, temp, etc.
-							const value = data[i];
-							let unitType = 'NA';
-							if (subKeys[4] !== undefined) {
-								unitType = subKeys[4]; // unit
-							}
-							if (!obj.subTypes[instrument]) {
-								obj.subTypes[instrument] = [
+			header: true,
+			step: function (result) {
+				const obj = {};
+				//create _id, epoch etc.
+				let epoch = moment(result.data.TheTime).unix();
+      			obj._id = `${aqsid}_${epoch}`;
+				obj.site = `${aqsid}`;
+				obj.epoch = epoch;
+				obj.subTypes = {};
+				let instrument = [];
+				for (const key in result.data) {
+					// Fix for wrong headers _Wind
+					let newKey = key;
+					if (key.indexOf('_Wind') >= 0) {
+						newKey = key.replace('_Wind', '');
+					}
+					const subKeys = newKey.split('_'); // split each column header
+					if (subKeys.length > 1) { // skipping e.g. 'TheTime'
+						instrument = subKeys[2]; // instrument i.e. Wind, Ozone etc.
+						const measurement = subKeys[3]; // measurement conc, temp, etc.
+						let unitType = 'NA';
+						if (subKeys[4] !== undefined) {
+							unitType = subKeys[4]; // unit
+						}
+						if (!obj.subTypes[instrument]) {
+							obj.subTypes[instrument] = {};
+							obj.subTypes[instrument][measurement] = [
+								{
+									metric: "sum",
+									val: NaN
+								},
+								{
+									metric: "avg",
+									val: parseFloat(result.data[newKey]) // the actual value
+								},
+								{
+									metric : "numValid", 
+									val : NaN
+								},
+								{
+									metric: "unit",
+									val: unitType
+								}
+							]
+							// a new measurement is found
+						} else if (!obj.subTypes[instrument][measurement]) {
+							if (measurement !== "Flag") {
+								obj.subTypes[instrument][measurement] = [
 									{
-										metric: measurement,
-										val: value,
-										unit: unitType
+										metric: "sum",
+										val: NaN
+									},
+									{
+										metric: "avg",
+										val: parseFloat(result.data[newKey])
+									},
+									{
+										metric : "numValid", 
+										val : NaN
+									},
+									{
+										metric: "unit",
+										val: unitType
 									}
-								];
-							} else if (measurement === 'Flag') { // Flag should be always first
-								obj.subTypes[instrument].unshift({ metric: measurement, val: value });
+								]
 							} else {
-								obj.subTypes[instrument].push({ metric: measurement, val: value, unit: unitType });
+								//put flag with each measurement
+								for (const measurement in obj.subTypes[instrument]) {
+									obj.subTypes[instrument][measurement].push({
+										metric: "Flag",
+										val: parseInt(result.data[newKey])
+									})
+								}
 							}
-							console.log(obj);
-						} else {
-							//create epoch and _id etc.
-							let epoch = moment(data[0]).unix();
-							obj.epoch = epoch;
-							obj.site = aqsid;
-							obj._id = `${aqsid}_${epoch}`;
 						}
 					}
-					allObjects.push(singleObj);
 				}
-
-				//console.log(allObjects);
-
+				allObjects.push(obj);
+			},
+			complete: function (results) {
 				//inserting into the “Aggregated5minuteData”
 				var collectionName = 'aggregatedata5min';
 				var collection = dbConn.collection(collectionName);
-				/* collection.insertMany(allObjects, (err, result) => {
-					if (err) console.log(err);
+				collection.insertMany(allObjects, (err, result) => {
+					if (err) logger.error(err);
 					if (result) {
-						console.log("Import CSV into database successfully.");
+						logger.info(`Imported ${filePath} into database successfully.`);
 					}
-				}); */
+				}); 
 			}
 		});
 	}
 }).on('error', (error) => {
 	logger.error('Error happened', error);
 }).on('ready', () => {
-	logger.info(`Ready for changes in /hnet/incoming/current/BOEM_SC_DAQData`);
+	logger.info(`Ready for changes in ${incoming}`);
 });
-
-
 
 
