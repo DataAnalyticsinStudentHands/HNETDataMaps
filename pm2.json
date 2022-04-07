@@ -1,0 +1,15 @@
+{
+  "apps": [
+    {
+      "name": "HNET Backend Import 5 minute data",
+      "script": "~/Development/HNETDataMaps_Import5minuteData/main.js",
+      "log_date_format": "YYYY-MM-DD HH:mm:ss",
+      "exec_mode": "fork_mode",
+      "env": {
+        "PORT": 30001,
+        "MONGO_URL": "mongodb://localhost:27017/DataMaps",
+	      "AQSID": "99950"
+      }
+    }
+  ]
+}
