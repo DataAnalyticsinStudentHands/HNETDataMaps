@@ -1,22 +1,14 @@
 import chokidar from 'chokidar';
 import path from 'path';
 import fs from 'fs';
-import { createLogger, format, transports } from 'winston';
 import mongodb from 'mongodb';
 import Papa from 'papaparse';
 import moment from 'moment';
 
-import { dburl, aqsid }  from './modules/startup.js';
+import { dburl, aqsid } from './modules/startup.js';
 import checkInitialEnvironmentVariables from './modules/startup.js';
 
 checkInitialEnvironmentVariables();
-
-//Logger setup
-const logger = createLogger({
-	level: 'info',
-	format: format.simple(),
-	transports: [new transports.Console()]
-})
 
 //DB connection setup
 var dbConn;
@@ -26,27 +18,34 @@ let liveWatcher;
 mongodb.MongoClient.connect(dburl, {
 	useUnifiedTopology: true,
 }).then((client) => {
-	logger.info("DB Connected!");
+	console.log("DB Connected!");
 	dbConn = client.db();
 	// find site information
-	dbConn.collection("livesites").findOne({ AQSID: `${aqsid}` }, function(err, result) {
+	dbConn.collection("livesites").findOne({ AQSID: `${aqsid}` }, function (err, result) {
 		if (err) throw err;
 		incoming = `/hnet/incoming/current/${result.incoming}`;
-		console.log(incoming);
 		liveWatcher = chokidar.watch(incoming, {
 			ignored: /[\/\\]\./,
 			ignoreInitial: true,
 			usePolling: true,
 			persistent: true
 		});
-	  });
+
+		//we will only import when file is added
+		liveWatcher.on('add', (filePath) => {
+			console.log('File ', filePath, ' has been added.');
+			readFile(filePath)
+		}).on('error', (error) => {
+			console.error('LiveWatcher error ', error);
+		}).on('ready', () => {
+			console.log(`Ready for changes in ${incoming}`);
+		});
+	});
 }).catch(err => {
-	logger.error("DB Connection Error: ${err.message}");
+	console.error("DB Connection Error: ${err.message}");
 });
 
-//we will only import when file is added
-liveWatcher.on('add', (filePath) => {
-	logger.info('File ', filePath, ' has been added.');
+const readFile = (filePath) => {
 	const pathArray = filePath.split(path.sep);
 	const fileName = pathArray[pathArray.length - 1];
 	const siteId = fileName.split(/[_]+/)[1];
@@ -54,7 +53,7 @@ liveWatcher.on('add', (filePath) => {
 	const test = parentDir.split(/[_]+/)[1];
 
 	if (siteId === test) {
-		logger.info("Will import", filePath)
+		console.log("Start import", filePath)
 		//create objects from parsed lines in csv
 		const allObjects = [];
 		Papa.parse(fs.createReadStream(filePath), {
@@ -63,7 +62,7 @@ liveWatcher.on('add', (filePath) => {
 				const obj = {};
 				//create _id, epoch etc.
 				let epoch = moment(result.data.TheTime).unix();
-      			obj._id = `${aqsid}_${epoch}`;
+				obj._id = `${aqsid}_${epoch}`;
 				obj.site = `${aqsid}`;
 				obj.epoch = epoch;
 				obj.subTypes = {};
@@ -94,8 +93,8 @@ liveWatcher.on('add', (filePath) => {
 									val: parseFloat(result.data[newKey]) // the actual value
 								},
 								{
-									metric : "numValid", 
-									val : NaN
+									metric: "numValid",
+									val: NaN
 								},
 								{
 									metric: "unit",
@@ -115,8 +114,8 @@ liveWatcher.on('add', (filePath) => {
 										val: parseFloat(result.data[newKey])
 									},
 									{
-										metric : "numValid", 
-										val : NaN
+										metric: "numValid",
+										val: NaN
 									},
 									{
 										metric: "unit",
@@ -141,19 +140,38 @@ liveWatcher.on('add', (filePath) => {
 				//inserting into the “Aggregated5minuteData”
 				var collectionName = 'aggregatedata5min';
 				var collection = dbConn.collection(collectionName);
-				collection.insertMany(allObjects, (err, result) => {
-					if (err) logger.error(err);
-					if (result) {
-						logger.info(`Imported ${filePath} into database successfully.`);
-					}
-				}); 
+
+				//we upsert data
+				collection.bulkWrite(
+					allObjects.map((item) =>
+						({
+							updateOne: {
+								filter: { _id: item._id },
+								update: { $set: item },
+								upsert: true
+							}
+						})
+					), function (err, result) {
+						if (err) console.error('Error during bulkwrite ', err)
+						if (result) {
+							console.log('Finished import of file ', filePath, 'Upserted: ', result.nUpserted, 'Modified: ', result.nModified);
+							const stats = fs.statSync(filePath);
+							const fileModified = moment(Date.parse(stats.mtime)).unix(); // from milliseconds into moments and then epochs
+							// find site and update lastUpdateEpoch
+							dbConn.collection("livesites").findOneAndUpdate({ AQSID: `${aqsid}` }, {
+								$set: {
+									lastUpdateEpoch: fileModified
+								}
+							}, function (err, re) {
+								if (err) throw err;
+							});
+						}
+					});
 			}
 		});
 	}
-}).on('error', (error) => {
-	logger.error('Error happened', error);
-}).on('ready', () => {
-	logger.info(`Ready for changes in ${incoming}`);
-});
+}
+
+
 
 
