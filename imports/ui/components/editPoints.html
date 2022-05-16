@@ -1,5 +1,6 @@
 <!-- Modal for editing points -->
 <template name="editPoints">
+    {{#if isInRole 'boemeditor,bc2editor,editor,operator,admin'}}
     <div class="modal fade" id="editPointsModal">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -71,6 +72,7 @@
             </div>
         </div>
     </div>
+    {{/if}}
 </template>
 
 <template name="flagLabel">
