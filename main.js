@@ -42,7 +42,7 @@ mongodb.MongoClient.connect(dburl, {
 		});
 	});
 }).catch(err => {
-	console.error("DB Connection Error: ${err.message}");
+	console.error(`DB Connection Error: ${err.message}`);
 });
 
 const readFile = (filePath) => {
@@ -67,90 +67,68 @@ const readFile = (filePath) => {
 				obj.epoch = epoch;
 				obj.subTypes = {};
 				let instrument = [];
+				let flag = 1; // placeholder for flag
 				for (const key in result.data) {
-					// Fix for wrong headers _Wind
-					let newKey = key;
-					if (key.indexOf('_Wind') >= 0) {
-						newKey = key.replace('_Wind', '');
-					}
-					const subKeys = newKey.split('_'); // split each column header
+					const subKeys = key.split('_'); // split each column header
 					if (subKeys.length > 1) { // skipping e.g. 'TheTime'
 						instrument = subKeys[2]; // instrument i.e. Wind, Ozone etc.
 						const measurement = subKeys[3]; // measurement conc, temp, etc.
 						let unitType = 'NA';
+						
 						if (subKeys[4] !== undefined) {
 							unitType = subKeys[4]; // unit
 						}
+						//create structure for new instrument
 						if (!obj.subTypes[instrument]) {
 							obj.subTypes[instrument] = {};
-							obj.subTypes[instrument][measurement] = [
-								{
-									metric: "sum",
-									val: NaN
-								},
-								{
-									metric: "avg",
-									val: parseFloat(result.data[newKey]) // the actual value
-								},
-								{
-									metric: "numValid",
-									val: NaN
-								},
-								{
-									metric: "unit",
-									val: unitType
-								}
-							]
-							// a new measurement is found
-						} else if (!obj.subTypes[instrument][measurement]) {
-							if (measurement !== "Flag") {
-								obj.subTypes[instrument][measurement] = [
-									{
-										metric: "sum",
-										val: NaN
-									},
-									{
-										metric: "avg",
-										val: parseFloat(result.data[newKey])
-									},
-									{
-										metric: "numValid",
-										val: NaN
-									},
-									{
-										metric: "unit",
-										val: unitType
-									}
-								]
-							} else {
-								//put flag with each measurement
-								for (const measurement in obj.subTypes[instrument]) {
-									obj.subTypes[instrument][measurement].push({
-										metric: "Flag",
-										val: parseInt(result.data[newKey])
-									})
-								}
-							}
+						}
+						//Flag column MUST be before measurement columns and we store it first
+						if (measurement == "Flag") {
+							flag = parseInt(result.data[key])
+							// add measurements
+						} else {
+							//create structure for new measurement
+							obj.subTypes[instrument][measurement] = [];
+							obj.subTypes[instrument][measurement].push({
+								metric: "sum",
+								val: NaN
+							});
+							obj.subTypes[instrument][measurement].push({
+								metric: "avg",
+								val: parseFloat(result.data[key]) // the actual value
+							});
+							obj.subTypes[instrument][measurement].push({
+								metric: "numValid",
+								val: NaN
+							});
+							obj.subTypes[instrument][measurement].push({
+								metric: "unit",
+								val: unitType
+							});
+							obj.subTypes[instrument][measurement].push({
+								metric: "Flag",
+								val: flag
+							});
 						}
 					}
 				}
 				allObjects.push(obj);
 			},
 			complete: function (results) {
-				//inserting into the “Aggregated5minuteData”
+				//inserting into the “Aggregated5minuteData” collection
 				var collectionName = 'aggregatedata5min';
 				var collection = dbConn.collection(collectionName);
 
 				//we upsert data
 				collection.bulkWrite(
 					allObjects.map((item) =>
-						({
-							updateOne: {
-								filter: { _id: item._id },
-								update: { $set: item },
-								upsert: true
-							}
-						})
+					({
+						updateOne: {
+							filter: { _id: item._id },
+							update: { $set: item },
+							upsert: true
+						}
+					})
 					), function (err, result) {
 						if (err) console.error('Error during bulkwrite ', err)
 						if (result) {
