@@ -121,6 +121,8 @@ export const flagsHash = {
     description: "Invalid",
     label: "I",
     selectable: false,
+    color: "#00ff00", 
+    color10: "#00ff00",
   },
 };
 

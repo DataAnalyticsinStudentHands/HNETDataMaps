@@ -292,6 +292,10 @@ Template.site.onCreated(function() {
             chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 26, 2).attr({ fill: 'black' }).add();
             chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Offline (N)</text>',
                  chart.legend.group.translateX + 25, chart.legend.group.translateY - 23).add();
+            chart.renderer.circle(chart.legend.group.translateX + 13, chart.legend.group.translateY - 14, 2).attr({ fill: '#00ff00' }).add();
+            chart.renderer.text('<text style="color:#333333;font-size:12px;font-weight:bold;fill:#333333;">Invalid (I)</text>',
+                  chart.legend.group.translateX + 25, chart.legend.group.translateY - 11).add();
+
           } else {
             // add other series that belongs to this chart
             const index = $(`#container-chart-${chartId}`).data('highchartsChart');
