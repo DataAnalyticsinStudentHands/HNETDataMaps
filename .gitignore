@@ -7,3 +7,5 @@ npm-shrinkwrap.json
 npm-debug.log
 .idea
 *.iml
+jsconfig.json
+.vscode
