@@ -20,6 +20,9 @@ const SitesSchema = new SimpleSchema({
           label: 'HNET',
           value: 'HNET'
         }, {
+          label: 'AUSTIN',
+          value: 'AUSTIN'
+        }, {
           label: 'BC2',
           value: 'BC2'
         }, {

@@ -46,6 +46,12 @@ Template.navItems.helpers({
         { siteGroup: 'BOEM' }]
     });
   },
+  austinsites() {
+    return LiveSites.find({ $and: [
+        { status: 'Active' },
+        { siteGroup: 'AUSTIN' }]
+    });
+  },
   histsites() {
     return LiveSites.find({ $and: [
         { status: 'Inactive' },

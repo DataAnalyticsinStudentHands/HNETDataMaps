@@ -62,6 +62,9 @@ Template.datamanagement.helpers({
   },
   availableBoemSites() {
     return LiveSites.find({ siteGroup: 'BOEM' });
+  },
+  availableAustinSites() {
+    return LiveSites.find({ siteGroup: 'AUSTIN' });
   }
 });
 

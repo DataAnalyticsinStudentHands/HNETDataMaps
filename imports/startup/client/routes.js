@@ -148,6 +148,23 @@ Router.route('boemsite', {
   }
 });
 
+Router.route('austinsite', {
+  path: '/austinsite/:_id',
+  data: function() {
+    return LiveSites.findOne({ AQSID: this.params._id });
+  },
+  template: 'site',
+  action: function() {
+    const start = Router.current().params.query.startEpoch;
+    if (start) {
+      this.state.set('fromRouter', (start));
+    } else {
+      this.state.set('fromRouter', moment().subtract(4320, 'minutes').unix());
+    }
+    this.render();
+  }
+});
+
 Router.route('histsites', {
   path: '/histsites/:_id',
   data: function() {
